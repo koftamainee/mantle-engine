@@ -261,7 +261,7 @@ namespace mantle {
         vk_verify(vkCreateFence(m_device, &fence_create_info, nullptr, &fence));
         vk_verify(vkQueueSubmit(queue, 1, &submit_info, fence));
 
-        vk_verify(vkWaitForFences(m_device, 1, &fence, VK_TRUE, 0));
+        vk_verify(vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX));
         vkDestroyFence(m_device, fence, nullptr);
 
         if (free) {
@@ -273,6 +273,33 @@ namespace mantle {
         check(m_is_initialized);
 
         flush_command_buffer(command_buffer, queue, m_command_pool, free);
+    }
+
+    VkCommandBuffer VulkanDevice::begin_single_time_commands(VkCommandPool pool) const {
+        VkCommandBuffer cmd = create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, pool, false);
+
+        VkCommandBufferBeginInfo begin_info{
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
+        };
+
+        vk_verify(vkBeginCommandBuffer(cmd, &begin_info));
+
+        return cmd;
+    }
+
+    void VulkanDevice::end_single_time_commands(VkCommandBuffer command_buffer,
+                                                VkQueue queue,
+                                                VkCommandPool pool) const {
+        flush_command_buffer(command_buffer, queue, pool, true);
+    }
+
+    VkCommandBuffer VulkanDevice::begin_single_time_commands() const {
+        return begin_single_time_commands(m_command_pool);
+    }
+
+    void VulkanDevice::end_single_time_commands(VkCommandBuffer command_buffer, VkQueue queue) const {
+        flush_command_buffer(command_buffer, queue, m_command_pool, true);
     }
 
 
@@ -316,7 +343,7 @@ namespace mantle {
 
     void VulkanDevice::create_physical_device(VkInstance instance, VkSurfaceKHR surface) {
         check(instance != VK_NULL_HANDLE);
-        
+
         uint32_t device_count = 0;
         vk_verify(vkEnumeratePhysicalDevices(instance, &device_count, nullptr));
         fatal(device_count == 0, "Failed to enumerate physical devices");

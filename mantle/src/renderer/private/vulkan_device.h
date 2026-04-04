@@ -43,6 +43,15 @@ namespace mantle {
                                   bool free = true) const;
         void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true) const;
 
+        VkCommandBuffer begin_single_time_commands(VkCommandPool pool) const;
+        void end_single_time_commands(VkCommandBuffer command_buffer,
+                                     VkQueue queue,
+                                     VkCommandPool pool) const;
+
+        VkCommandBuffer begin_single_time_commands() const;
+        void end_single_time_commands(VkCommandBuffer command_buffer,
+                                     VkQueue queue) const;
+
         bool extension_supported(std::string_view extension) const;
         VkFormat get_supported_depth_format(bool check_sampling_support) const;
 
