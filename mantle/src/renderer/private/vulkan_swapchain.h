@@ -18,6 +18,11 @@ namespace mantle {
         VulkanSwapchain(VulkanSwapchain &&) noexcept = delete;
         VulkanSwapchain &operator=(VulkanSwapchain &&) noexcept = delete;
 
+        struct Image {
+            VkImage image;
+            VkImageView view;
+        };
+
         void init(VkDevice device,
                   VkSurfaceKHR surface,
                   const SwapchainSupportDetails &support_details,
@@ -26,6 +31,8 @@ namespace mantle {
                   uint32_t height);
 
         void destroy();
+
+        std::vector<Image> get_images() const;
 
     private:
         static VkSurfaceFormatKHR pick_surface_format(const std::vector<VkSurfaceFormatKHR> &formats);
@@ -36,7 +43,7 @@ namespace mantle {
         bool m_is_initialized = false;
 
         VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
-        std::vector<VkImage> m_images{};
+        std::vector<Image> m_images{};
 
         VkDevice m_device = VK_NULL_HANDLE;
         VkSurfaceFormatKHR m_surface_format{};

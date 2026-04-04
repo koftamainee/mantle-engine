@@ -29,6 +29,8 @@ namespace mantle {
         void destroy();
 
         void on_update() const;
+        bool should_close() const;
+
 
         uint32_t get_width() const;
         uint32_t get_height() const;

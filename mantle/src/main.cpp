@@ -19,6 +19,10 @@ int main() {
     mantle::Renderer renderer;
     renderer.init(window);
 
+    // while (!window.should_close()) {
+    //     window.on_update();
+    // }
+
     renderer.destroy();
     window.destroy();
 }

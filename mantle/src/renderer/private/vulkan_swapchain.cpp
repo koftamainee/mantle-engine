@@ -68,8 +68,32 @@ namespace mantle {
         vk_verify(vkCreateSwapchainKHR(device, &create_info, nullptr, &m_swapchain));
 
         vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count, nullptr));
+        std::vector<VkImage> images(image_count);
+        vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count, images.data()));
+
         m_images.resize(image_count);
-        vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count, m_images.data()));
+        for (uint32_t i = 0; i < image_count; i++) {
+            m_images[i].image = images[i];
+
+            VkImageViewCreateInfo view_info = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = m_images[i].image,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = m_surface_format.format,
+                .components = {
+                    VK_COMPONENT_SWIZZLE_IDENTITY,
+                    VK_COMPONENT_SWIZZLE_IDENTITY,
+                    VK_COMPONENT_SWIZZLE_IDENTITY,
+                    VK_COMPONENT_SWIZZLE_IDENTITY
+                },
+                .subresourceRange = {
+                    VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,0,1
+                }
+            };
+
+
+            vk_verify(vkCreateImageView(m_device, &view_info, nullptr, &m_images[i].view));
+        }
 
         m_is_initialized = true;
         spdlog::info("Swapchain {}x{} created", m_extent.width, m_extent.height);
@@ -79,12 +103,23 @@ namespace mantle {
         if (m_is_initialized) {
             check(m_device != VK_NULL_HANDLE);
 
+            for (auto [_, view] : m_images) {
+                vkDestroyImageView(m_device, view, nullptr);
+            }
+            m_images.clear();
+
             vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 
             m_device = VK_NULL_HANDLE;
             m_is_initialized = false;
             spdlog::info("Swapchain destroyed");
         }
+    }
+
+    std::vector<VulkanSwapchain::Image> VulkanSwapchain::get_images() const {
+        check(m_is_initialized);
+
+        return m_images;
     }
 
     VkSurfaceFormatKHR VulkanSwapchain::pick_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) {

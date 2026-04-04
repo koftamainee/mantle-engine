@@ -14,7 +14,7 @@ namespace mantle {
 
         if (s_windows_count == 0) {
             glfwSetErrorCallback([](int error, const char *desc) {
-                spdlog::info("GLFW error {}: {}", error, desc);
+                spdlog::error("GLFW error {}: {}", error, desc);
             });
             fatal(!glfwInit(), "Failed to initialize GLFW");
             spdlog::info("GLFW initialized");
@@ -56,6 +56,11 @@ namespace mantle {
     void Window::on_update() const {
         check(m_is_initialized);
         glfwPollEvents();
+    }
+
+    bool Window::should_close() const {
+        check(m_is_initialized);
+        return glfwWindowShouldClose(m_native_window);
     }
 
     uint32_t Window::get_width() const {

@@ -316,7 +316,7 @@ namespace mantle {
 
     void VulkanDevice::create_physical_device(VkInstance instance, VkSurfaceKHR surface) {
         check(instance != VK_NULL_HANDLE);
-
+        
         uint32_t device_count = 0;
         vk_verify(vkEnumeratePhysicalDevices(instance, &device_count, nullptr));
         fatal(device_count == 0, "Failed to enumerate physical devices");
