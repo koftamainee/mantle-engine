@@ -1,0 +1,7 @@
+/cmake-build*/
+/build*/
+
+mantle/third_party/*/*
+!mantle/third_party/CMakeLists.txt
+
+.idea/
