@@ -132,6 +132,11 @@ namespace mantle {
         return m_extent;
     }
 
+    VkSurfaceFormatKHR VulkanSwapchain::get_surface_format() const {
+        check(m_is_initialized);
+        return m_surface_format;
+    }
+
     VkSurfaceFormatKHR VulkanSwapchain::pick_surface_format(const std::vector<VkSurfaceFormatKHR> &formats) {
         for (const auto &format : formats) {
             if (format.format == VK_FORMAT_R8G8B8A8_SRGB &&

@@ -20,23 +20,7 @@ namespace mantle {
 
         m_impl = std::make_unique<Impl>();
 
-        m_impl->graphics_context.init(window.get_native_window());
-        VkInstance instance = m_impl->graphics_context.get_instance();
-        VkSurfaceKHR surface = m_impl->graphics_context.get_surface();
-
-        m_impl->device.init(m_impl->graphics_context.get_instance(), surface);
-        VkDevice device = m_impl->device.get_device();
-        VkPhysicalDevice physical_device = m_impl->device.get_physical_device();
-
-        m_impl->allocator.init(physical_device, device, instance);
-
-        auto [width, height] = window.get_framebuffer_size();
-
-        m_impl->swapchain.init(device, surface,
-                               m_impl->device.get_swapchain_support_details(surface),
-                               m_impl->device.get_queue_families(), width, height);
-
-        m_impl->create_frames();
+        m_impl->init(window);
 
         m_is_initialized = true;
         spdlog::info("Renderer Initialized");
@@ -44,13 +28,8 @@ namespace mantle {
 
     void Renderer::destroy() {
         if (m_is_initialized) {
-            vkDeviceWaitIdle(m_impl->device.get_device());
-            m_impl->destroy_frames();
-            m_impl->swapchain.destroy();
-            m_impl->allocator.destroy();
-            m_impl->device.destroy();
-            m_impl->graphics_context.destroy();
 
+            m_impl->destroy();
             m_impl.reset();
 
             spdlog::info("Renderer Destroyed");
@@ -98,7 +77,7 @@ namespace mantle {
         auto &frame = m_impl->get_current_frame();
 
         VkSemaphore acquire_sem = m_impl->acquire_semaphores[m_impl->acquire_index];
-        VkSemaphore render_sem  = m_impl->render_semaphores[m_impl->image_index];
+        VkSemaphore render_sem = m_impl->render_semaphores[m_impl->image_index];
 
         vk_verify(vkEndCommandBuffer(frame.cmd));
 
@@ -138,10 +117,11 @@ namespace mantle {
         VkResult result = vkQueuePresentKHR(
             m_impl->device.get_present_queue(),
             &present
-        );
+            );
         if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
             m_impl->swapchain_dirty = true;
-        } else {
+        }
+        else {
             vk_verify(result);
         }
 
@@ -251,7 +231,7 @@ namespace mantle {
             m_impl->device.get_swapchain_support_details(surface),
             m_impl->device.get_queue_families(),
             width, height
-        );
+            );
 
         uint32_t new_count = static_cast<uint32_t>(m_impl->swapchain.get_images().size());
         if (new_count != old_count) {
@@ -281,5 +261,29 @@ namespace mantle {
         m_impl->swapchain_dirty = false;
     }
 
-    void Renderer::draw_triangle() {}
+    void Renderer::draw_triangle() {
+        FrameData &frame = m_impl->get_current_frame();
+        VkExtent2D extent = m_impl->swapchain.get_extent();
+
+        m_impl->graphics_pipeline.bind(frame.cmd);
+
+        VkViewport viewport = {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+
+        VkRect2D scissor = {
+            .offset = {0, 0},
+            .extent = extent,
+        };
+
+        vkCmdSetViewport(frame.cmd, 0, 1, &viewport);
+        vkCmdSetScissor(frame.cmd, 0, 1, &scissor);
+
+        vkCmdDraw(frame.cmd, 3, 1, 0, 0);
+    }
 } // namespace mantle

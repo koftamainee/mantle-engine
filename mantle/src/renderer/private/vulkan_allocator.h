@@ -11,6 +11,8 @@ namespace mantle {
 
         VulkanAllocator(const VulkanAllocator&) = delete;
         VulkanAllocator& operator=(const VulkanAllocator&) = delete;
+        VulkanAllocator(VulkanAllocator &&)noexcept = delete;
+        VulkanAllocator &operator=(VulkanAllocator &&) noexcept = delete;
 
         void init(VkPhysicalDevice physical_device, VkDevice device, VkInstance instance);
         void destroy();

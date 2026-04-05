@@ -4,20 +4,22 @@
 #include "vulkan_allocator.h"
 #include "vulkan_device.h"
 #include "vulkan_graphics_context.h"
+#include "vulkan_graphics_pipeline.h"
 #include "vulkan_swapchain.h"
 #include "renderer/renderer.h"
 
 namespace mantle {
-    struct FrameData {
+    struct FrameData final {
         VkCommandBuffer cmd;
         VkFence in_flight;
     };
 
-    struct Renderer::Impl {
+    struct Renderer::Impl final {
         VulkanGraphicsContext graphics_context;
         VulkanDevice device;
         VulkanAllocator allocator;
         VulkanSwapchain swapchain;
+        VulkanGraphicsPipeline graphics_pipeline;
 
         std::vector<FrameData> frames;
         std::vector<VkSemaphore> acquire_semaphores;
@@ -29,6 +31,9 @@ namespace mantle {
         bool swapchain_dirty = false;
 
         static constexpr uint8_t frames_in_flight = 2;
+
+        void init(const Window &window);
+        void destroy();
 
         void create_frames();
         void destroy_frames();

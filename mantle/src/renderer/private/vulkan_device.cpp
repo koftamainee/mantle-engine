@@ -410,6 +410,10 @@ namespace mantle {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
             .features = {.samplerAnisotropy = VK_TRUE},
         };
+        VkPhysicalDeviceVulkan11Features vulkan11_features = {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+            .shaderDrawParameters = VK_TRUE,
+        };
 
         VkPhysicalDeviceVulkan13Features vulkan13_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
@@ -423,8 +427,10 @@ namespace mantle {
             .pNext = nullptr,
         };
 
-        features2.pNext = &vulkan13_features;
+        features2.pNext = &vulkan11_features;
+        vulkan11_features.pNext = &vulkan13_features;
         vulkan13_features.pNext = &dynamic_state_features;
+        dynamic_state_features.pNext = nullptr;
 
         VkDeviceCreateInfo device_create_info = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,

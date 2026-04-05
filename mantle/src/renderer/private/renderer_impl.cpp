@@ -2,7 +2,9 @@
 
 #include <spdlog/spdlog.h>
 #include "vkassert.h"
+#include "vulkan_utils.h"
 #include "core/assert.h"
+#include "window/window.h"
 
 namespace mantle {
     void Renderer::Impl::create_frame(FrameData &frame) const {
@@ -23,6 +25,46 @@ namespace mantle {
             vkDestroyFence(vkdevice, frame.in_flight, nullptr);
         }
         frame = {};
+    }
+
+    void Renderer::Impl::init(const Window &window) {
+        graphics_context.init(window.get_native_window());
+        VkInstance instance = graphics_context.get_instance();
+        VkSurfaceKHR surface = graphics_context.get_surface();
+
+        device.init(graphics_context.get_instance(), surface);
+        VkDevice vkdevice = device.get_device();
+        VkPhysicalDevice physical_device = device.get_physical_device();
+
+        allocator.init(physical_device, vkdevice, instance);
+
+        auto [width, height] = window.get_framebuffer_size();
+
+        swapchain.init(vkdevice, surface,
+                               device.get_swapchain_support_details(surface),
+                               device.get_queue_families(), width, height);
+        create_frames();
+
+        VulkanGraphicsPipeline::Config pipeline_cfg = {
+            .vert_entry = "vert_main",
+            .frag_entry = "frag_main",
+            .color_format = swapchain.get_surface_format().format,
+        };
+
+        std::vector<uint32_t> spv = load_spv("assets/shaders/triangle.spv");
+
+        graphics_pipeline.init(vkdevice, pipeline_cfg, spv);
+    }
+
+    void Renderer::Impl::destroy() {
+        vkDeviceWaitIdle(device.get_device());
+
+        graphics_pipeline.destroy();
+        destroy_frames();
+        swapchain.destroy();
+        allocator.destroy();
+        device.destroy();
+        graphics_context.destroy();
     }
 
     void Renderer::Impl::create_frames() {

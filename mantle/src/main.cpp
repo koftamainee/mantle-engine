@@ -4,8 +4,13 @@
 
 
 int main() {
+#ifndef NDEBUG
     spdlog::set_level(spdlog::level::trace);
+#else
+    spdlog::set_level(spdlog::level::warn);
+#endif
     mantle::Window window;
+
 
     mantle::Window::Properties prop = {
         .title = "Mantle",
@@ -33,10 +38,9 @@ int main() {
             continue;
         }
         renderer.begin_pass();
-
         renderer.draw_triangle();
-
         renderer.end_pass();
+
         result = renderer.end_frame();
         if (result == mantle::Renderer::Result::NeedsResize) {
             auto [width, height] = window.get_framebuffer_size();
