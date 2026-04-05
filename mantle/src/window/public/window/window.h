@@ -38,6 +38,7 @@ namespace mantle {
         Properties::Size get_size() const;
         Properties::Size get_framebuffer_size() const;
         GLFWwindow *get_native_window() const;
+        double get_time() const;
 
         void set_resize_callback(std::function<void(uint32_t, uint32_t)> callback);
 

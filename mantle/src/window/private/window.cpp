@@ -93,6 +93,11 @@ namespace mantle {
         return m_native_window;
     }
 
+    double Window::get_time() const {
+        check(m_is_initialized);
+        return glfwGetTime();
+    }
+
     void Window::set_resize_callback(std::function<void(uint32_t, uint32_t)> callback) {
         m_resize_callback = std::move(callback);
         glfwSetFramebufferSizeCallback(m_native_window, [](GLFWwindow *w, int width, int height) {

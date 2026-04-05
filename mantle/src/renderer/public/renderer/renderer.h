@@ -11,7 +11,8 @@ namespace mantle {
     public:
         enum class Result {
             Ok,
-            NeedsResize,
+            FrameNeedsResize,
+            InvalidMeshHandle,
         };
 
         Renderer();
@@ -33,8 +34,7 @@ namespace mantle {
         void begin_pass() const;
         void end_pass() const;
 
-        void draw_mesh(MeshHandle handle, const glm::mat4 &model) const;
-
+        Result draw_mesh(MeshHandle handle, const glm::mat4 &model) const;
 
         void resize(uint32_t width, uint32_t height) const;
 

@@ -44,7 +44,7 @@ namespace mantle {
         check(m_is_initialized);
 
         if (m_impl->swapchain_dirty) {
-            return Result::NeedsResize;
+            return Result::FrameNeedsResize;
         }
 
         FrameData &frame = m_impl->get_current_frame();
@@ -60,7 +60,7 @@ namespace mantle {
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             m_impl->swapchain_dirty = true;
-            return Result::NeedsResize;
+            return Result::FrameNeedsResize;
         }
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             vk_verify(result);
@@ -132,7 +132,7 @@ namespace mantle {
         m_impl->acquire_index = (m_impl->acquire_index + 1) % static_cast<uint32_t>(m_impl->acquire_semaphores.size());
 
         if (m_impl->swapchain_dirty) {
-            return Result::NeedsResize;
+            return Result::FrameNeedsResize;
         }
         return Result::Ok;
     }
@@ -218,10 +218,13 @@ namespace mantle {
                              1, &barrier_to_present);
     }
 
-    void Renderer::draw_mesh(MeshHandle handle, const glm::mat4 &model) const {
+    Renderer::Result Renderer::draw_mesh(MeshHandle handle, const glm::mat4 &model) const {
         check(m_is_initialized);
         auto &frame = m_impl->get_current_frame();
         auto extent = m_impl->swapchain.get_extent();
+        if (!m_impl->gpu_resource_manager.is_valid(handle)) {
+            return Result::InvalidMeshHandle;
+        }
         auto &mesh = m_impl->gpu_resource_manager.m_impl->get_mesh_data(handle);
 
         VkBuffer vb = m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(mesh.vertex_buffer);
@@ -255,6 +258,8 @@ namespace mantle {
                            sizeof(glm::mat4), &mvp);
 
         vkCmdDrawIndexed(frame.cmd, mesh.index_count, 1, 0, 0, 0);
+
+        return Result::Ok;
     }
 
     void Renderer::resize(uint32_t width, uint32_t height) const {
