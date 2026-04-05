@@ -3,7 +3,7 @@
 
 #include "vulkan_allocator.h"
 
-#include "vkassert.h"
+#include "../vulkan/vkassert.h"
 #include "core/assert.h"
 
 namespace mantle {
@@ -52,6 +52,9 @@ namespace mantle {
         VmaAllocationCreateInfo alloc_info = {
             .usage = memory_usage,
         };
+        if (mapped_data != nullptr) {
+            alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+        }
 
         VmaAllocationInfo alloc_info_out = {};
 

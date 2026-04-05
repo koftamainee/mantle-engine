@@ -1,10 +1,10 @@
-#include "vulkan_device.h"
+#include "../vulkan/vulkan_device.h"
 
 #include <algorithm>
 #include <core/assert.h>
 
-#include <vkassert.h>
-#include "vulkan_types.h"
+#include "../vulkan/vkassert.h"
+#include "../vulkan/vulkan_types.h"
 #include <cstring>
 #include <unordered_set>
 
@@ -59,6 +59,7 @@ namespace mantle {
         m_is_initialized = true;
 
         m_command_pool = create_command_pool(m_queue_indices.graphics_family);
+        m_transfer_command_pool = create_command_pool(m_queue_indices.transfer_family);
         spdlog::info("Logical device command pool created");
     }
 
@@ -67,6 +68,12 @@ namespace mantle {
             if (m_command_pool != VK_NULL_HANDLE) {
                 check(m_device != VK_NULL_HANDLE);
                 vkDestroyCommandPool(m_device, m_command_pool, nullptr);
+                m_command_pool = VK_NULL_HANDLE;
+            }
+            if (m_transfer_command_pool != VK_NULL_HANDLE) {
+                check(m_device != VK_NULL_HANDLE);
+                vkDestroyCommandPool(m_device, m_transfer_command_pool, nullptr);
+                m_transfer_command_pool = VK_NULL_HANDLE;
             }
             destroy_logical_device();
             destroy_physical_device();
@@ -177,7 +184,7 @@ namespace mantle {
     VkResult VulkanDevice::copy_buffer(VkBuffer src, VkBuffer dst, VkQueue queue, VkDeviceSize size,
                                        VkDeviceSize src_offset, VkDeviceSize dst_offset) const {
         check(m_is_initialized);
-        VkCommandBuffer cmd = create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+        VkCommandBuffer cmd = create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_transfer_command_pool, true);
 
         VkBufferCopy region = {
             .srcOffset = src_offset,
@@ -187,7 +194,7 @@ namespace mantle {
 
         vkCmdCopyBuffer(cmd, src, dst, 1, &region);
 
-        flush_command_buffer(cmd, queue, true);
+        flush_command_buffer(cmd, queue, m_transfer_command_pool, true);
 
         return VK_SUCCESS;
     }
@@ -502,6 +509,10 @@ namespace mantle {
             return false;
 
         queue_family_indices = indices;
+        spdlog::debug("Queue families:");
+        spdlog::debug("  graphics: {}", indices.graphics_family);
+        spdlog::debug("  present:  {}", indices.present_family);
+        spdlog::debug("  transfer: {}", indices.transfer_family);
 
         return true;
     }

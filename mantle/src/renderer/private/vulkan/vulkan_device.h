@@ -92,6 +92,7 @@ namespace mantle {
         std::vector<VkQueueFamilyProperties> m_queue_family_properties{};
         std::vector<std::string> m_supported_extensions{};
         VkCommandPool m_command_pool{};
+        VkCommandPool m_transfer_command_pool{};
         QueueFamilyIndices m_queue_indices{};
 
         VkQueue m_graphics_queue{};

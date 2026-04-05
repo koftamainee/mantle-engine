@@ -1,8 +1,8 @@
 #include "renderer_impl.h"
 
 #include <spdlog/spdlog.h>
-#include "vkassert.h"
-#include "vulkan_utils.h"
+#include "../vulkan/vkassert.h"
+#include "../vulkan/vulkan_utils.h"
 #include "core/assert.h"
 #include "window/window.h"
 
@@ -54,6 +54,8 @@ namespace mantle {
         std::vector<uint32_t> spv = load_spv("assets/shaders/triangle.spv");
 
         graphics_pipeline.init(vkdevice, pipeline_cfg, spv);
+
+        gpu_resource_manager.init(resource_manager, device);
     }
 
     void Renderer::Impl::destroy() {

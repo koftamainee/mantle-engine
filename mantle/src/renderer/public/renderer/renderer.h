@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <cstdint>
+#include "renderer/gpu_resource_manager.h"
 
 namespace mantle {
 
@@ -29,9 +31,11 @@ namespace mantle {
         void begin_pass() const;
         void end_pass() const;
 
+        void draw_mesh(MeshHandle handle) const;
+
         void resize(uint32_t width, uint32_t height) const;
 
-        void draw_triangle();
+        GPUResourceManager& get_resource_manager();
 
     private:
         bool m_is_initialized = false;
@@ -40,4 +44,4 @@ namespace mantle {
         std::unique_ptr<Impl> m_impl;
     };
 
-} // namespace VkEngine
+} // namespace mantle

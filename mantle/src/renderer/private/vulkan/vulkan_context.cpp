@@ -1,7 +1,7 @@
-#include "vulkan_graphics_context.h"
+#include "../vulkan/vulkan_context.h"
 
 #include <core/assert.h>
-#include <vkassert.h>
+#include "vkassert.h"
 #include <cstring>
 #include <iostream>
 #include <GLFW/glfw3.h>
@@ -61,11 +61,11 @@ namespace {
 
 namespace mantle {
 
-    VulkanGraphicsContext::~VulkanGraphicsContext() {
+    VulkanContext::~VulkanContext() {
         destroy();
     }
 
-    void VulkanGraphicsContext::init(GLFWwindow *window) {
+    void VulkanContext::init(GLFWwindow *window) {
         check(!m_is_initialized);
 
         create_instance();
@@ -78,7 +78,7 @@ namespace mantle {
         m_is_initialized = true;
     }
 
-    void VulkanGraphicsContext::destroy() {
+    void VulkanContext::destroy() {
         if (m_is_initialized) {
             destroy_surface();
 
@@ -91,15 +91,15 @@ namespace mantle {
         }
     }
 
-    VkInstance VulkanGraphicsContext::get_instance() const {
+    VkInstance VulkanContext::get_instance() const {
         return m_instance;
     }
 
-    VkSurfaceKHR VulkanGraphicsContext::get_surface() const {
+    VkSurfaceKHR VulkanContext::get_surface() const {
         return m_surface;
     }
 
-    void VulkanGraphicsContext::create_instance() {
+    void VulkanContext::create_instance() {
         constexpr VkApplicationInfo app_info = {
             .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
             .pNext = nullptr,
@@ -140,7 +140,7 @@ namespace mantle {
         spdlog::info("Vulkan Instance Created");
     }
 
-    void VulkanGraphicsContext::destroy_instance() {
+    void VulkanContext::destroy_instance() {
         if (m_instance != VK_NULL_HANDLE) {
             vkDestroyInstance(m_instance, nullptr);
             m_instance = VK_NULL_HANDLE;
@@ -149,7 +149,7 @@ namespace mantle {
     }
 
 #ifdef ENABLE_VALIDATION_LAYERS
-    void VulkanGraphicsContext::create_debug_messenger_ext() {
+    void VulkanContext::create_debug_messenger_ext() {
         check(m_instance != VK_NULL_HANDLE);
 
         const auto vk_create_debug_utils_messenger =
@@ -167,7 +167,7 @@ namespace mantle {
         spdlog::info("Debug Messenger Created");
     }
 
-    void VulkanGraphicsContext::destroy_debug_messenger_ext() {
+    void VulkanContext::destroy_debug_messenger_ext() {
         if (m_debug_messenger != VK_NULL_HANDLE) {
             check(m_instance != VK_NULL_HANDLE);
 
@@ -185,7 +185,7 @@ namespace mantle {
     }
 #endif
 
-    void VulkanGraphicsContext::create_surface(GLFWwindow *glfw_window) {
+    void VulkanContext::create_surface(GLFWwindow *glfw_window) {
         check(m_instance != VK_NULL_HANDLE);
 
         fatal(glfwCreateWindowSurface(m_instance, glfw_window, nullptr, &m_surface) != VK_SUCCESS,
@@ -194,7 +194,7 @@ namespace mantle {
         spdlog::info("Surface Created");
     }
 
-    void VulkanGraphicsContext::destroy_surface() {
+    void VulkanContext::destroy_surface() {
         if (m_surface != VK_NULL_HANDLE) {
             check(m_instance != VK_NULL_HANDLE);
 
@@ -205,7 +205,7 @@ namespace mantle {
         }
     }
 
-    std::vector<const char *> VulkanGraphicsContext::get_required_instance_extensions() {
+    std::vector<const char *> VulkanContext::get_required_instance_extensions() {
         uint32_t glfw_extensions_count = 0;
         const char **glfw_extensions =
             glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
@@ -242,7 +242,7 @@ namespace mantle {
 
 #ifdef ENABLE_VALIDATION_LAYERS
 
-    VkDebugUtilsMessengerCreateInfoEXT VulkanGraphicsContext::make_debug_messenger_create_info_ext() {
+    VkDebugUtilsMessengerCreateInfoEXT VulkanContext::make_debug_messenger_create_info_ext() {
         return {
             .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
             .pNext = nullptr,
@@ -260,7 +260,7 @@ namespace mantle {
         };
     }
 
-    void VulkanGraphicsContext::check_validation_layers() {
+    void VulkanContext::check_validation_layers() {
         uint32_t vk_layer_properties_count = 0;
         vk_verify(vkEnumerateInstanceLayerProperties(&vk_layer_properties_count, nullptr));
 

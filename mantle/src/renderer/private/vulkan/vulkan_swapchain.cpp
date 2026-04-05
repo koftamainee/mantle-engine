@@ -1,10 +1,10 @@
-#include "vulkan_swapchain.h"
+#include "../vulkan/vulkan_swapchain.h"
 
 #include <algorithm>
 #include <array>
 #include <vulkan/vulkan.h>
 
-#include "vulkan_types.h"
+#include "../vulkan/vulkan_types.h"
 #include <spdlog/spdlog.h>
 
 #include "vkassert.h"

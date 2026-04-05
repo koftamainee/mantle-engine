@@ -1,13 +1,13 @@
 #pragma once
 #include <vulkan/vulkan.h>
 
-#include "vulkan_allocator.h"
-#include "vulkan_device.h"
-#include "vulkan_graphics_context.h"
-#include "vulkan_graphics_pipeline.h"
-#include "vulkan_resource_manager.h"
-#include "vulkan_swapchain.h"
+#include "../vulkan/vulkan_device.h"
+#include "../vulkan/vulkan_context.h"
+#include "../vulkan/vulkan_graphics_pipeline.h"
+#include "../resources/vulkan_resource_manager.h"
+#include "../vulkan/vulkan_swapchain.h"
 #include "renderer/renderer.h"
+#include "../resources/gpu_resource_manager_impl.h"
 
 namespace mantle {
     struct FrameData final {
@@ -16,11 +16,12 @@ namespace mantle {
     };
 
     struct Renderer::Impl final {
-        VulkanGraphicsContext graphics_context;
+        VulkanContext graphics_context;
         VulkanDevice device;
         VulkanResourceManager resource_manager;
         VulkanSwapchain swapchain;
         VulkanGraphicsPipeline graphics_pipeline;
+        GPUResourceManager gpu_resource_manager;
 
         std::vector<FrameData> frames;
         std::vector<VkSemaphore> acquire_semaphores;

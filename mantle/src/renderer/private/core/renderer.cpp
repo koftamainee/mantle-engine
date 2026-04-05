@@ -1,14 +1,13 @@
 #include <renderer/renderer.h>
-#include <vulkan_graphics_context.h>
-#include <vulkan_device.h>
-#include <vulkan_swapchain.h>
+#include "../vulkan/vulkan_context.h"
+#include "../vulkan/vulkan_device.h"
+#include "../vulkan/vulkan_swapchain.h"
 #include <core/assert.h>
 #include <spdlog/spdlog.h>
 
-#include <renderer_impl.h>
+#include "renderer_impl.h"
 
-#include "vkassert.h"
-#include "window/window.h"
+#include "../vulkan/vkassert.h"
 
 namespace mantle {
 
@@ -19,7 +18,6 @@ namespace mantle {
         check(!m_is_initialized);
 
         m_impl = std::make_unique<Impl>();
-
         m_impl->init(window);
 
         m_is_initialized = true;
@@ -215,6 +213,40 @@ namespace mantle {
                              1, &barrier_to_present);
     }
 
+    void Renderer::draw_mesh(MeshHandle handle) const {
+        check(m_is_initialized);
+        auto &frame = m_impl->get_current_frame();
+        auto extent = m_impl->swapchain.get_extent();
+        auto &mesh = m_impl->gpu_resource_manager.m_impl->get_mesh_data(handle);
+
+        VkBuffer vb = m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(mesh.vertex_buffer);
+        VkBuffer ib = m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(mesh.index_buffer);
+
+        m_impl->graphics_pipeline.bind(frame.cmd);
+
+        VkViewport viewport = {
+            .x = 0,
+            .y = 0,
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+
+        VkRect2D scissors = {
+            .offset = {0, 0},
+            .extent = extent,
+        };
+
+        vkCmdSetViewport(frame.cmd, 0, 1, &viewport);
+        vkCmdSetScissor(frame.cmd, 0, 1, &scissors);
+
+        VkDeviceSize offset = 0;
+        vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vb, &offset);
+        vkCmdBindIndexBuffer(frame.cmd, ib, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(frame.cmd, mesh.index_count, 1, 0, 0, 0);
+    }
+
     void Renderer::resize(uint32_t width, uint32_t height) const {
         check(m_is_initialized);
         VkDevice device = m_impl->device.get_device();
@@ -261,29 +293,8 @@ namespace mantle {
         m_impl->swapchain_dirty = false;
     }
 
-    void Renderer::draw_triangle() {
-        FrameData &frame = m_impl->get_current_frame();
-        VkExtent2D extent = m_impl->swapchain.get_extent();
-
-        m_impl->graphics_pipeline.bind(frame.cmd);
-
-        VkViewport viewport = {
-            .x = 0.0f,
-            .y = 0.0f,
-            .width = static_cast<float>(extent.width),
-            .height = static_cast<float>(extent.height),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-
-        VkRect2D scissor = {
-            .offset = {0, 0},
-            .extent = extent,
-        };
-
-        vkCmdSetViewport(frame.cmd, 0, 1, &viewport);
-        vkCmdSetScissor(frame.cmd, 0, 1, &scissor);
-
-        vkCmdDraw(frame.cmd, 3, 1, 0, 0);
+    GPUResourceManager &Renderer::get_resource_manager() {
+        check(m_is_initialized);
+        return m_impl->gpu_resource_manager;
     }
 } // namespace mantle

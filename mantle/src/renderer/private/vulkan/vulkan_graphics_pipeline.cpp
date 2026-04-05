@@ -4,6 +4,8 @@
 #include "core/assert.h"
 #include "spdlog/spdlog.h"
 
+#include "mesh/vertex.h"
+
 namespace mantle {
 
     static VkShaderModule create_shader_module(VkDevice device, std::span<uint32_t> spv) {
@@ -50,9 +52,29 @@ namespace mantle {
         vk_verify(vkCreatePipelineLayout(device, &layout_info, nullptr, &m_pipeline_layout));
 
 
+        VkVertexInputBindingDescription binding = {
+            .binding = 0,
+            .stride = sizeof(Vertex),
+            .inputRate = VK_VERTEX_INPUT_RATE_VERTEX,
+        };
+
+        std::array<VkVertexInputAttributeDescription, 1> attrs = {{
+            {
+                .location = 0,
+                .binding = 0,
+                .format = VK_FORMAT_R32G32B32_SFLOAT,
+                .offset = offsetof(Vertex, position),
+            },
+        }};
+
         VkPipelineVertexInputStateCreateInfo vertex_input = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+            .vertexBindingDescriptionCount = 1,
+            .pVertexBindingDescriptions = &binding,
+            .vertexAttributeDescriptionCount = static_cast<uint32_t>(attrs.size()),
+            .pVertexAttributeDescriptions = attrs.data(),
         };
+
         VkPipelineInputAssemblyStateCreateInfo input_assembly = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,

@@ -1,5 +1,5 @@
-#include "vkassert.h"
-#include "vulkan_resource_manager.h"
+#include "../vulkan/vkassert.h"
+#include "../resources/vulkan_resource_manager.h"
 #include "core/assert.h"
 
 namespace mantle {
@@ -76,13 +76,13 @@ namespace mantle {
 
     }
 
-    template<typename TData>
-    TData& VulkanResourceManager::get_resource_data(
+    template <typename TData>
+    TData &VulkanResourceManager::get_resource_data(
         ResourceHandle handle,
         ResourceType expected_type,
-        std::vector<TData>& storage,
-        const std::vector<uint32_t>& generations
-    ) {
+        std::vector<TData> &storage,
+        const std::vector<uint32_t> &generations
+        ) {
         check(m_is_initialized);
         check(handle.type == expected_type);
         check(handle.id < storage.size());
@@ -90,13 +90,13 @@ namespace mantle {
         return storage[handle.id];
     }
 
-    template<typename TData>
-    const TData& VulkanResourceManager::get_resource_data(
+    template <typename TData>
+    const TData &VulkanResourceManager::get_resource_data(
         ResourceHandle handle,
         ResourceType expected_type,
-        const std::vector<TData>& storage,
-        const std::vector<uint32_t>& generations
-    ) const {
+        const std::vector<TData> &storage,
+        const std::vector<uint32_t> &generations
+        ) const {
         check(m_is_initialized);
         check(handle.type == expected_type);
         check(handle.id < storage.size());
@@ -109,7 +109,7 @@ namespace mantle {
     }
 
     void VulkanResourceManager::destroy_buffer(ResourceHandle handle, bool immediate) {
-        auto& buf = get_resource_data(handle, ResourceType::Buffer, m_buffers, m_buffer_generations);
+        auto &buf = get_resource_data(handle, ResourceType::Buffer, m_buffers, m_buffer_generations);
 
         if (buf.buffer == VK_NULL_HANDLE) {
             return;
@@ -117,12 +117,13 @@ namespace mantle {
 
         if (immediate) {
             m_allocator.destroy_buffer(buf.buffer, buf.allocation);
-        } else {
+        }
+        else {
             m_deletion_queues[m_current_frame].push(
                 [this, buffer = buf.buffer, allocation = buf.allocation]() {
                     m_allocator.destroy_buffer(buffer, allocation);
                 }
-            );
+                );
         }
 
         buf.buffer = VK_NULL_HANDLE;
@@ -171,7 +172,7 @@ namespace mantle {
     }
 
     void VulkanResourceManager::destroy_image(ResourceHandle handle, bool immediate) {
-        auto& img = get_resource_data(handle, ResourceType::Image, m_images, m_image_generations);
+        auto &img = get_resource_data(handle, ResourceType::Image, m_images, m_image_generations);
 
         if (img.image == VK_NULL_HANDLE) {
             return;
@@ -179,12 +180,13 @@ namespace mantle {
 
         if (immediate) {
             m_allocator.destroy_image(img.image, img.allocation);
-        } else {
+        }
+        else {
             m_deletion_queues[m_current_frame].push(
                 [this, image = img.image, allocation = img.allocation]() {
                     m_allocator.destroy_image(image, allocation);
                 }
-            );
+                );
         }
 
         img.image = VK_NULL_HANDLE;

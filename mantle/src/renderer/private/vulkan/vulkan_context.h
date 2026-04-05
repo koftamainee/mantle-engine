@@ -9,15 +9,15 @@
 #endif
 
 namespace mantle {
-    class VulkanGraphicsContext final {
+    class VulkanContext final {
     public:
-        VulkanGraphicsContext() = default;
-        ~VulkanGraphicsContext();
+        VulkanContext() = default;
+        ~VulkanContext();
 
-        VulkanGraphicsContext(const VulkanGraphicsContext &) = delete;
-        VulkanGraphicsContext &operator=(const VulkanGraphicsContext &) = delete;
-        VulkanGraphicsContext(VulkanGraphicsContext &&) noexcept = delete;
-        VulkanGraphicsContext &operator=(VulkanGraphicsContext &&) noexcept = delete;
+        VulkanContext(const VulkanContext &) = delete;
+        VulkanContext &operator=(const VulkanContext &) = delete;
+        VulkanContext(VulkanContext &&) noexcept = delete;
+        VulkanContext &operator=(VulkanContext &&) noexcept = delete;
 
         void init(GLFWwindow *window);
         void destroy();
