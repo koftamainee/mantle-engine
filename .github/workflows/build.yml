@@ -11,8 +11,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
-            artifact: mantle-linux
+#          - os: ubuntu-24.04
+#            artifact: mantle-linux
           - os: windows-latest
             artifact: mantle-windows
     runs-on: ${{ matrix.os }}
@@ -25,11 +25,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install system deps (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install -y clang-18 libwayland-dev libxkbcommon-dev \
-            xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+#      - name: Install system deps (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          sudo apt-get install -y clang-18 libwayland-dev libxkbcommon-dev \
+#            xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 
       - name: Cache Vulkan SDK (Linux)
         if: runner.os == 'Linux'
@@ -39,21 +39,21 @@ jobs:
           path: ~/vulkansdk
           key: vulkansdk-linux-${{ env.VULKAN_VERSION }}
 
-      - name: Install Vulkan SDK (Linux)
-        if: runner.os == 'Linux' && steps.cache-vulkan-linux.outputs.cache-hit != 'true'
-        run: |
-          wget -q "https://sdk.lunarg.com/sdk/download/${VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_VERSION}.tar.xz" \
-            -O vulkansdk.tar.xz
-          mkdir -p ~/vulkansdk
-          tar -xf vulkansdk.tar.xz -C ~/vulkansdk
+#      - name: Install Vulkan SDK (Linux)
+#        if: runner.os == 'Linux' && steps.cache-vulkan-linux.outputs.cache-hit != 'true'
+#        run: |
+#          wget -q "https://sdk.lunarg.com/sdk/download/${VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_VERSION}.tar.xz" \
+#            -O vulkansdk.tar.xz
+#          mkdir -p ~/vulkansdk
+#          tar -xf vulkansdk.tar.xz -C ~/vulkansdk
 
-      - name: Setup Vulkan env (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          source ~/vulkansdk/${VULKAN_VERSION}/setup-env.sh
-          echo "VULKAN_SDK=${VULKAN_SDK}" >> $GITHUB_ENV
-          echo "PATH=${PATH}" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $GITHUB_ENV
+#      - name: Setup Vulkan env (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          source ~/vulkansdk/${VULKAN_VERSION}/setup-env.sh
+#          echo "VULKAN_SDK=${VULKAN_SDK}" >> $GITHUB_ENV
+#          echo "PATH=${PATH}" >> $GITHUB_ENV
+#          echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $GITHUB_ENV
 
       - name: Cache Vulkan SDK (Windows)
         if: runner.os == 'Windows'
@@ -78,20 +78,20 @@ jobs:
           echo "C:\VulkanSDK\${env:VULKAN_VERSION}\Bin" >> $env:GITHUB_PATH
         shell: pwsh
 
-      - name: Setup ccache (Linux)
-        if: runner.os == 'Linux'
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          key: ${{ matrix.artifact }}
+#      - name: Setup ccache (Linux)
+#        if: runner.os == 'Linux'
+#        uses: hendrikmuhs/ccache-action@v1.2
+#        with:
+#          key: ${{ matrix.artifact }}
 
-      - name: Configure (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER=clang++-18 \
-            -DCMAKE_C_COMPILER=clang-18 \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+#      - name: Configure (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          cmake -B build \
+#            -DCMAKE_BUILD_TYPE=Release \
+#            -DCMAKE_CXX_COMPILER=clang++-18 \
+#            -DCMAKE_C_COMPILER=clang-18 \
+#            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
@@ -101,11 +101,11 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      - name: Package (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p dist
-          cp -r build/target/. dist/
+#      - name: Package (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          mkdir -p dist
+#          cp -r build/target/. dist/
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
