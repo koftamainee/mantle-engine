@@ -5,6 +5,8 @@
 #include "deletion_queue.h"
 #include "vulkan_allocator.h"
 
+#include <array>
+
 namespace mantle {
     class VulkanResourceManager final {
     public:
