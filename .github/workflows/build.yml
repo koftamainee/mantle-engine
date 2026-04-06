@@ -1,12 +1,10 @@
 name: Build
-
 on:
   push:
     branches: [master]
     tags:   ['v*']
   pull_request:
     branches: [master]
-
 jobs:
   build:
     strategy:
@@ -17,25 +15,20 @@ jobs:
             artifact: mantle-linux
           - os: windows-latest
             artifact: mantle-windows
-
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.artifact }}
-
     env:
       VULKAN_VERSION: "1.4.341.1"
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-
       - name: Install system deps (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install -y libwayland-dev libxkbcommon-dev \
             xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-
       - name: Install Vulkan SDK (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -47,7 +40,6 @@ jobs:
           echo "VULKAN_SDK=${VULKAN_SDK}" >> $GITHUB_ENV
           echo "PATH=${PATH}" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $GITHUB_ENV
-
       - name: Install Vulkan SDK (Windows)
         if: runner.os == 'Windows'
         run: |
@@ -57,59 +49,48 @@ jobs:
           echo "VULKAN_SDK=C:\VulkanSDK\${env:VULKAN_VERSION}" >> $env:GITHUB_ENV
           echo "C:\VulkanSDK\${env:VULKAN_VERSION}\Bin" >> $env:GITHUB_PATH
         shell: pwsh
-
       - name: Configure (Linux)
         if: runner.os == 'Linux'
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
-
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         run: cmake -B build
         shell: pwsh
-
       - name: Build
         run: cmake --build build --config Release --parallel
-
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p dist
-          cp -r build/target dist/
-          tar -czf mantle-linux.tar.gz -C dist target
-
+          cd build/target
+          zip -r ../../mantle-linux.zip .
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
-          New-Item -ItemType Directory -Force dist
-          Copy-Item -Recurse build\target dist\
-          Compress-Archive -Path dist\target -DestinationPath mantle-windows.zip
+          cd build\target
+          Compress-Archive -Path * -DestinationPath ..\..\mantle-windows.zip
         shell: pwsh
-
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact }}
           path: |
-            mantle-linux.tar.gz
+            mantle-linux.zip
             mantle-windows.zip
           if-no-files-found: error
           retention-days: 30
-
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v5
-
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            mantle-linux/mantle-linux.tar.gz
+            mantle-linux/mantle-linux.zip
             mantle-windows/mantle-windows.zip
           generate_release_notes: true
