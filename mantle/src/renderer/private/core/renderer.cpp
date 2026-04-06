@@ -184,6 +184,27 @@ namespace mantle {
         };
 
         vkCmdBeginRendering(frame.cmd, &rendering_info);
+
+        auto extent = m_impl->swapchain.get_extent();
+
+        m_impl->graphics_pipeline.bind(frame.cmd);
+
+        VkViewport viewport = {
+            .x = 0,
+            .y = 0,
+            .width = static_cast<float>(extent.width),
+            .height = static_cast<float>(extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+
+        VkRect2D scissors = {
+            .offset = {0, 0},
+            .extent = extent,
+        };
+
+        vkCmdSetViewport(frame.cmd, 0, 1, &viewport);
+        vkCmdSetScissor(frame.cmd, 0, 1, &scissors);
     }
 
     void Renderer::end_pass() const {
@@ -221,7 +242,6 @@ namespace mantle {
     Renderer::Result Renderer::draw_mesh(MeshHandle handle, const glm::mat4 &model) const {
         check(m_is_initialized);
         auto &frame = m_impl->get_current_frame();
-        auto extent = m_impl->swapchain.get_extent();
         if (!m_impl->gpu_resource_manager.is_valid(handle)) {
             return Result::InvalidMeshHandle;
         }
@@ -230,24 +250,6 @@ namespace mantle {
         VkBuffer vb = m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(mesh.vertex_buffer);
         VkBuffer ib = m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(mesh.index_buffer);
 
-        m_impl->graphics_pipeline.bind(frame.cmd);
-
-        VkViewport viewport = {
-            .x = 0,
-            .y = 0,
-            .width = static_cast<float>(extent.width),
-            .height = static_cast<float>(extent.height),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-
-        VkRect2D scissors = {
-            .offset = {0, 0},
-            .extent = extent,
-        };
-
-        vkCmdSetViewport(frame.cmd, 0, 1, &viewport);
-        vkCmdSetScissor(frame.cmd, 0, 1, &scissors);
 
         VkDeviceSize offset = 0;
         vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vb, &offset);

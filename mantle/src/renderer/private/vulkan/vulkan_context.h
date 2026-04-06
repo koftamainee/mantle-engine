@@ -58,7 +58,8 @@ namespace mantle {
     private:
 #ifdef ENABLE_VALIDATION_LAYERS
         inline static const std::vector<const char *> ms_validation_layers{
-            "VK_LAYER_KHRONOS_validation"
+            "VK_LAYER_KHRONOS_validation",
+            "VK_LAYER_MANGOHUD_overlay_x86_64",
         };
 #endif
     };
