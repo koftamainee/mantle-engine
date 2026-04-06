@@ -61,21 +61,19 @@ jobs:
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
-          cd build/target
-          zip -r ../../mantle-linux.zip .
+          mkdir -p dist
+          cp -r build/target/. dist/
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
-          cd build\target
-          Compress-Archive -Path * -DestinationPath ..\..\mantle-windows.zip
+          New-Item -ItemType Directory -Force dist
+          Copy-Item -Recurse build\target\* dist\
         shell: pwsh
       - name: Upload artifact
         uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            mantle-linux.zip
-            mantle-windows.zip
+          path: dist/
           if-no-files-found: error
           retention-days: 30
   release:
@@ -87,10 +85,14 @@ jobs:
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v5
+      - name: Create Release zips
+        run: |
+          cd mantle-linux && zip -r ../mantle-linux.zip . && cd ..
+          cd mantle-windows && zip -r ../mantle-windows.zip . && cd ..
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            mantle-linux/mantle-linux.zip
-            mantle-windows/mantle-windows.zip
+            mantle-linux.zip
+            mantle-windows.zip
           generate_release_notes: true
