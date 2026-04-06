@@ -3,8 +3,9 @@ add_subdirectory(window)
 add_subdirectory(renderer)
 add_subdirectory(camera)
 add_subdirectory(mesh)
+add_subdirectory(world)
 
-mantle_executable(NAME mantle MAIN main.cpp DEPS core window renderer)
+mantle_executable(NAME mantle MAIN main.cpp DEPS core window renderer world)
 
 set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/mantle/assets/shaders")
 

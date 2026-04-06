@@ -1,0 +1,1 @@
+mantle_module(NAME world DEPS core)

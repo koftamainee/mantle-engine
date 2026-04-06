@@ -39,11 +39,11 @@ namespace mantle {
 
     void Window::destroy() {
         if (m_is_initialized) {
-            const char *title = glfwGetWindowTitle(m_native_window);
+            std::string title = glfwGetWindowTitle(m_native_window);
             glfwDestroyWindow(m_native_window);
             m_native_window = nullptr;
             s_windows_count--;
-            spdlog::info("{} window destroyed", title ? title : "unknown");
+            spdlog::info("{} window destroyed", title.c_str());
             if (s_windows_count == 0) {
                 glfwTerminate();
                 spdlog::info("GLFW terminated");
