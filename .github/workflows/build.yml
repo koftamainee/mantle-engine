@@ -21,61 +21,107 @@ jobs:
       VULKAN_VERSION: "1.4.341.1"
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
         with:
           submodules: recursive
+
       - name: Install system deps (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y libwayland-dev libxkbcommon-dev \
+          sudo apt-get install -y clang libwayland-dev libxkbcommon-dev \
             xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-      - name: Install Vulkan SDK (Linux)
+
+      - name: Cache Vulkan SDK (Linux)
         if: runner.os == 'Linux'
+        id: cache-vulkan-linux
+        uses: actions/cache@v4
+        with:
+          path: ~/vulkansdk
+          key: vulkansdk-linux-${{ env.VULKAN_VERSION }}
+
+      - name: Install Vulkan SDK (Linux)
+        if: runner.os == 'Linux' && steps.cache-vulkan-linux.outputs.cache-hit != 'true'
         run: |
           wget -q "https://sdk.lunarg.com/sdk/download/${VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_VERSION}.tar.xz" \
             -O vulkansdk.tar.xz
           mkdir -p ~/vulkansdk
           tar -xf vulkansdk.tar.xz -C ~/vulkansdk
+
+      - name: Setup Vulkan env (Linux)
+        if: runner.os == 'Linux'
+        run: |
           source ~/vulkansdk/${VULKAN_VERSION}/setup-env.sh
           echo "VULKAN_SDK=${VULKAN_SDK}" >> $GITHUB_ENV
           echo "PATH=${PATH}" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $GITHUB_ENV
-      - name: Install Vulkan SDK (Windows)
+
+      - name: Cache Vulkan SDK (Windows)
         if: runner.os == 'Windows'
+        id: cache-vulkan-windows
+        uses: actions/cache@v4
+        with:
+          path: C:\VulkanSDK
+          key: vulkansdk-windows-${{ env.VULKAN_VERSION }}
+
+      - name: Install Vulkan SDK (Windows)
+        if: runner.os == 'Windows' && steps.cache-vulkan-windows.outputs.cache-hit != 'true'
         run: |
           $installer = "vulkansdk-windows-X64-${env:VULKAN_VERSION}.exe"
           Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/${env:VULKAN_VERSION}/windows/$installer" -OutFile $installer
           Start-Process -FilePath $installer -ArgumentList "--accept-licenses --default-answer --confirm-command install com.lunarg.vulkan.vma" -Wait
+        shell: pwsh
+
+      - name: Setup Vulkan env (Windows)
+        if: runner.os == 'Windows'
+        run: |
           echo "VULKAN_SDK=C:\VulkanSDK\${env:VULKAN_VERSION}" >> $env:GITHUB_ENV
           echo "C:\VulkanSDK\${env:VULKAN_VERSION}\Bin" >> $env:GITHUB_PATH
         shell: pwsh
+
+      - name: Setup ccache (Linux)
+        if: runner.os == 'Linux'
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.artifact }}
+
       - name: Configure (Linux)
         if: runner.os == 'Linux'
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER=clang++ \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         run: cmake -B build
         shell: pwsh
+
       - name: Build
         run: cmake --build build --config Release --parallel
+
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p dist
           cp -r build/target/. dist/
+
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
           New-Item -ItemType Directory -Force dist
           Copy-Item -Recurse build\target\* dist\
         shell: pwsh
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: dist/
           if-no-files-found: error
           retention-days: 30
+
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
@@ -84,11 +130,13 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
+
       - name: Create Release zips
         run: |
           cd mantle-linux && zip -r ../mantle-linux.zip . && cd ..
           cd mantle-windows && zip -r ../mantle-windows.zip . && cd ..
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
