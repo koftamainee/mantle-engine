@@ -21,7 +21,7 @@ foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
 endforeach()
 
 if (MSVC)
-    set(MANTLE_COMPILE_FLAGS /W4 /WX /GR- /EHs-)
+    set(MANTLE_COMPILE_FLAGS /W4 /WX /GR-)
 else()
     set(MANTLE_COMPILE_FLAGS -fno-rtti -fno-exceptions)
 endif()

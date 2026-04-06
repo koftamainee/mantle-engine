@@ -13,12 +13,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-latest
             artifact: mantle-linux
+            container: registry.gitlab.steampowered.com/steam/steamrt-sniper/sdk:latest
           - os: windows-latest
             artifact: mantle-windows
+            container: ""
 
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container || null }}
     name: ${{ matrix.artifact }}
 
     env:
@@ -33,16 +36,11 @@ jobs:
       - name: Install Vulkan SDK (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get install -y libwayland-dev libxkbcommon-dev \
-            xorg-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
-
           wget -q "https://sdk.lunarg.com/sdk/download/${VULKAN_VERSION}/linux/vulkansdk-linux-x86_64-${VULKAN_VERSION}.tar.xz" \
             -O vulkansdk.tar.xz
           mkdir -p ~/vulkansdk
           tar -xf vulkansdk.tar.xz -C ~/vulkansdk
-
           source ~/vulkansdk/${VULKAN_VERSION}/setup-env.sh
-
           echo "VULKAN_SDK=${VULKAN_SDK}" >> $GITHUB_ENV
           echo "PATH=${PATH}" >> $GITHUB_ENV
           echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >> $GITHUB_ENV
