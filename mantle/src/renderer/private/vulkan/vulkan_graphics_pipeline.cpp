@@ -3,6 +3,7 @@
 #include "vkassert.h"
 #include "core/assert.h"
 #include "spdlog/spdlog.h"
+#include <array>
 
 #include "mesh/vertex.h"
 
