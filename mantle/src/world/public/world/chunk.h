@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <mdspan>
+#include "glm/vec3.hpp"
 #include "voxel.h"
 
 namespace mantle {
@@ -14,11 +15,20 @@ namespace mantle {
         using VoxelSpan = std::mdspan<Voxel, Extents>;
         using ConstVoxelSpan = std::mdspan<const Voxel, Extents>;
 
+      public:
+        explicit Chunk(glm::ivec3 position);
+
         VoxelSpan voxels();
         ConstVoxelSpan voxels() const;
         VoxelArray &voxel_array();
 
+        glm::ivec3 position() const;
+
+
       private:
+        glm::ivec3 m_position{};
         VoxelArray m_voxels{};
+
+        bool m_dirty = false;
     };
 } // namespace mantle

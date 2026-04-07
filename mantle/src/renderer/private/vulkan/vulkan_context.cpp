@@ -1,9 +1,6 @@
-#include "../vulkan/vulkan_context.h"
+#include "vulkan/vulkan_context.h"
 
-#include <GLFW/glfw3.h>
 #include <core/assert.h>
-#include <cstring>
-#include <iostream>
 #include "vkassert.h"
 
 #include <spdlog/spdlog.h>

@@ -5,8 +5,8 @@
 
 namespace mantle {
     struct Camera final {
-        glm::vec3 position = {0.0f, 0.0f, 0.0f};
-        glm::vec3 front = {0.0f, 0.0f, -1.0f};
+        glm::vec3 position = {30.0f, 30.0f, 30.0f};
+        glm::vec3 front = glm::normalize(glm::vec3(-1.0f, -1.0f, -1.0f));
         glm::vec3 up = {0.0f, 1.0f, 0.0f};
 
         f32 fov = 75.0f;

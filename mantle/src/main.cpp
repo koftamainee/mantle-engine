@@ -1,31 +1,15 @@
+#include <iostream>
 #include "camera/public/camera/camera.h"
 #include "glm/ext/matrix_transform.hpp"
-#include "glm/matrix.hpp"
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "spdlog/spdlog.h"
 #include "window/window.h"
+#include "world/chunk_mesher.h"
+#include "world/world.h"
 
 
 namespace mantle {
-    Mesh create_cube_mesh() {
-        Mesh mesh;
-        mesh.vertices = {
-            {{-0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{0.5f, -0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, 0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
-            {{-0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
-            {{0.5f, -0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
-            {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
-            {{-0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, -1.0f}},
-        };
-        mesh.indices = {
-            0, 1, 2, 2, 3, 0, 5, 4, 7, 7, 6, 5, 4, 0, 3, 3, 7, 4,
-            1, 5, 6, 6, 2, 1, 3, 2, 6, 6, 7, 3, 4, 5, 1, 1, 0, 4,
-        };
-        return mesh;
-    }
     i32 mantle_main() {
         Window window;
         Window::Properties prop = {
@@ -46,11 +30,46 @@ namespace mantle {
         });
 
         GPUResourceManager &resources = renderer.get_resource_manager();
-        MeshHandle mesh_handle = resources.upload_mesh(
-            create_cube_mesh().vertices, create_cube_mesh().indices);
 
-        f32 rotation = 0.0f;
+        World world;
+        world.init();
+
+        std::vector<glm::mat4> models;
+
+        f32 voxel_size = 0.1;
+
+        for (i32 x = -5; x < 5; x++) {
+            for (i32 y = -5; y < 5; y++) {
+                for (i32 z = -5; z < 5; z++) {
+                    world.generate_chunk({x, y, z});
+                    glm::vec3 world_pos = glm::vec3(x, y, z) * static_cast<f32>(Chunk::s_chunk_size) * voxel_size;
+                    glm::mat4 model = glm::translate(glm::mat4{1.0f}, world_pos);
+                    model = glm::scale(model, glm::vec3(voxel_size));
+                    models.emplace_back(model);
+                }
+            }
+        }
+
+        std::vector<MeshHandle> meshes;
+        world.for_each_chunk([&](Chunk &chunk) {
+            Mesh mesh = ChunkMesher::build(chunk);
+            if (mesh.vertices.empty()) return;
+
+            glm::vec3 world_pos = glm::vec3(chunk.position()) * static_cast<f32>(Chunk::s_chunk_size) * voxel_size;
+            glm::mat4 model = glm::translate(glm::mat4{1.0f}, world_pos);
+            model = glm::scale(model, glm::vec3(voxel_size));
+
+            models.emplace_back(model);
+            meshes.push_back(resources.upload_mesh(mesh.vertices, mesh.indices));
+        });
+
         f32 last_time = 0.0f;
+
+        glm::vec3 target = {0.0f, 0.0f, 0.0f};
+
+        f32 distance = 50.0f;
+        f32 yaw = 0.0f;
+        f32 pitch = glm::radians(20.0f); // фиксированный наклон
 
         while (!window.should_close()) {
             auto current_time = static_cast<f32>(window.get_time());
@@ -59,13 +78,17 @@ namespace mantle {
 
             window.on_update();
 
-            rotation += delta_time;
+            f32 speed = 0.5f; // радианы в секунду
 
+            yaw += speed * delta_time;
 
-            glm::mat4 model =
-                glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -3.0f)) *
-                glm::rotate(glm::mat4(1.0f), rotation,
-                            glm::vec3(0.0f, 1.0f, 0.0f));
+            glm::vec3 direction;
+            direction.x = cos(yaw) * cos(pitch);
+            direction.y = sin(pitch);
+            direction.z = sin(yaw) * cos(pitch);
+
+            camera.position = target - direction * distance;
+            camera.front = glm::normalize(target - camera.position);
 
             renderer.set_camera(camera.view(), camera.projection());
 
@@ -77,10 +100,14 @@ namespace mantle {
             }
 
             renderer.begin_pass();
-            result = renderer.draw_mesh(mesh_handle, model);
-            if (result == Renderer::Result::InvalidMeshHandle) {
-                spdlog::critical("Invalid mesh handle. Should be unreachable");
-                break;
+
+            for (i32 i = 0; i < meshes.size(); i++) {
+                result = renderer.draw_mesh(meshes[i], models[i]);
+                if (result == Renderer::Result::InvalidMeshHandle) {
+                    spdlog::critical(
+                        "Invalid mesh handle. Should be unreachable");
+                    break;
+                }
             }
             renderer.end_pass();
 
