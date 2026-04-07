@@ -12,7 +12,7 @@ namespace mantle {
 
     Chunk::VoxelArray &Chunk::voxel_array() { return m_voxels; }
 
-    glm::ivec3 Chunk::position() const {
+    glm::ivec3 Chunk::world_pos() const {
         return m_position;
     }
 } // namespace mantle

@@ -17,6 +17,22 @@ namespace mantle {
             std::string title;
             Size size;
         };
+        struct MousePosition final {
+            f32 x;
+            f32 y;
+        };
+        enum class Key {
+            W,
+            A,
+            S,
+            D,
+            Space,
+            Shift,
+        };
+
+        enum class MouseButton {
+            Left, Middle, Right,
+        };
 
       public:
         Window() = default;
@@ -30,8 +46,12 @@ namespace mantle {
         void init(const Properties &properties);
         void destroy();
 
-        void on_update() const;
+        void update() const;
         bool should_close() const;
+
+        bool is_key_pressed(Key key) const;
+        bool is_mouse_button_pressed(MouseButton mouse_button) const;
+        MousePosition get_mouse_position() const;
 
 
         u32 get_width() const;

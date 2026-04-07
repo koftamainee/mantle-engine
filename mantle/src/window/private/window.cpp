@@ -27,6 +27,7 @@ namespace mantle {
                              properties.title.c_str(), nullptr, nullptr);
 
         fatal(!m_native_window, "Failed to create GLFW window");
+        glfwSetInputMode(m_native_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         s_windows_count++;
 
         glfwSetWindowUserPointer(m_native_window, this);
@@ -51,7 +52,7 @@ namespace mantle {
         }
     }
 
-    void Window::on_update() const {
+    void Window::update() const {
         check(m_is_initialized);
         glfwPollEvents();
     }
@@ -59,6 +60,31 @@ namespace mantle {
     bool Window::should_close() const {
         check(m_is_initialized);
         return glfwWindowShouldClose(m_native_window);
+    }
+
+    bool Window::is_key_pressed(Key key) const {
+        check(m_is_initialized);
+        std::array glfw_keys = {GLFW_KEY_W,     GLFW_KEY_A,
+                                GLFW_KEY_S,     GLFW_KEY_D,
+                                GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT};
+        return glfwGetKey(m_native_window,
+                          glfw_keys[std::to_underlying(key)]) == GLFW_PRESS;
+    }
+
+    bool Window::is_mouse_button_pressed(MouseButton mouse_button) const {
+        std::array glfw_mb = {GLFW_MOUSE_BUTTON_LEFT, GLFW_MOUSE_BUTTON_MIDDLE,
+                              GLFW_MOUSE_BUTTON_RIGHT};
+        return glfwGetMouseButton(m_native_window,
+                                  glfw_mb[std::to_underlying(mouse_button)]) ==
+            GLFW_PRESS;
+    }
+
+    Window::MousePosition Window::get_mouse_position() const {
+        check(m_is_initialized);
+        f64 x;
+        f64 y;
+        glfwGetCursorPos(m_native_window, &x, &y);
+        return {static_cast<f32>(x), static_cast<f32>(y)};
     }
 
     u32 Window::get_width() const { return get_size().width; }

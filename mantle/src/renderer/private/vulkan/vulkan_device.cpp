@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <core/assert.h>
 
-#include <cstring>
 #include <unordered_set>
 #include "../vulkan/vkassert.h"
 #include "../vulkan/vulkan_types.h"
@@ -435,7 +434,7 @@ namespace mantle {
 
         VkPhysicalDeviceFeatures2 features2 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-            .features = {.samplerAnisotropy = VK_TRUE},
+            .features ={.samplerAnisotropy = VK_TRUE},
         };
         VkPhysicalDeviceVulkan11Features vulkan11_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,

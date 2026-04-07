@@ -1,7 +1,6 @@
 #include <camera/camera.h>
 
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 
 namespace mantle {
     glm::mat4 Camera::view() const {
@@ -9,6 +8,9 @@ namespace mantle {
     }
 
     glm::mat4 Camera::projection() const {
-        return glm::perspective(glm::radians(fov), aspect, near, far);
+        glm::mat4 projection =
+            glm::perspective(glm::radians(fov), aspect, near, far);
+        projection[1][1] *= -1;
+        return projection;
     }
 } // namespace mantle

@@ -64,7 +64,11 @@ namespace mantle {
             for (u32 y = 0; y < Chunk::s_chunk_size; y++) {
                 for (u32 z = 0; z < Chunk::s_chunk_size; z++) {
                     i32 world_y = static_cast<i32>(chunk_coords.y * Chunk::s_chunk_size + y);
-                    voxels[x, y, z].id = world_y > 0 ? 0u : 1u;
+                    if (rand() % 100 > 90) {
+                        voxels[x, y, z].id = world_y > 0 ? 0u : 1u;
+                    } else {
+                        voxels[x, y, z].id = world_y = 0u;
+                    }
                 }
             }
         }

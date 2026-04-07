@@ -13,6 +13,11 @@ set_target_properties(${EXE_NAME} PROPERTIES
         VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/target"
 )
 
+add_compile_definitions(
+        GLM_FORCE_DEPTH_ZERO_TO_ONE
+        GLM_FORCE_RIGHT_HANDED
+)
+
 foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER ${cfg} CFG_UPPER)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${CFG_UPPER} "${CMAKE_BINARY_DIR}/target")

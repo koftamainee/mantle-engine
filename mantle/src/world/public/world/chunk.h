@@ -22,13 +22,13 @@ namespace mantle {
         ConstVoxelSpan voxels() const;
         VoxelArray &voxel_array();
 
-        glm::ivec3 position() const;
+        glm::ivec3 world_pos() const;
+
+        bool is_dirty = true;
 
 
       private:
         glm::ivec3 m_position{};
         VoxelArray m_voxels{};
-
-        bool m_dirty = false;
     };
 } // namespace mantle
