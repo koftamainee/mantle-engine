@@ -1,6 +1,6 @@
 #include "engine/engine.h"
 
-#include <iostream>
+#include <algorithm>
 
 #include "camera/camera.h"
 #include "glm/gtx/transform.hpp"
