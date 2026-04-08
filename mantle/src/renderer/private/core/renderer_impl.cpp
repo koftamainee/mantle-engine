@@ -29,6 +29,41 @@ namespace mantle {
         frame = {};
     }
 
+    void Renderer::Impl::create_depth_image(u32 width, u32 height) {
+
+        VkImageCreateInfo create_image_info = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = VK_FORMAT_D32_SFLOAT,
+            .extent = {width, height, 1},
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+        depth_image = resource_manager.create_image(create_image_info,
+                                                    VMA_MEMORY_USAGE_GPU_ONLY);
+
+        VkImageViewCreateInfo view_create_info = {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = resource_manager.get_image(depth_image),
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = VK_FORMAT_D32_SFLOAT,
+            .subresourceRange = {VK_IMAGE_ASPECT_DEPTH_BIT, 0, 1, 0, 1},
+        };
+
+        vk_verify(vkCreateImageView(device.get_device(), &view_create_info,
+                                    nullptr, &depth_view));
+
+    }
+    void Renderer::Impl::destroy_depth_image() {
+        vkDestroyImageView(device.get_device(), depth_view, nullptr);
+        resource_manager.destroy_image(depth_image, true);
+        depth_view = VK_NULL_HANDLE;
+    }
+
     void Renderer::Impl::init(const Window &window) {
         graphics_context.init(window.get_native_window());
         VkInstance instance = graphics_context.get_instance();
@@ -58,11 +93,14 @@ namespace mantle {
         graphics_pipeline.init(vkdevice, pipeline_cfg, spv);
 
         gpu_resource_manager.init(resource_manager, device);
+
+        create_depth_image(width, height);
     }
 
     void Renderer::Impl::destroy() {
         vkDeviceWaitIdle(device.get_device());
 
+        destroy_depth_image();
         graphics_pipeline.destroy();
         destroy_frames();
         swapchain.destroy();

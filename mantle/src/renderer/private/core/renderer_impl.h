@@ -1,5 +1,5 @@
 #pragma once
-#include <vulkan/vulkan.h>
+
 #include "core/types.h"
 
 #include "renderer/renderer.h"
@@ -28,6 +28,9 @@ namespace mantle {
         std::vector<VkSemaphore> acquire_semaphores;
         std::vector<VkSemaphore> render_semaphores;
 
+        VulkanResourceManager::ResourceHandle depth_image;
+        VkImageView depth_view;
+
         u32 current_frame = 0;
         u32 image_index = 0;
         u32 acquire_index = 0;
@@ -48,5 +51,7 @@ namespace mantle {
       private:
         void create_frame(FrameData &frame) const;
         void destroy_frame(FrameData &frame) const;
+        void create_depth_image(u32 width, u32 height);
+        void destroy_depth_image();
     };
 } // namespace mantle

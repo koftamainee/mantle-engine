@@ -131,6 +131,16 @@ namespace mantle {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
             .colorAttachmentCount = 1,
             .pColorAttachmentFormats = &config.color_format,
+            .depthAttachmentFormat = config.depth_format,
+        };
+
+        VkPipelineDepthStencilStateCreateInfo depth_info = {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+            .depthTestEnable = VK_TRUE,
+            .depthWriteEnable = VK_TRUE,
+            .depthCompareOp = VK_COMPARE_OP_LESS,
+            .depthBoundsTestEnable = VK_FALSE,
+            .stencilTestEnable = VK_FALSE,
         };
 
         VkGraphicsPipelineCreateInfo pipeline_info = {
@@ -143,6 +153,7 @@ namespace mantle {
             .pViewportState = &viewport_state,
             .pRasterizationState = &rasterization,
             .pMultisampleState = &multisample,
+            .pDepthStencilState = &depth_info,
             .pColorBlendState = &color_blend,
             .pDynamicState = &dynamic,
             .layout = m_pipeline_layout,

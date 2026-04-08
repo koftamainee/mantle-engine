@@ -160,12 +160,16 @@ namespace mantle {
         for (const auto &mode : present_modes) {
             // vsync on, unlimited frames, best case
             if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                spdlog::info(
+                    "Chosen present mode: VK_PRESENT_MODE_MAILBOX_KHR");
                 return mode;
             }
 
             // vsync on, sync to monitor refresh rate, supported on all devices
             // by spec
             if (mode == VK_PRESENT_MODE_FIFO_KHR) {
+                spdlog::info("Preferred present mode is not available. "
+                             "Fallback to VK_PRESENT_MOD_FIFO_KHR");
                 return mode;
             }
         }

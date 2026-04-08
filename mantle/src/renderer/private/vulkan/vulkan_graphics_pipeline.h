@@ -11,6 +11,7 @@ namespace mantle {
             std::string_view vert_entry = "vert_main";
             std::string_view frag_entry = "frag_main";
             VkFormat color_format{};
+            VkFormat depth_format = VK_FORMAT_D32_SFLOAT;
         };
 
         VulkanGraphicsPipeline() = default;
