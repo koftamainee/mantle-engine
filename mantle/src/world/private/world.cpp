@@ -14,7 +14,7 @@ namespace mantle {
 
         m_chunk_pool.reserve(4096); // this is kinda bad i need to fix it
         m_is_initialized = true;
-        spdlog::info("World class is initialized");
+        spdlog::info("World is initialized");
     }
 
     void World::destroy() {
@@ -23,7 +23,7 @@ namespace mantle {
             m_chunk_index.clear();
 
             m_is_initialized = false;
-            spdlog::info("World class is destroyed");
+            spdlog::info("World is destroyed");
         }
     }
 

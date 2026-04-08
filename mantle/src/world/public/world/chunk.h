@@ -26,7 +26,6 @@ namespace mantle {
 
         bool is_dirty = true;
 
-
       private:
         glm::ivec3 m_position{};
         VoxelArray m_voxels{};

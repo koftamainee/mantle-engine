@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "camera/camera.h"
+#include "core/assert.h"
 #include "glm/gtx/transform.hpp"
 #include "mesh/mesh.h"
 #include "renderer/renderer.h"
@@ -13,6 +14,7 @@
 
 namespace mantle {
     void Engine::init() {
+        check(!m_is_initialized);
         Window::Properties prop = {
             .title = "Mantle",
             .size = {.width = 2560, .height = 1600},
@@ -21,7 +23,8 @@ namespace mantle {
         m_renderer.init(m_window);
         m_world.init();
 
-        m_camera.aspect = 2560.0f / 1600.0f;
+        m_camera.aspect = static_cast<f32>(prop.size.width) /
+            static_cast<f32>(prop.size.height);
 
         m_window.set_resize_callback([&](u32 w, u32 h) {
             m_renderer.resize(w, h);
@@ -59,6 +62,9 @@ namespace mantle {
         m_world.for_each_chunk(chunk_mesher);
 
         m_last_time = 0;
+
+        m_is_initialized = true;
+        spdlog::info("Engine is initialized. Starting the game");
     }
 
     void Engine::run() {
@@ -72,13 +78,28 @@ namespace mantle {
         }
     }
     void Engine::destroy() {
-        m_renderer.destroy();
-        m_window.destroy();
+        if (m_is_initialized) {
+            m_world.destroy();
+            m_renderer.destroy();
+            m_window.destroy();
+            m_is_initialized = false;
+            spdlog::info("Engine is destroyed");
+        }
     }
 
     void Engine::update(f32 delta_time) {
         m_window.update();
 
+        auto [mouse_x, mouse_y] = m_window.get_mouse_position();
+
+        float dx = m_mouse_x - mouse_x;
+        float dy = m_mouse_y - mouse_y;
+        m_mouse_x = mouse_x;
+        m_mouse_y = mouse_y;
+        dx *= m_mouse_sensitivity;
+        dy *= m_mouse_sensitivity;
+
+        m_camera.rotate(dx, dy);
 
         if (m_window.is_key_pressed(Window::Key::W)) {
             m_camera.position += m_camera.front * m_camera_speed * delta_time;
@@ -93,35 +114,11 @@ namespace mantle {
             m_camera.position += m_camera.right * m_camera_speed * delta_time;
         }
         if (m_window.is_key_pressed(Window::Key::Shift)) {
-            m_camera.position -=
-                Camera::up * m_camera_speed * delta_time;
+            m_camera.position -= Camera::world_up * m_camera_speed * delta_time;
         }
         if (m_window.is_key_pressed(Window::Key::Space)) {
-            m_camera.position +=
-                Camera::up * m_camera_speed * delta_time;
+            m_camera.position += Camera::world_up * m_camera_speed * delta_time;
         }
-
-        auto [mouse_x, mouse_y] = m_window.get_mouse_position();
-
-        float dx = m_mouse_x - mouse_x;
-        float dy = m_mouse_y - mouse_y;
-        m_mouse_x = mouse_x;
-        m_mouse_y = mouse_y;
-        dx *= m_mouse_sensitivity;
-        dy *= m_mouse_sensitivity;
-
-        m_camera.yaw += dx;
-        m_camera.pitch += dy;
-
-        m_camera.pitch = std::clamp(m_camera.pitch, -89.0f, 89.0f);
-
-        m_camera.front.x = cos(glm::radians(m_camera.yaw)) * cos(glm::radians(m_camera.pitch));
-        m_camera.front.y = sin(glm::radians(m_camera.pitch));
-        m_camera.front.z = -sin(glm::radians(m_camera.yaw)) * cos(glm::radians(m_camera.pitch));
-
-
-        m_camera.front = glm::normalize(m_camera.front);
-        m_camera.right = glm::normalize(glm::cross(m_camera.front, Camera::up));
     }
 
     void Engine::render() {

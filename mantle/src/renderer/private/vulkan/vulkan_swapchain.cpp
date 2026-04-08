@@ -163,13 +163,9 @@ namespace mantle {
                 return mode;
             }
 
-            // vsync on, sync to monitor refresh rate, first fallback
+            // vsync on, sync to monitor refresh rate, supported on all devices
+            // by spec
             if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-                return mode;
-            }
-
-            // this SHOULD be supported on most platforms, last fallback
-            if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
                 return mode;
             }
         }

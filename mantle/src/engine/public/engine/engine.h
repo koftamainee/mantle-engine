@@ -16,13 +16,14 @@ namespace mantle {
         void render();
 
       private:
-        Window m_window;
-        Renderer m_renderer;
-        World m_world;
-        Camera m_camera;
+        bool m_is_initialized = false;
+        Window m_window{};
+        Renderer m_renderer{};
+        World m_world{};
+        Camera m_camera{};
 
-        std::vector<MeshHandle> m_meshes;
-        std::vector<glm::mat4> m_models;
+        std::vector<MeshHandle> m_meshes{};
+        std::vector<glm::mat4> m_models{};
 
         f32 m_last_time = 0.0f;
 
