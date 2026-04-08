@@ -7,3 +7,6 @@
 [submodule "mantle/third_party/glfw"]
 	path = mantle/third_party/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "mantle/third_party/googletest"]
+	path = mantle/third_party/googletest
+	url = https://github.com/google/googletest.git
