@@ -14,3 +14,7 @@ set(SPDLOG_NO_EXCEPTIONS     ON  CACHE BOOL "" FORCE)
 add_subdirectory(spdlog)
 
 target_compile_definitions(spdlog PUBLIC SPDLOG_NO_EXCEPTIONS)
+
+set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+set(BUILD_GMOCK   OFF CACHE BOOL "" FORCE)
+add_subdirectory(googletest)

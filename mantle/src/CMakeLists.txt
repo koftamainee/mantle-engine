@@ -5,12 +5,13 @@ add_subdirectory(camera)
 add_subdirectory(mesh)
 add_subdirectory(world)
 add_subdirectory(engine)
+add_subdirectory(math)
 
 mantle_executable(NAME mantle MAIN main.cpp DEPS engine)
 
 set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/mantle/assets/shaders")
 
 mantle_shader(mantle
-        NAME triangle
-        SOURCES "${SHADERS_DIR}/triangle.slang"
+        NAME flat
+        SOURCES "${SHADERS_DIR}/flat.slang"
 )

@@ -1,0 +1,1 @@
+mantle_module(NAME math DEPS core)

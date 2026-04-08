@@ -1,1 +1,1 @@
-mantle_module(NAME engine DEPS core renderer camera mesh world)
+mantle_module(NAME engine DEPS core renderer camera mesh world math)

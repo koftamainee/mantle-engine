@@ -1,4 +1,6 @@
 #pragma once
+#include "math/aabb.h"
+#include "math/frustum.h"
 #include "camera/camera.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
@@ -24,6 +26,9 @@ namespace mantle {
 
         std::vector<MeshHandle> m_meshes{};
         std::vector<glm::mat4> m_models{};
+        std::vector<AABB> m_aabbs{};
+
+        Frustum m_frustum{};
 
         f32 m_last_time = 0.0f;
 

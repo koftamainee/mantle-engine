@@ -1,8 +1,17 @@
-//
-// Created by koftamainee on 4/8/26.
-//
+#pragma once
+#include "glm/vec3.hpp"
 
-#ifndef MANTLE_AABB_H
-#define MANTLE_AABB_H
+namespace mantle {
+    struct AABB final {
+        glm::vec3 min;
+        glm::vec3 max;
 
-#endif //MANTLE_AABB_H
+        bool intersects(const AABB &other) const;
+        bool contains(glm::vec3 point) const;
+
+        glm::vec3 size() const;
+        glm::vec3 center() const;
+
+        void expand(glm::vec3 point);
+    };
+}

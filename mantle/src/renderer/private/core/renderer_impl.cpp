@@ -88,7 +88,7 @@ namespace mantle {
             .color_format = swapchain.get_surface_format().format,
         };
 
-        std::vector<u32> spv = load_spv("assets/shaders/triangle.spv");
+        std::vector<u32> spv = load_spv("assets/shaders/flat.spv");
 
         graphics_pipeline.init(vkdevice, pipeline_cfg, spv);
 

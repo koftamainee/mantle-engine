@@ -37,7 +37,8 @@ namespace mantle {
             chunk.is_dirty = false;
             Mesh mesh = ChunkMesher::build(chunk);
             if (mesh.vertices.empty()) {
-                return;
+                return; // safe to return here, meshes, models and AABBs stays
+                        // in sync
             }
 
             glm::vec3 world_pos = chunk.world_pos();
@@ -45,8 +46,13 @@ namespace mantle {
 
             glm::mat4 model = glm::translate(glm::mat4{1.0f}, world_pos);
 
-            m_models.emplace_back(model);
+            AABB aabb = {
+                .min = world_pos,
+                .max = world_pos + static_cast<f32>(Chunk::s_chunk_size),
+            };
 
+            m_models.emplace_back(model);
+            m_aabbs.emplace_back(aabb);
             m_meshes.push_back(
                 resources.upload_mesh(mesh.vertices, mesh.indices));
         };
@@ -127,7 +133,11 @@ namespace mantle {
     }
 
     void Engine::render() {
-        m_renderer.set_camera(m_camera.view(), m_camera.projection());
+        glm::mat4 view = m_camera.view();
+        glm::mat4 projection = m_camera.projection();
+
+        m_renderer.set_camera(view, projection);
+        m_frustum.extract(projection * view);
 
         Renderer::Result result = m_renderer.begin_frame();
         if (result == Renderer::Result::FrameNeedsResize) {
@@ -139,6 +149,9 @@ namespace mantle {
         m_renderer.begin_pass();
 
         for (i32 i = 0; i < m_meshes.size(); i++) {
+            if (!m_frustum.intersects(m_aabbs[i])) {
+                continue;
+            }
             result = m_renderer.draw_mesh(m_meshes[i], m_models[i]);
             if (result == Renderer::Result::InvalidMeshHandle) {
                 spdlog::error("Invalid mesh handle. Should be unreachable");

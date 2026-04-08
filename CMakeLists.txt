@@ -136,4 +136,6 @@ function(mantle_executable)
     message(STATUS "[mantle_executable] ${EXE_NAME}")
 endfunction()
 
+enable_testing()
+
 add_subdirectory(mantle)
