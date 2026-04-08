@@ -1,6 +1,6 @@
 #pragma once
 #include "core/types.h"
-#include "glm/glm.hpp"
+#include <glm/vec3.hpp>
 
 namespace mantle {
     struct Plane final {

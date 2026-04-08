@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <mdspan>
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 #include "voxel.h"
 
 namespace mantle {
