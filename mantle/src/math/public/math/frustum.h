@@ -2,6 +2,7 @@
 #include "aabb.h"
 #include "glm/glm.hpp"
 #include "plane.h"
+#include <array>
 
 namespace mantle {
     struct Frustum final {
@@ -18,6 +19,6 @@ namespace mantle {
             Near,
             Far,
         };
-        std::array<Plane, 6> m_planes;
+        std::array<Plane, 6> m_planes{};
     };
 } // namespace mantle
