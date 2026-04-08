@@ -63,11 +63,16 @@ namespace mantle {
         for (u32 x = 0; x < Chunk::s_chunk_size; x++) {
             for (u32 y = 0; y < Chunk::s_chunk_size; y++) {
                 for (u32 z = 0; z < Chunk::s_chunk_size; z++) {
-                    i32 world_y = static_cast<i32>(chunk_coords.y * Chunk::s_chunk_size + y);
-                    if (rand() % 100 > 98) {
-                        voxels[x, y, z].id = world_y > 0 ? 0u : 1u;
+                    i32 world_y = static_cast<i32>(
+                        chunk_coords.y * Chunk::s_chunk_size + y);
+                    if (world_y > 0) {
+                        if (rand() % 100 > 98) {
+                            voxels[x, y, z].id = 1u;
+                        } else {
+                            voxels[x, y, z].id = 0u;
+                        }
                     } else {
-                        voxels[x, y, z].id = 0u;
+                        voxels[x, y, z].id = 1u;
                     }
                 }
             }
@@ -76,7 +81,7 @@ namespace mantle {
         return &chunk;
     }
 
-    void World::for_each_chunk(const std::function<void(Chunk &)>& fn) {
+    void World::for_each_chunk(const std::function<void(Chunk &)> &fn) {
         check(m_is_initialized);
         for (auto &chunk : m_chunk_pool) {
             fn(chunk);

@@ -37,28 +37,23 @@ namespace mantle {
             chunk.is_dirty = false;
             Mesh mesh = ChunkMesher::build(chunk);
             if (mesh.vertices.empty()) {
-                return; // safe to return here, meshes, models and AABBs stays
-                        // in sync
+                return;
             }
 
-            glm::vec3 world_pos = chunk.world_pos();
-            world_pos = world_pos * static_cast<f32>(Chunk::s_chunk_size);
+            glm::vec3 world_pos = glm::vec3(chunk.world_pos()) *
+                static_cast<f32>(Chunk::s_chunk_size);
 
-            glm::mat4 model = glm::translate(glm::mat4{1.0f}, world_pos);
-
-            AABB aabb = {
-                .min = world_pos,
-                .max = world_pos + static_cast<f32>(Chunk::s_chunk_size),
+            ChunkRenderData render_data = {
+                .mesh = resources.upload_mesh(mesh.vertices, mesh.indices),
+                .model = glm::translate(glm::mat4{1.0f}, world_pos),
+                .aabb = {world_pos,
+                         world_pos + static_cast<f32>(Chunk::s_chunk_size)},
             };
-
-            m_models.emplace_back(model);
-            m_aabbs.emplace_back(aabb);
-            m_meshes.push_back(
-                resources.upload_mesh(mesh.vertices, mesh.indices));
+            m_chunk_render_data.insert({chunk.world_pos(), render_data});
         };
 
         for (i32 x = -5; x < 5; x++) {
-            for (i32 y = -5; y < 5; y++) {
+            for (i32 y = -1; y < 5; y++) {
                 for (i32 z = -5; z < 5; z++) {
                     m_world.generate_chunk({x, y, z});
                 }
@@ -70,6 +65,8 @@ namespace mantle {
         m_last_time = 0;
 
         m_is_initialized = true;
+
+        m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
         spdlog::info("Engine is initialized. Starting the game");
     }
 
@@ -130,6 +127,41 @@ namespace mantle {
         } else {
             m_camera_speed = m_base_camera_speed;
         }
+
+        constexpr i32 max_chunks_per_frame = 10;
+
+        i32 processed = 0;
+        while (!m_dirty_chunks.empty() && processed < max_chunks_per_frame) {
+            glm::ivec3 pos = m_dirty_chunks.front();
+            m_dirty_chunks.pop();
+
+            Chunk *chunk = m_world.get_chunk(pos);
+            if (chunk == nullptr || !chunk->is_dirty) {
+                continue;
+            }
+
+            chunk->is_dirty = false;
+
+            Mesh mesh = ChunkMesher::build(*chunk);
+            if (mesh.vertices.empty()) {
+                continue;
+            }
+
+            glm::vec3 world_pos =
+                glm::vec3(pos) * static_cast<f32>(Chunk::s_chunk_size);
+
+            ChunkRenderData &render_data = m_chunk_render_data[pos];
+
+            render_data.mesh = m_renderer.get_resource_manager().upload_mesh(
+                mesh.vertices, mesh.indices);
+
+            render_data.model = glm::translate(glm::mat4{1.0f}, world_pos);
+
+            render_data.aabb = {
+                world_pos, world_pos + static_cast<f32>(Chunk::s_chunk_size)};
+
+            processed++;
+        }
     }
 
     void Engine::render() {
@@ -148,11 +180,11 @@ namespace mantle {
 
         m_renderer.begin_pass();
 
-        for (i32 i = 0; i < m_meshes.size(); i++) {
-            if (!m_frustum.intersects(m_aabbs[i])) {
+        for (const auto &[pos, data] : m_chunk_render_data) {
+            if (!m_frustum.intersects(data.aabb)) {
                 continue;
             }
-            result = m_renderer.draw_mesh(m_meshes[i], m_models[i]);
+            result = m_renderer.draw_mesh(data.mesh, data.model);
             if (result == Renderer::Result::InvalidMeshHandle) {
                 spdlog::error("Invalid mesh handle. Should be unreachable");
                 break;

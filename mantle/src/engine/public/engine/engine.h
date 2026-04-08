@@ -6,6 +6,11 @@
 #include "window/window.h"
 #include "world/world.h"
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
+#include <queue>
+#include <unordered_map>
+
 namespace mantle {
     class Engine final {
       public:
@@ -24,9 +29,14 @@ namespace mantle {
         World m_world{};
         Camera m_camera{};
 
-        std::vector<MeshHandle> m_meshes{};
-        std::vector<glm::mat4> m_models{};
-        std::vector<AABB> m_aabbs{};
+        struct ChunkRenderData {
+            MeshHandle mesh{};
+            glm::mat4 model{};
+            AABB aabb{};
+        };
+
+        std::unordered_map<glm::ivec3, ChunkRenderData> m_chunk_render_data{};
+        std::queue<glm::ivec3> m_dirty_chunks{};
 
         Frustum m_frustum{};
 
