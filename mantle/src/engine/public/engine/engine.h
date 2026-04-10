@@ -4,12 +4,13 @@
 #include "camera/camera.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
-#include "world/world.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 #include <queue>
 #include <unordered_map>
+
+#include "world/chunk_storage.h"
 
 namespace mantle {
     class Engine final {
@@ -26,8 +27,9 @@ namespace mantle {
         bool m_is_initialized = false;
         Window m_window{};
         Renderer m_renderer{};
-        World m_world{};
         Camera m_camera{};
+
+        ChunkStorage m_chunk_storage;
 
         struct ChunkRenderData {
             MeshHandle mesh{};

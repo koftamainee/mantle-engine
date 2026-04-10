@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
 #include <algorithm>
+#include <ranges>
 
 #include "camera/camera.h"
 #include "core/assert.h"
@@ -9,8 +10,8 @@
 #include "renderer/renderer.h"
 #include "spdlog/spdlog.h"
 #include "window/window.h"
-#include "world/chunk_mesher.h"
-#include "world/world.h"
+#include "world/chunk_generation_system.h"
+#include "world/chunk_meshing_system.h"
 
 namespace mantle {
     void Engine::init() {
@@ -21,7 +22,6 @@ namespace mantle {
         };
         m_window.init(prop);
         m_renderer.init(m_window);
-        m_world.init();
 
         m_camera.aspect = static_cast<f32>(prop.size.width) /
             static_cast<f32>(prop.size.height);
@@ -35,32 +35,40 @@ namespace mantle {
 
         auto chunk_mesher = [&](Chunk &chunk) {
             chunk.is_dirty = false;
-            Mesh mesh = ChunkMesher::build(chunk);
+            Mesh mesh = ChunkMeshingSystem::build(chunk.data);
             if (mesh.vertices.empty()) {
                 return;
             }
 
-            glm::vec3 world_pos = glm::vec3(chunk.world_pos()) *
-                static_cast<f32>(Chunk::s_chunk_size);
+            glm::vec3 world_pos = glm::vec3(chunk.position) *
+                static_cast<f32>(Chunk::Data::chunk_size);
 
             ChunkRenderData render_data = {
                 .mesh = resources.upload_mesh(mesh.vertices, mesh.indices),
                 .model = glm::translate(glm::mat4{1.0f}, world_pos),
                 .aabb = {world_pos,
-                         world_pos + static_cast<f32>(Chunk::s_chunk_size)},
+                         world_pos + static_cast<f32>(Chunk::Data::chunk_size)},
             };
-            m_chunk_render_data.insert({chunk.world_pos(), render_data});
+            m_chunk_render_data.insert({chunk.position, render_data});
         };
 
+
+        //TODO: carry out this logic to chunk streamer system
         for (i32 x = -5; x < 5; x++) {
             for (i32 y = -1; y < 5; y++) {
                 for (i32 z = -5; z < 5; z++) {
-                    m_world.generate_chunk({x, y, z});
+                    u32 index = m_chunk_storage.chunks.size();
+                    m_chunk_storage.chunks.push_back({});
+                    m_chunk_storage.index.insert({{x, y, z}, index});
+
+                    m_chunk_storage.chunks[index].position = {x, y, z};
+                    ChunkGenerationSystem::generate(
+                        m_chunk_storage.chunks[index].data, {x, y, z});
+                    chunk_mesher(m_chunk_storage.chunks[index]);
                 }
             }
         }
 
-        m_world.for_each_chunk(chunk_mesher);
 
         m_last_time = 0;
 
@@ -82,7 +90,6 @@ namespace mantle {
     }
     void Engine::destroy() {
         if (m_is_initialized) {
-            m_world.destroy();
             m_renderer.destroy();
             m_window.destroy();
             m_is_initialized = false;
@@ -135,30 +142,33 @@ namespace mantle {
             glm::ivec3 pos = m_dirty_chunks.front();
             m_dirty_chunks.pop();
 
-            Chunk *chunk = m_world.get_chunk(pos);
-            if (chunk == nullptr || !chunk->is_dirty) {
+            Chunk & chunk = m_chunk_storage.chunks[index(pos.x, pos.y, pos.z)];
+            if (!chunk.is_dirty) {
                 continue;
             }
 
-            chunk->is_dirty = false;
+            chunk.is_dirty = false;
 
-            Mesh mesh = ChunkMesher::build(*chunk);
+            Mesh mesh = ChunkMeshingSystem::build(chunk.data);
             if (mesh.vertices.empty()) {
                 continue;
             }
 
             glm::vec3 world_pos =
-                glm::vec3(pos) * static_cast<f32>(Chunk::s_chunk_size);
+                glm::vec3(pos) * static_cast<f32>(Chunk::Data::chunk_size);
 
             ChunkRenderData &render_data = m_chunk_render_data[pos];
 
-            render_data.mesh = m_renderer.get_resource_manager().upload_mesh(
+            auto &resources = m_renderer.get_resource_manager();
+            resources.destroy_mesh(render_data.mesh);
+
+            render_data.mesh = resources.upload_mesh(
                 mesh.vertices, mesh.indices);
 
             render_data.model = glm::translate(glm::mat4{1.0f}, world_pos);
 
             render_data.aabb = {
-                world_pos, world_pos + static_cast<f32>(Chunk::s_chunk_size)};
+                world_pos, world_pos + static_cast<f32>(Chunk::Data::chunk_size)};
 
             processed++;
         }
@@ -180,7 +190,7 @@ namespace mantle {
 
         m_renderer.begin_pass();
 
-        for (const auto &[pos, data] : m_chunk_render_data) {
+        for (const auto &data : m_chunk_render_data | std::views::values) {
             if (!m_frustum.intersects(data.aabb)) {
                 continue;
             }

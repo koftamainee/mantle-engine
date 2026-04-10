@@ -1,33 +1,27 @@
 #pragma once
-#include <cstdint>
-#include <mdspan>
-#include <glm/glm.hpp>
-#include "voxel.h"
+#include <array>
+
+#include "core/types.h"
+#include "glm/vec3.hpp"
+
 
 namespace mantle {
-    class Chunk final {
-      public:
-        static constexpr uint32_t s_chunk_size = 16;
-        using VoxelArray =
-            std::array<Voxel, s_chunk_size * s_chunk_size * s_chunk_size>;
-        using Extents =
-            std::extents<uint32_t, s_chunk_size, s_chunk_size, s_chunk_size>;
-        using VoxelSpan = std::mdspan<Voxel, Extents>;
-        using ConstVoxelSpan = std::mdspan<const Voxel, Extents>;
+    struct Chunk final {
+        struct Data final {
+            static constexpr u32 chunk_size = 16;
+            static constexpr u32 chunk_area = chunk_size * chunk_size;
+            static constexpr u32 chunk_volume = chunk_area * chunk_size;
+            std::array<u8, chunk_volume> voxels{};
+        };
 
-      public:
-        explicit Chunk(glm::ivec3 position);
+        Data data;
 
-        VoxelSpan voxels();
-        ConstVoxelSpan voxels() const;
-        VoxelArray &voxel_array();
-
-        glm::ivec3 world_pos() const;
-
-        bool is_dirty = true;
-
-      private:
-        glm::ivec3 m_position{};
-        VoxelArray m_voxels{};
+        glm::ivec3 position = {0, 0, 0};
+        bool is_dirty = false;
     };
+
+
+    constexpr int index(int x, int y, int z) {
+        return x + Chunk::Data::chunk_size * (y + Chunk::Data::chunk_size * z);
+    }
 } // namespace mantle
