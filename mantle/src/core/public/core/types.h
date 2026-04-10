@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace mantle {
@@ -15,4 +16,6 @@ namespace mantle {
 
     using f32 = float;
     using f64 = double;
+
+    using usize = std::size_t;
 } // namespace mantle
