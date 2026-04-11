@@ -15,7 +15,7 @@ namespace mantle {
         heap = in_heap;
         scratch_arena = in_scratch_arena;
 
-        tlsf_vulkan_allocator.init(heap->take(megabytes(100)));
+        tlsf_vulkan_allocator.init(heap->take(megabytes(32)));
         vulkan_cpu_allocator.init(&tlsf_vulkan_allocator);
 
         graphics_context.init(window.get_native_window(), scratch_arena,

@@ -16,7 +16,7 @@ namespace mantle {
     void Window::init(const Properties &properties, VirtualHeap *heap) {
         check(!m_is_initialized);
 
-        m_tlsf_alloc.init(heap->take(megabytes(100)));
+        m_tlsf_alloc.init(heap->take(kilobytes(128)));
         m_glfw_alloc.init(&m_tlsf_alloc);
 
         glfwInitAllocator(m_glfw_alloc.glfw_allocator());
@@ -58,8 +58,19 @@ namespace mantle {
         }
     }
 
-    void Window::update() const {
+    void Window::update() {
         check(m_is_initialized);
+
+        std::swap(m_pressed_keys, m_pressed_keys_prev);
+        for (usize i = 0; i < glfw_keys.size(); i++) {
+            m_pressed_keys[i] = glfwGetKey(m_native_window, glfw_keys[i]) == GLFW_PRESS;
+        }
+
+        std::swap(m_pressed_mb, m_pressed_mb_prev);
+        for (usize i = 0; i < glfw_mb.size(); i++) {
+            m_pressed_mb[i] = glfwGetMouseButton(m_native_window, glfw_mb[i]) == GLFW_PRESS;
+        }
+
         glfwPollEvents();
     }
 
@@ -70,22 +81,36 @@ namespace mantle {
 
     bool Window::is_key_pressed(Key key) const {
         check(m_is_initialized);
-        // MSVC is garbage that can's deduce this template argument...
-        std::array<int, 7> glfw_keys = {
-            GLFW_KEY_W,           GLFW_KEY_A,     GLFW_KEY_S,
-            GLFW_KEY_D,           GLFW_KEY_SPACE, GLFW_KEY_LEFT_SHIFT,
-            GLFW_KEY_LEFT_CONTROL};
-        return glfwGetKey(m_native_window,
-                          glfw_keys[std::to_underlying(key)]) == GLFW_PRESS;
+        return m_pressed_keys[std::to_underlying(key)];
     }
 
-    bool Window::is_mouse_button_pressed(MouseButton mouse_button) const {
-        std::array<int, 3> glfw_mb = {GLFW_MOUSE_BUTTON_LEFT,
-                                      GLFW_MOUSE_BUTTON_MIDDLE,
-                                      GLFW_MOUSE_BUTTON_RIGHT};
-        return glfwGetMouseButton(m_native_window,
-                                  glfw_mb[std::to_underlying(mouse_button)]) ==
-            GLFW_PRESS;
+    bool Window::is_key_just_pressed(Key key) const {
+        check(m_is_initialized);
+        usize i = std::to_underlying(key);
+        return m_pressed_keys[i] && !m_pressed_keys_prev[i];
+    }
+
+    bool Window::is_key_just_released(Key key) const {
+        check(m_is_initialized);
+        usize i = std::to_underlying(key);
+        return !m_pressed_keys[i] && m_pressed_keys_prev[i];
+    }
+
+    bool Window::is_mouse_button_pressed(MouseButton button) const {
+        check(m_is_initialized);
+        return m_pressed_mb[std::to_underlying(button)];
+    }
+
+    bool Window::is_mouse_button_just_pressed(MouseButton button) const {
+        check(m_is_initialized);
+        usize i = std::to_underlying(button);
+        return m_pressed_mb[i] && !m_pressed_mb_prev[i];
+    }
+
+    bool Window::is_mouse_button_just_released(MouseButton button) const {
+        check(m_is_initialized);
+        usize i = std::to_underlying(button);
+        return !m_pressed_mb[i] && m_pressed_mb_prev[i];
     }
 
     Window::MousePosition Window::get_mouse_position() const {

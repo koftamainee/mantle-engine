@@ -138,9 +138,10 @@ namespace mantle {
         if (m_window.is_key_pressed(Window::Key::Space)) {
             m_camera.position += Camera::world_up * m_camera_speed * delta_time;
         }
-        if (m_window.is_key_pressed(Window::Key::Ctrl)) {
+        if (m_window.is_key_just_pressed(Window::Key::Ctrl)) {
             m_camera_speed = m_base_camera_speed * 2;
-        } else {
+        }
+        if (m_window.is_key_just_released(Window::Key::Ctrl)) {
             m_camera_speed = m_base_camera_speed;
         }
 
