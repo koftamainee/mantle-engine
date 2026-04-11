@@ -2,8 +2,6 @@ add_subdirectory(core)
 add_subdirectory(window)
 add_subdirectory(renderer)
 add_subdirectory(camera)
-add_subdirectory(mesh)
-add_subdirectory(world)
 add_subdirectory(engine)
 add_subdirectory(math)
 

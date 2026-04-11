@@ -3,7 +3,6 @@
 #include "core/types.h"
 
 #include "renderer/renderer.h"
-#include "resources/gpu_resource_manager_impl.h"
 #include "resources/vulkan_resource_manager.h"
 #include "vulkan/vulkan_context.h"
 #include "vulkan/vulkan_device.h"
@@ -32,7 +31,6 @@ namespace mantle {
         VulkanResourceManager resource_manager;
         VulkanSwapchain swapchain;
         VulkanGraphicsPipeline graphics_pipeline;
-        GPUResourceManager gpu_resource_manager;
 
         std::pmr::vector<FrameData> frames;
         std::pmr::vector<VkSemaphore> acquire_semaphores;

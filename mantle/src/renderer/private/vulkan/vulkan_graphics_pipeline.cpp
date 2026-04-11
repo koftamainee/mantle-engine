@@ -2,10 +2,11 @@
 
 #include <array>
 #include "core/assert.h"
+#include "glm/glm.hpp"
 #include "spdlog/spdlog.h"
 #include "vkassert.h"
+#include "renderer/vertex.h"
 
-#include "mesh/vertex.h"
 
 namespace mantle {
 

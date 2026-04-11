@@ -2,7 +2,7 @@
 #include "core/memory/arena_allocator.h"
 #include "core/memory/virtual_heap.h"
 #include "core/types.h"
-#include "renderer/gpu_resource_manager.h"
+#include "glm/glm.hpp"
 
 namespace mantle {
 
@@ -36,11 +36,8 @@ namespace mantle {
         void begin_pass() const;
         void end_pass() const;
 
-        Result draw_mesh(MeshHandle handle, const glm::mat4 &model) const;
-
         void resize(u32 width, u32 height) const;
 
-        GPUResourceManager &get_resource_manager() const;
 
       private:
         bool m_is_initialized = false;

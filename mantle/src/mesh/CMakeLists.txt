@@ -1,1 +1,0 @@
-mantle_module(NAME mesh DEPS glm)

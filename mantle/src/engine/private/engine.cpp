@@ -6,13 +6,9 @@
 #include "camera/camera.h"
 #include "core/assert.h"
 #include "core/memory/memory_units.h"
-#include "glm/gtx/transform.hpp"
-#include "mesh/mesh.h"
 #include "renderer/renderer.h"
 #include "spdlog/spdlog.h"
 #include "window/window.h"
-#include "world/chunk_generation_system.h"
-#include "world/chunk_meshing_system.h"
 
 namespace mantle {
     void Engine::init() {
@@ -39,45 +35,6 @@ namespace mantle {
             m_renderer.resize(w, h);
             m_camera.aspect = static_cast<f32>(w) / static_cast<f32>(h);
         });
-
-        GPUResourceManager &resources = m_renderer.get_resource_manager();
-
-        auto chunk_mesher = [&](Chunk &chunk) {
-            chunk.is_dirty = false;
-            Mesh mesh = ChunkMeshingSystem::build(chunk.data);
-            if (mesh.vertices.empty()) {
-                return;
-            }
-
-            glm::vec3 world_pos = glm::vec3(chunk.position) *
-                static_cast<f32>(Chunk::Data::chunk_size);
-
-            ChunkRenderData render_data = {
-                .mesh = resources.upload_mesh(mesh.vertices, mesh.indices),
-                .model = glm::translate(glm::mat4{1.0f}, world_pos),
-                .aabb = {world_pos,
-                         world_pos + static_cast<f32>(Chunk::Data::chunk_size)},
-            };
-            m_chunk_render_data.insert({chunk.position, render_data});
-        };
-
-
-        // TODO: carry out this logic to chunk streamer system
-        for (i32 x = -5; x < 5; x++) {
-            for (i32 y = -1; y < 5; y++) {
-                for (i32 z = -5; z < 5; z++) {
-                    u32 index = m_chunk_storage.chunks.size();
-                    m_chunk_storage.chunks.push_back({});
-                    m_chunk_storage.index.insert({{x, y, z}, index});
-
-                    m_chunk_storage.chunks[index].position = {x, y, z};
-                    ChunkGenerationSystem::generate(
-                        m_chunk_storage.chunks[index].data, {x, y, z});
-                    chunk_mesher(m_chunk_storage.chunks[index]);
-                }
-            }
-        }
-
 
         m_last_time = 0;
 
@@ -145,44 +102,6 @@ namespace mantle {
             m_camera_speed = m_base_camera_speed;
         }
 
-        constexpr i32 max_chunks_per_frame = 10;
-
-        i32 processed = 0;
-        while (!m_dirty_chunks.empty() && processed < max_chunks_per_frame) {
-            glm::ivec3 pos = m_dirty_chunks.front();
-            m_dirty_chunks.pop();
-
-            Chunk &chunk = m_chunk_storage.chunks[index(pos.x, pos.y, pos.z)];
-            if (!chunk.is_dirty) {
-                continue;
-            }
-
-            chunk.is_dirty = false;
-
-            Mesh mesh = ChunkMeshingSystem::build(chunk.data);
-            if (mesh.vertices.empty()) {
-                continue;
-            }
-
-            glm::vec3 world_pos =
-                glm::vec3(pos) * static_cast<f32>(Chunk::Data::chunk_size);
-
-            ChunkRenderData &render_data = m_chunk_render_data[pos];
-
-            auto &resources = m_renderer.get_resource_manager();
-            resources.destroy_mesh(render_data.mesh);
-
-            render_data.mesh =
-                resources.upload_mesh(mesh.vertices, mesh.indices);
-
-            render_data.model = glm::translate(glm::mat4{1.0f}, world_pos);
-
-            render_data.aabb = {world_pos,
-                                world_pos +
-                                    static_cast<f32>(Chunk::Data::chunk_size)};
-
-            processed++;
-        }
     }
 
     void Engine::render() {
@@ -201,16 +120,8 @@ namespace mantle {
 
         m_renderer.begin_pass();
 
-        for (const auto &data : m_chunk_render_data | std::views::values) {
-            if (!m_frustum.intersects(data.aabb)) {
-                continue;
-            }
-            result = m_renderer.draw_mesh(data.mesh, data.model);
-            if (result == Renderer::Result::InvalidMeshHandle) {
-                spdlog::error("Invalid mesh handle. Should be unreachable");
-                break;
-            }
-        }
+        //TODO: rendering
+
         m_renderer.end_pass();
 
         result = m_renderer.end_frame();

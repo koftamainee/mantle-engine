@@ -1,18 +1,11 @@
 #pragma once
-#include "math/aabb.h"
 #include "math/frustum.h"
 #include "camera/camera.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/hash.hpp>
-#include <queue>
-#include <unordered_map>
-
 #include "core/memory/arena_allocator.h"
 #include "core/memory/virtual_heap.h"
-#include "world/chunk_storage.h"
 
 namespace mantle {
     class Engine final {
@@ -31,20 +24,9 @@ namespace mantle {
         Renderer m_renderer{};
         Camera m_camera{};
 
-        ChunkStorage m_chunk_storage{};
-
         OSMemory m_os_memory;
         VirtualHeap m_heap;
         ArenaAllocator m_scratch_arena;
-
-        struct ChunkRenderData {
-            MeshHandle mesh{};
-            glm::mat4 model{};
-            AABB aabb{};
-        };
-
-        std::unordered_map<glm::ivec3, ChunkRenderData> m_chunk_render_data{};
-        std::queue<glm::ivec3> m_dirty_chunks{};
 
         Frustum m_frustum{};
 

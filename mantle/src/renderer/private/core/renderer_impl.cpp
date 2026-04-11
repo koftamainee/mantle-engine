@@ -64,8 +64,6 @@ namespace mantle {
                                    vulkan_cpu_allocator.vk_allocator());
         }
 
-        gpu_resource_manager.init(resource_manager, device, heap);
-
         create_depth_image(width, height);
     }
 

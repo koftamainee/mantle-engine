@@ -293,36 +293,6 @@ namespace mantle {
                              nullptr, 0, nullptr, 1, &barrier_to_present);
     }
 
-    Renderer::Result Renderer::draw_mesh(MeshHandle handle,
-                                         const glm::mat4 &model) const {
-        check(m_is_initialized);
-        auto &frame = m_impl->get_current_frame();
-        if (!m_impl->gpu_resource_manager.is_valid(handle)) {
-            return Result::InvalidMeshHandle;
-        }
-        auto &mesh = m_impl->gpu_resource_manager.m_impl->get_mesh_data(handle);
-
-        VkBuffer vb =
-            m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(
-                mesh.vertex_buffer);
-        VkBuffer ib =
-            m_impl->gpu_resource_manager.m_impl->vulkan_resources.get_buffer(
-                mesh.index_buffer);
-
-
-        VkDeviceSize offset = 0;
-        vkCmdBindVertexBuffers(frame.cmd, 0, 1, &vb, &offset);
-        vkCmdBindIndexBuffer(frame.cmd, ib, 0, VK_INDEX_TYPE_UINT32);
-
-        glm::mat4 mvp = m_impl->projection * m_impl->view * model;
-        vkCmdPushConstants(frame.cmd, m_impl->graphics_pipeline.get_layout(),
-                           VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4),
-                           &mvp);
-
-        vkCmdDrawIndexed(frame.cmd, mesh.index_count, 1, 0, 0, 0);
-
-        return Result::Ok;
-    }
 
     void Renderer::resize(u32 width, u32 height) const {
         check(m_is_initialized);
@@ -378,8 +348,4 @@ namespace mantle {
         m_impl->swapchain_dirty = false;
     }
 
-    GPUResourceManager &Renderer::get_resource_manager() const {
-        check(m_is_initialized);
-        return m_impl->gpu_resource_manager;
-    }
 } // namespace mantle
