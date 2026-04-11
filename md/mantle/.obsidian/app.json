@@ -1,0 +1,16 @@
+{
+  "promptDelete": false,
+  "newFileLocation": "folder",
+  "newFileFolderPath": "99 - Vault",
+  "attachmentFolderPath": "99 - Сache",
+  "alwaysUpdateLinks": true,
+  "spellcheck": false,
+  "vimMode": false,
+  "pdfExportSettings": {
+    "includeName": true,
+    "pageSize": "Letter",
+    "landscape": false,
+    "margin": "0",
+    "downscalePercent": 100
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "cssTheme": "Tokyo Night",
+  "interfaceFontFamily": "monospace",
+  "theme": "obsidian",
+  "textFontFamily": "monospace",
+  "monospaceFontFamily": "monospace",
+  "nativeMenus": true,
+  "baseFontSize": 16,
+  "enabledCssSnippets": []
+}
