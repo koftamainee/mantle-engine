@@ -5,12 +5,13 @@ namespace mantle {
 
     ArenaAllocator::~ArenaAllocator() { destroy(); }
 
-    void ArenaAllocator::init(VirtualHeap &heap, usize size) {
+    void ArenaAllocator::init(MemoryBlock block) {
         check(!m_is_initialized);
-        check(size > 0);
+        check(block.ptr != nullptr);
+        check(block.size > 0);
 
-        m_base = heap.take(size);
-        m_size = size;
+        m_base = block.ptr;
+        m_size = block.size;
         m_offset = 0;
         m_is_initialized = true;
     }
@@ -30,7 +31,7 @@ namespace mantle {
         usize aligned_offset = (m_offset + (align - 1)) & ~(align - 1);
         usize new_offset = aligned_offset + size;
 
-        check(new_offset <= m_size);
+        fatal(new_offset > m_size, "Out of memory");
 
         void *ptr = static_cast<u8 *>(m_base) + aligned_offset;
         m_offset = new_offset;
@@ -61,6 +62,11 @@ namespace mantle {
     usize ArenaAllocator::offset() const {
         check(m_is_initialized);
         return m_offset;
+    }
+
+    usize ArenaAllocator::remaining() const {
+        check(m_is_initialized);
+        return m_size - m_offset;
     }
 
 } // namespace mantle

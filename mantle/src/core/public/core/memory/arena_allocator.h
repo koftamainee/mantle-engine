@@ -1,9 +1,10 @@
 #pragma once
+
+#include <cstring>
 #include <type_traits>
 #include <utility>
 
-
-#include "core/memory/virtual_heap.h"
+#include "core/memory/memory_block.h"
 #include "core/types.h"
 
 namespace mantle {
@@ -18,15 +19,24 @@ namespace mantle {
         ArenaAllocator(ArenaAllocator &&) = delete;
         ArenaAllocator &operator=(ArenaAllocator &&) = delete;
 
-        void init(VirtualHeap &heap, usize size);
+        void init(MemoryBlock block);
         void destroy();
 
-        [[nodiscard]] void *push(usize size, usize align = 16);
+        [[nodiscard]] void *push(usize size,
+                                 usize align = alignof(std::max_align_t));
 
         template <typename T>
         [[nodiscard]] T *push(usize count = 1) {
             static_assert(std::is_trivially_constructible_v<T>);
             return static_cast<T *>(push(sizeof(T) * count, alignof(T)));
+        }
+
+        template <typename T>
+        [[nodiscard]] T *push_zeroed(usize count = 1) {
+            static_assert(std::is_trivially_constructible_v<T>);
+            T *ptr = static_cast<T *>(push(sizeof(T) * count, alignof(T)));
+            std::memset(ptr, 0, sizeof(T) * count);
+            return ptr;
         }
 
         template <typename T, typename... Args>
@@ -45,6 +55,7 @@ namespace mantle {
 
         usize size() const;
         usize offset() const;
+        usize remaining() const;
 
       private:
         void *m_base = nullptr;

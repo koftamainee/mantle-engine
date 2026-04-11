@@ -2,6 +2,8 @@
 
 #include <spdlog/spdlog.h>
 #include "core/assert.h"
+#include "core/memory/pmr/arena_resource.h"
+#include "core/memory/scope_arena.h"
 #include "vulkan/vkassert.h"
 #include "vulkan/vulkan_utils.h"
 #include "window/window.h"
@@ -43,15 +45,14 @@ namespace mantle {
             .color_format = swapchain.get_surface_format().format,
         };
 
-        ArenaAllocator::Marker tag = scratch_arena->save();
+        ScopeArena scope_arena(scratch_arena);
+
         ArenaResource resource(scratch_arena);
         std::pmr::vector<u32> spv(&resource);
 
         load_spv("assets/shaders/flat.spv", spv);
 
         graphics_pipeline.init(vkdevice, pipeline_cfg, spv);
-
-        scratch_arena->restore(tag);
 
         gpu_resource_manager.init(resource_manager, device);
 

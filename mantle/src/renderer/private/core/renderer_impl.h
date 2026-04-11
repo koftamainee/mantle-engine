@@ -10,8 +10,7 @@
 #include "vulkan/vulkan_graphics_pipeline.h"
 #include "vulkan/vulkan_swapchain.h"
 
-#include "core/memory/arena_resource.h"
-#include "core/memory/persistent_resource.h"
+#include "core/memory/pmr/persistent_resource.h"
 
 namespace mantle {
     struct FrameData final {

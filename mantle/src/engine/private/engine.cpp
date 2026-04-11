@@ -18,8 +18,9 @@ namespace mantle {
         check(!m_is_initialized);
 
         m_os_memory.init();
-        m_heap.init(m_os_memory, 2u * 1024 * 1024 * 1024); // 2GB
-        m_scratch_arena.init(m_heap, 1u * 1024 * 1024); // 1 MB
+        m_heap.init(m_os_memory, 2u * 1024 * 1024 * 1024); // 2 GB
+        MemoryBlock memory = m_heap.take(1u * 1024 * 1024); // 1 MB
+        m_scratch_arena.init(memory);
 
         Window::Properties prop = {
             .title = "Mantle",

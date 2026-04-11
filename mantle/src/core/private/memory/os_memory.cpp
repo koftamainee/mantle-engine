@@ -10,6 +10,14 @@
 
 namespace mantle {
 
+    static inline bool is_aligned(void* ptr, usize align) {
+        return (reinterpret_cast<uintptr_t>(ptr) & (align - 1)) == 0;
+    }
+
+    static inline bool is_aligned_size(usize size, usize align) {
+        return (size & (align - 1)) == 0;
+    }
+
     OSMemory::~OSMemory() { destroy(); }
 
     void OSMemory::destroy() { m_is_initialized = false; }
@@ -25,45 +33,93 @@ namespace mantle {
         m_page_size = static_cast<usize>(getpagesize());
 #endif
 
+        fatal((m_page_size == 0), "Invalid page size");
+
+        fatal((m_page_size & (m_page_size - 1)) != 0,
+              "Page size is not power of two");
+
         m_is_initialized = true;
     }
 
-    void *OSMemory::reserve(usize size) const {
+    void* OSMemory::reserve(usize size) const {
         check(m_is_initialized);
+
+        fatal(size == 0, "reserve size == 0");
+        fatal(!is_aligned_size(size, m_page_size),
+              "reserve size not page aligned");
+
 #ifdef _WIN32
-        return VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
+        void* ptr = VirtualAlloc(nullptr, size, MEM_RESERVE, PAGE_NOACCESS);
+        fatal(ptr == nullptr, "VirtualAlloc reserve failed");
+        return ptr;
 #else
-        void *ptr =
-            mmap(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-        return ptr == MAP_FAILED ? nullptr : ptr;
+        void* ptr = mmap(nullptr, size, PROT_NONE,
+                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        fatal(ptr == MAP_FAILED, "mmap reserve failed");
+        return ptr;
 #endif
     }
 
-    void OSMemory::commit(void *ptr, usize size) const {
+    void OSMemory::commit(void* ptr, usize size) const {
         check(m_is_initialized);
+
+        fatal(ptr == nullptr, "commit ptr == nullptr");
+        fatal(size == 0, "commit size == 0");
+
+        fatal(!is_aligned(ptr, m_page_size),
+              "commit ptr not page aligned");
+        fatal(!is_aligned_size(size, m_page_size),
+              "commit size not page aligned");
+
 #ifdef _WIN32
-        VirtualAlloc(ptr, size, MEM_COMMIT, PAGE_READWRITE);
+        void* result = VirtualAlloc(ptr, size, MEM_COMMIT, PAGE_READWRITE);
+        fatal(result == nullptr, "VirtualAlloc commit failed");
 #else
-        mprotect(ptr, size, PROT_READ | PROT_WRITE);
+        int res = mprotect(ptr, size, PROT_READ | PROT_WRITE);
+        fatal(res != 0, "mprotect commit failed");
 #endif
     }
 
-    void OSMemory::decommit(void *ptr, usize size) const {
+    void OSMemory::decommit(void* ptr, usize size) const {
         check(m_is_initialized);
+
+        fatal(ptr == nullptr, "decommit ptr == nullptr");
+        fatal(size == 0, "decommit size == 0");
+
+        fatal(!is_aligned(ptr, m_page_size),
+              "decommit ptr not page aligned");
+        fatal(!is_aligned_size(size, m_page_size),
+              "decommit size not page aligned");
+
 #ifdef _WIN32
-        VirtualFree(ptr, size, MEM_DECOMMIT);
+        BOOL ok = VirtualFree(ptr, size, MEM_DECOMMIT);
+        fatal(!ok, "VirtualFree decommit failed");
 #else
-        madvise(ptr, size, MADV_DONTNEED);
-        mprotect(ptr, size, PROT_NONE);
+        int r1 = madvise(ptr, size, MADV_DONTNEED);
+        fatal(r1 != 0, "madvise failed");
+
+        int r2 = mprotect(ptr, size, PROT_NONE);
+        fatal(r2 != 0, "mprotect decommit failed");
 #endif
     }
 
-    void OSMemory::release(void *ptr, usize size) const {
+    void OSMemory::release(void* ptr, usize size) const {
         check(m_is_initialized);
+
+        fatal(ptr == nullptr, "release ptr == nullptr");
+        fatal(size == 0, "release size == 0");
+
+        fatal(!is_aligned(ptr, m_page_size),
+              "release ptr not page aligned");
+        fatal(!is_aligned_size(size, m_page_size),
+              "release size not page aligned");
+
 #ifdef _WIN32
-        VirtualFree(ptr, size, MEM_RELEASE);
+        BOOL ok = VirtualFree(ptr, 0, MEM_RELEASE);
+        fatal(!ok, "VirtualFree release failed");
 #else
-        munmap(ptr, size);
+        int res = munmap(ptr, size);
+        fatal(res != 0, "munmap failed");
 #endif
     }
 

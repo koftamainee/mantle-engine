@@ -15,6 +15,7 @@ namespace mantle {
 
         m_reserved = reserve_size;
         m_used = 0;
+        m_committed = 0;
         m_is_initialized = true;
     }
 
@@ -26,21 +27,29 @@ namespace mantle {
             m_base = nullptr;
             m_reserved = 0;
             m_used = 0;
+            m_committed = 0;
             m_is_initialized = false;
         }
     }
 
-    void *VirtualHeap::take(usize size, usize align) {
+    MemoryBlock VirtualHeap::take(usize size) {
         check(m_is_initialized);
-        check(m_used + size <= m_reserved);
+        check(size > 0);
+        fatal(m_used + size > m_reserved, "Out of memory");
 
-        usize aligned_used = (m_used + (align - 1)) & ~(align - 1);
-        check(aligned_used + size <= m_reserved);
+        void *ptr = static_cast<u8 *>(m_base) + m_used;
 
-        void *ptr = static_cast<u8 *>(m_base) + aligned_used;
-        m_os->commit(ptr, size);
-        m_used = aligned_used + size;
-        return ptr;
+        const usize page = m_os->page_size();
+        usize commit_end = (m_used + size + page - 1) & ~(page - 1);
+
+        if (commit_end > m_committed) {
+            void *commit_ptr = static_cast<u8 *>(m_base) + m_committed;
+            m_os->commit(commit_ptr, commit_end - m_committed);
+            m_committed = commit_end;
+        }
+
+        m_used += size;
+        return {ptr, size};
     }
 
     usize VirtualHeap::reserved() const {
@@ -51,6 +60,11 @@ namespace mantle {
     usize VirtualHeap::used() const {
         check(m_is_initialized);
         return m_used;
+    }
+
+    usize VirtualHeap::committed() const {
+        check(m_is_initialized);
+        return m_committed;
     }
 
 } // namespace mantle

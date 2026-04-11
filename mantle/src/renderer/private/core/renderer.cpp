@@ -5,6 +5,8 @@
 #include "vulkan/vulkan_device.h"
 #include "vulkan/vulkan_swapchain.h"
 
+#include "core/memory/persistent_allocator.h"
+#include "glm/gtx/scalar_relational.inl"
 #include "renderer_impl.h"
 
 #include "vulkan/vkassert.h"
@@ -18,7 +20,10 @@ namespace mantle {
         check(!m_is_initialized);
         check(heap != nullptr);
 
-        m_impl = heap->emplace<Impl>();
+        PersistentAllocator alloc;
+        alloc.init(heap);
+
+        m_impl = alloc.emplace<Impl>();
         m_impl->init(window, heap, scratch_arena);
 
         m_is_initialized = true;

@@ -2,10 +2,10 @@
 
 #include <memory_resource>
 
-#include "arena_allocator.h"
+#include "../arena_allocator.h"
 
 namespace mantle {
-    class ArenaResource : public std::pmr::memory_resource {
+    class ArenaResource final : public std::pmr::memory_resource {
       public:
         ArenaResource() : m_arena(nullptr) {}
         explicit ArenaResource(ArenaAllocator *arena) : m_arena(arena) {}
