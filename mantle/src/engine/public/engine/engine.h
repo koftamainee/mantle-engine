@@ -28,6 +28,11 @@ namespace mantle {
         VirtualHeap m_heap;
         ArenaAllocator m_scratch_arena;
 
+        ArenaAllocator m_rendering_arena;
+
+        GraphicsPipelineHandle m_pipeline{};
+        BufferHandle m_vertex_buffer{};
+
         Frustum m_frustum{};
 
         f32 m_last_time = 0.0f;

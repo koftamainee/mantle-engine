@@ -3,6 +3,8 @@
 #include "core/memory/virtual_heap.h"
 #include "core/types.h"
 #include "glm/glm.hpp"
+#include "gpu_resource_manager.h"
+#include "render_graph.h"
 
 namespace mantle {
 
@@ -33,8 +35,10 @@ namespace mantle {
         Result begin_frame() const;
         Result end_frame() const;
 
-        void begin_pass() const;
-        void end_pass() const;
+        GPUResourceManager &resource_manager();
+        ImageHandle current_backbuffer();
+
+        void execute(const CompiledRenderGraph &render_graph);
 
         void resize(u32 width, u32 height) const;
 

@@ -41,6 +41,30 @@ namespace mantle {
         m_is_initialized = true;
 
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
+
+        struct TriangleVertex {
+            float pos[2];
+        };
+
+        TriangleVertex triangle[] = {
+            {{0.0f, -0.5f}},
+            {{0.5f, 0.5f}},
+            {{-0.5f, 0.5f}},
+        };
+
+        GraphicsPipelineDesc pipeline_desc{};
+        m_pipeline = m_renderer.resource_manager().create_graphics_pipeline(
+            pipeline_desc);
+
+        BufferDesc buffer_desc{
+            .size = sizeof(triangle),
+            .usage = BufferUsage::Vertex,
+            .memory = MemoryType::Gpu,
+        };
+        m_vertex_buffer =
+            m_renderer.resource_manager().create_buffer(buffer_desc);
+        m_rendering_arena.init(m_heap.take(megabytes(100)));
+
         spdlog::info("Engine is initialized. Starting the game");
     }
 
@@ -101,7 +125,6 @@ namespace mantle {
         if (m_window.is_key_just_released(Window::Key::Ctrl)) {
             m_camera_speed = m_base_camera_speed;
         }
-
     }
 
     void Engine::render() {
@@ -118,11 +141,30 @@ namespace mantle {
             return;
         }
 
-        m_renderer.begin_pass();
+        RenderGraph graph(&m_rendering_arena);
+        struct GeometryPass final {
+            RGImageHandle target;
+        };
 
-        //TODO: rendering
+        graph.add_pass<GeometryPass>(
+            "Geometry pass",
+            [&](RenderGraphBuilder &builder, GeometryPass &data) {
+                ImageHandle swapchain_image = m_renderer.current_backbuffer();
+                RGImageHandle backbuffer =
+                    builder.import_image(swapchain_image);
 
-        m_renderer.end_pass();
+                data.target = builder.write(backbuffer);
+            },
+            [&](const GeometryPass &data, RenderPassContext &ctx) {
+                ctx.bind_pipeline(m_pipeline);
+                ctx.draw(3, 1, 0, 0);
+            });
+
+        CompiledRenderGraph compiled_rg =
+            graph.compile(m_renderer.resource_manager());
+
+        m_renderer.execute(compiled_rg);
+
 
         result = m_renderer.end_frame();
         if (result == Renderer::Result::FrameNeedsResize) {
