@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 
+#include <span>
 #include "core/enum_flags.h"
 #include "core/types.h"
 
@@ -81,7 +82,7 @@ namespace mantle {
         GPUResourceManager &
         operator=(GPUResourceManager &&other) noexcept = delete;
 
-        ShaderHandle create_shader(std::pmr::vector<u32> spir_v);
+        ShaderHandle create_shader(std::span<const u32> spir_v);
         void destroy_shader(ShaderHandle shader);
 
         GraphicsPipelineHandle
@@ -92,6 +93,8 @@ namespace mantle {
         void destroy_compute_pipeline(ComputePipelineHandle pipeline);
 
         BufferHandle create_buffer(const BufferDesc &desc);
+        void update_buffer(BufferHandle handle, const void *data, usize size,
+                           usize offset = 0);
         void destroy_buffer(BufferHandle buffer);
 
         ImageHandle create_image(const ImageDesc &desc);

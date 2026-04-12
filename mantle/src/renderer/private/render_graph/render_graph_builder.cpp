@@ -8,10 +8,6 @@ namespace mantle {
 
     RGBufferHandle RenderGraphBuilder::create_buffer(const BufferDesc &desc) {}
 
-    RGImageHandle RenderGraphBuilder::import_image(ImageHandle image) {}
-
-    RGBufferHandle RenderGraphBuilder::import_buffer(BufferHandle buffer) {}
-
     RGImageHandle RenderGraphBuilder::read(RGImageHandle image) {}
 
     RGImageHandle RenderGraphBuilder::write(RGImageHandle image) {}

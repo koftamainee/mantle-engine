@@ -5,6 +5,7 @@
 
 #include "core/memory/arena_allocator.h"
 #include "core/memory/pmr/arena_resource.h"
+#include "core/memory/scope_arena.h"
 #include "gpu_resource_manager.h"
 
 namespace mantle {
@@ -12,9 +13,6 @@ namespace mantle {
         u32 index;
     };
     struct RGImageHandle final {
-        u32 index;
-    };
-    struct RGShaderHandle final {
         u32 index;
     };
 
@@ -31,9 +29,6 @@ namespace mantle {
 
         RGImageHandle create_image(const ImageDesc &desc);
         RGBufferHandle create_buffer(const BufferDesc &desc);
-
-        RGImageHandle import_image(ImageHandle image);
-        RGBufferHandle import_buffer(BufferHandle buffer);
 
         RGImageHandle read(RGImageHandle image);
         RGImageHandle write(RGImageHandle image);
@@ -88,22 +83,24 @@ namespace mantle {
     template <typename TData, typename TExecute>
     concept CRenderPassExecuteLambda =
         requires(TExecute fn, const TData &data, RenderPassContext &ctx) {
-            { fn(data, ctx) } -> std::same_as<void>;
+            { fn(ctx, data) } -> std::same_as<void>;
         };
 
     class RenderGraph final {
       public:
         explicit RenderGraph(ArenaAllocator *arena);
-        ~RenderGraph();
 
         template <typename TData, typename TSetup, typename TExecute>
             requires CRenderPassData<TData> &&
             CRenderPassSetupLambda<TData, TSetup> &&
             CRenderPassExecuteLambda<TData, TExecute>
-        void add_pass(std::string_view name, TSetup &&setup,
+        const TData &add_pass(std::string_view name, TSetup &&setup,
                       TExecute &&execute) {
             // TODO
         }
+
+        RGImageHandle import_image(ImageHandle image);
+        RGBufferHandle import_buffer(BufferHandle buffer);
 
         CompiledRenderGraph compile(GPUResourceManager &resources);
 
@@ -117,7 +114,7 @@ namespace mantle {
 
 
         ArenaAllocator *m_arena = nullptr;
-        ArenaAllocator::Marker m_tag{};
+        ScopeArena m_scope;
         ArenaResource m_resource{};
         std::pmr::vector<RenderPassNode> m_passes;
     };

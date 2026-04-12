@@ -1,6 +1,6 @@
 #pragma once
-#include "math/frustum.h"
 #include "camera/camera.h"
+#include "math/frustum.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
 
@@ -30,8 +30,9 @@ namespace mantle {
 
         ArenaAllocator m_rendering_arena;
 
-        GraphicsPipelineHandle m_pipeline{};
-        BufferHandle m_vertex_buffer{};
+        ComputePipelineHandle m_dda_pipeline{};
+        ComputePipelineHandle m_lighting_pipeline{};
+        GraphicsPipelineHandle m_present_pipeline{};
 
         Frustum m_frustum{};
 

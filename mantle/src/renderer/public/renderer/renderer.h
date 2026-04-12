@@ -2,7 +2,6 @@
 #include "core/memory/arena_allocator.h"
 #include "core/memory/virtual_heap.h"
 #include "core/types.h"
-#include "glm/glm.hpp"
 #include "gpu_resource_manager.h"
 #include "render_graph.h"
 
@@ -15,7 +14,6 @@ namespace mantle {
         enum class Result {
             Ok,
             FrameNeedsResize,
-            InvalidMeshHandle,
         };
 
         Renderer();
@@ -26,17 +24,15 @@ namespace mantle {
         Renderer(Renderer &&) noexcept = delete;
         Renderer &operator=(Renderer &&) noexcept = delete;
 
-        void init(const Window &window, VirtualHeap *heap, ArenaAllocator *scratch_arena);
+        void init(const Window &window, VirtualHeap *heap,
+                  ArenaAllocator *scratch_arena);
         void destroy();
-
-        void set_camera(const glm::mat4 &view,
-                        const glm::mat4 &projection) const;
 
         Result begin_frame() const;
         Result end_frame() const;
 
         GPUResourceManager &resource_manager();
-        ImageHandle current_backbuffer();
+        ImageHandle current_backbuffer() const;
 
         void execute(const CompiledRenderGraph &render_graph);
 

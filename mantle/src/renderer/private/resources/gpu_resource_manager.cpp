@@ -5,7 +5,7 @@ namespace mantle {
     GPUResourceManager::~GPUResourceManager() {}
 
     ShaderHandle
-    GPUResourceManager::create_shader(std::pmr::vector<u32> spir_v) {}
+    GPUResourceManager::create_shader(std::span<const u32> spir_v) {}
 
     void GPUResourceManager::destroy_shader(ShaderHandle shader) {}
 
@@ -22,6 +22,10 @@ namespace mantle {
         ComputePipelineHandle pipeline) {}
 
     BufferHandle GPUResourceManager::create_buffer(const BufferDesc &desc) {}
+
+    void GPUResourceManager::update_buffer(BufferHandle handle,
+                                           const void *data, usize size,
+                                           usize offset) {}
 
     void GPUResourceManager::destroy_buffer(BufferHandle buffer) {}
 

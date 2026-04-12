@@ -8,7 +8,6 @@
 #include "vulkan/vulkan_swapchain.h"
 
 #include "core/memory/persistent_allocator.h"
-#include "glm/gtx/scalar_relational.inl"
 #include "renderer_impl.h"
 
 #include "vulkan/vkassert.h"
@@ -57,11 +56,6 @@ namespace mantle {
         }
     }
 
-    void Renderer::set_camera(const glm::mat4 &view,
-                              const glm::mat4 &projection) const {
-        m_impl->view = view;
-        m_impl->projection = projection;
-    }
 
     Renderer::Result Renderer::begin_frame() const {
         check(m_is_initialized);
@@ -160,7 +154,7 @@ namespace mantle {
 
     GPUResourceManager &Renderer::resource_manager() {} // TODO
 
-    ImageHandle Renderer::current_backbuffer() {} // TODO
+    ImageHandle Renderer::current_backbuffer() const {} // TODO
 
     void Renderer::execute(const CompiledRenderGraph &render_graph) {} // TODO
 

@@ -42,27 +42,13 @@ namespace mantle {
 
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
-        struct TriangleVertex {
-            float pos[2];
-        };
+        m_dda_pipeline =
+            m_renderer.resource_manager().create_compute_pipeline({});
+        m_lighting_pipeline =
+            m_renderer.resource_manager().create_compute_pipeline({});
+        m_present_pipeline =
+            m_renderer.resource_manager().create_graphics_pipeline({});
 
-        TriangleVertex triangle[] = {
-            {{0.0f, -0.5f}},
-            {{0.5f, 0.5f}},
-            {{-0.5f, 0.5f}},
-        };
-
-        GraphicsPipelineDesc pipeline_desc{};
-        m_pipeline = m_renderer.resource_manager().create_graphics_pipeline(
-            pipeline_desc);
-
-        BufferDesc buffer_desc{
-            .size = sizeof(triangle),
-            .usage = BufferUsage::Vertex,
-            .memory = MemoryType::Gpu,
-        };
-        m_vertex_buffer =
-            m_renderer.resource_manager().create_buffer(buffer_desc);
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 
         spdlog::info("Engine is initialized. Starting the game");
@@ -131,7 +117,6 @@ namespace mantle {
         glm::mat4 view = m_camera.view();
         glm::mat4 projection = m_camera.projection();
 
-        m_renderer.set_camera(view, projection);
         m_frustum.extract(projection * view);
 
         Renderer::Result result = m_renderer.begin_frame();
@@ -142,33 +127,81 @@ namespace mantle {
         }
 
         RenderGraph graph(&m_rendering_arena);
+
         struct GeometryPass final {
-            RGImageHandle target;
+            RGImageHandle out_gbuffer;
+        };
+        struct LightingPass final {
+            RGImageHandle in_gbuffer;
+            RGImageHandle out_lit_image;
+        };
+        struct PresentPass {
+            RGImageHandle in_lit_image;
+            RGImageHandle out_backbuffer;
         };
 
-        graph.add_pass<GeometryPass>(
-            "Geometry pass",
-            [&](RenderGraphBuilder &builder, GeometryPass &data) {
-                ImageHandle swapchain_image = m_renderer.current_backbuffer();
-                RGImageHandle backbuffer =
-                    builder.import_image(swapchain_image);
 
-                data.target = builder.write(backbuffer);
+        RGImageHandle backbuffer =
+            graph.import_image(m_renderer.current_backbuffer());
+
+        auto [width, height] = m_window.get_framebuffer_size();
+
+        auto geometry_pass = graph.add_pass<GeometryPass>(
+            "Geometry Pass",
+            [&](RenderGraphBuilder &builder, GeometryPass &pass) {
+                pass.out_gbuffer = builder.create_image({
+                    .width = width,
+                    .height = height,
+                    .depth = 1,
+                    .format = ImageFormat::Rgba32,
+                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
+                });
+                pass.out_gbuffer = builder.write(pass.out_gbuffer);
             },
-            [&](const GeometryPass &data, RenderPassContext &ctx) {
-                ctx.bind_pipeline(m_pipeline);
+            [width, height, this](RenderPassContext &ctx,
+                                  const GeometryPass &pass) {
+                ctx.bind_pipeline(m_dda_pipeline);
+                ctx.dispatch(width / 8, height / 8, 1);
+            });
+
+        auto lighting_pass = graph.add_pass<LightingPass>(
+            "Lighting pass",
+            [&](RenderGraphBuilder &builder, LightingPass &pass) {
+                pass.in_gbuffer = builder.read(geometry_pass.out_gbuffer);
+                pass.out_lit_image = builder.create_image({
+                    .width = width,
+                    .height = height,
+                    .depth = 1,
+                    .format = ImageFormat::Rgba32,
+                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
+                });
+                pass.out_lit_image = builder.write(pass.out_lit_image);
+            },
+            [width, height, this](RenderPassContext &ctx,
+                                  const LightingPass &pass) {
+                ctx.bind_pipeline(m_lighting_pipeline);
+                ctx.dispatch(width / 8, height / 8, 1);
+            });
+
+        graph.add_pass<PresentPass>(
+            "Present pass",
+            [&](RenderGraphBuilder &builder, PresentPass &pass) {
+                pass.in_lit_image = builder.read(lighting_pass.out_lit_image);
+                pass.out_backbuffer = builder.write(backbuffer);
+            },
+            [this](RenderPassContext &ctx, const PresentPass &pass) {
+                ctx.bind_pipeline(m_present_pipeline);
                 ctx.draw(3, 1, 0, 0);
             });
 
-        CompiledRenderGraph compiled_rg =
+        CompiledRenderGraph compiled =
             graph.compile(m_renderer.resource_manager());
 
-        m_renderer.execute(compiled_rg);
+        m_renderer.execute(compiled);
 
 
         result = m_renderer.end_frame();
         if (result == Renderer::Result::FrameNeedsResize) {
-            auto [width, height] = m_window.get_framebuffer_size();
             m_renderer.resize(width, height);
         }
     }

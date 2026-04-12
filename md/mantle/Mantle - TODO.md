@@ -45,8 +45,8 @@ This milestone focuses on enhancing visual quality and renderer architecture. Di
     - [ ] Ambient -- constant factor
     - [ ] Point light -- position and radius. Examples: torch, lamp
 3. Basic render graph
-    - [ ] Define resource lifetime tracking per pass (read/write access per resource) -- required for automatic barrier insertion
-    - [ ] Create render graph class: accepts passes, computes dependencies, inserts `vkCmdPipelineBarrier`s
+    - [/] Define resource lifetime tracking per pass (read/write access per resource) -- required for automatic barrier insertion
+    - [/] Create render graph class: accepts passes, computes dependencies, inserts `vkCmdPipelineBarrier`s
     - [ ] Using render graph, build the following pass sequence:
         - Geometry pass -- compute, DDA raycasting, writes G-buffer
         - Lighting pass -- compute, shadow ray raycasting, reads G-buffer, writes lit image

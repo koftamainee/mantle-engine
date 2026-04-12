@@ -44,9 +44,6 @@ namespace mantle {
         u32 acquire_index = 0;
         bool swapchain_dirty = false;
 
-        glm::mat4 view;
-        glm::mat4 projection;
-
         static constexpr u8 frames_in_flight = 2;
 
         void init(const Window &window, VirtualHeap *in_heap,
