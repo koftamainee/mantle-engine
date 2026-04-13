@@ -4,27 +4,42 @@
 #include "renderer/gpu_resource_manager.h"
 
 namespace mantle {
+    inline static constexpr u32 RemainingMipLevels = ~0u;
 
     enum class ImageLayout {
         Undefined,
         General,
         ColorAttachment,
         DepthAttachment,
+        AttachmentOptimal,
         ShaderReadOnly,
+        ReadOnlyOptimal,
         TransferSrc,
         TransferDst,
         Present,
     };
 
     enum class PipelineStage {
+        None,
         Top,
-        ColorOutput,
-        EarlyFragmentTests,
-        LateFragmentTests,
-        FragmentShader,
-        VertexShader,
-        Transfer,
         Bottom,
+        AllCommands,
+        AllGraphics,
+
+        VertexInput,
+        VertexShader,
+        EarlyFragmentTests,
+        FragmentShader,
+        LateFragmentTests,
+        ColorOutput,
+
+        ComputeShader,
+
+        Transfer,
+        Blit,
+        Copy,
+        Resolve,
+        Clear,
     };
 
     struct ImageBarrier final {
@@ -33,11 +48,17 @@ namespace mantle {
         ImageLayout to{};
         PipelineStage src_stage{};
         PipelineStage dst_stage{};
+        u32 base_mip = 0;
+        u32 mip_count = RemainingMipLevels;
     };
 
+    enum class AttachmentLoad { Clear, Load, DontCare };
+    enum class AttachmentStore { Store, DontCare };
     struct ColorAttachment final {
         ImageHandle image{};
         ImageLayout layout{};
+        AttachmentLoad load = AttachmentLoad::Clear;
+        AttachmentStore store = AttachmentStore::Store;
         f32 clear_r = 0.0f;
         f32 clear_g = 0.0f;
         f32 clear_b = 0.0f;

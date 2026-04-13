@@ -58,13 +58,8 @@ namespace mantle {
         void draw_indexed(u32 index_count, u32 instance_count, u32 first_index,
                           i32 vertex_offset, u32 first_instance);
 
-        void draw_indirect(RGBufferHandle indirect_buffer, u32 offset,
-                           u32 draw_count);
-        void draw_indexed_indirect(RGBufferHandle indirect_buffer, u32 offset,
-                                   u32 draw_count);
-
         void dispatch(u32 x, u32 y, u32 z);
-        void push_constants(const void *data, u32 size);
+        void push_constants(const void *data, u32 size, u32 offset = 0);
 
       private:
         // TODO
