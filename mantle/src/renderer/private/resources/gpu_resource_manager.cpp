@@ -1,5 +1,6 @@
 #include "renderer/gpu_resource_manager.h"
 
+#include "gpu_resource_manager_internal.h"
 #include "vulkan/vulkan_backend.h"
 
 // TODO
@@ -67,4 +68,25 @@ namespace mantle {
     u32 GPUResourceManager::get_bindless_index(ImageHandle image) {}
 
     u32 GPUResourceManager::get_bindless_index(BufferHandle buffer) {}
+
+    VkImage GPUResourceManager::Impl::get_vk_image(ImageHandle handle) const {}
+
+    VkImageView
+    GPUResourceManager::Impl::get_vk_image_view(ImageHandle handle) const {}
+
+    VkBuffer
+    GPUResourceManager::Impl::get_vk_buffer(BufferHandle handle) const {}
+
+    VkPipeline GPUResourceManager::Impl::get_vk_pipeline(
+        GraphicsPipelineHandle handle) const {}
+
+    VkPipeline GPUResourceManager::Impl::get_vk_pipeline(
+        ComputePipelineHandle handle) const {}
+
+    VkPipelineLayout GPUResourceManager::Impl::get_vk_pipeline_layout(
+        GraphicsPipelineHandle handle) const {}
+
+    VkPipelineLayout GPUResourceManager::Impl::get_vk_pipeline_layout(
+        ComputePipelineHandle handle) const {}
+
 } // namespace mantle

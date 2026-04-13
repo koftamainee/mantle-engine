@@ -33,7 +33,7 @@ namespace mantle {
         FrameScheduler(FrameScheduler &&) noexcept = delete;
         FrameScheduler &operator=(FrameScheduler &&) noexcept = delete;
 
-        void init(VulkanBackend *backend, u32 frames_in_flight);
+        void init(VulkanBackend *backend, GPUResourceManager *resource_manager, u32 frames_in_flight);
         void destroy();
 
         FrameResult begin_frame(FrameContext &out_ctx);

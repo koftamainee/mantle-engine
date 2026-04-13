@@ -8,7 +8,9 @@
 namespace mantle {
     FrameScheduler::~FrameScheduler() { destroy(); }
 
-    void FrameScheduler::init(VulkanBackend *backend, u32 frames_in_flight) {
+    void FrameScheduler::init(VulkanBackend *backend,
+                              GPUResourceManager *resource_manager,
+                              u32 frames_in_flight) {
         check(!m_is_initialized);
         check(backend != nullptr);
         check(frames_in_flight > 0);
@@ -62,7 +64,9 @@ namespace mantle {
             };
         }
 
-        m_is_initialized = true;
+        m_recorder.set_resource_manager(resource_manager);
+
+            m_is_initialized = true;
         spdlog::info("Frame scheduler is initialized");
     }
 

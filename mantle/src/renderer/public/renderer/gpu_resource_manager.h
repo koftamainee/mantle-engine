@@ -46,6 +46,7 @@ namespace mantle {
 
       private:
         friend class Renderer;
+        friend class CommandRecorder;
         void import_swapchain_images(const SwapchainInfo &swapchain_info,
                                      std::pmr::vector<ImageHandle> &out_images);
         void release_swapchain_images(std::pmr::vector<ImageHandle> &images);
@@ -54,6 +55,7 @@ namespace mantle {
 
         void init(VulkanBackend *backend);
         void destroy();
-        // TODO
+        struct Impl;
+        Impl *m_impl = nullptr;
     };
 } // namespace mantle

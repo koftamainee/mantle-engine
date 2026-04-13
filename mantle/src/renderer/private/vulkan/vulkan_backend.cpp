@@ -22,7 +22,6 @@ namespace mantle {
             case VK_FORMAT_D32_SFLOAT:
                 return ImageFormat::D32;
             case VK_FORMAT_D24_UNORM_S8_UINT:
-                return ImageFormat::D24S8;
             case VK_FORMAT_D16_UNORM_S8_UINT:
                 return ImageFormat::D24S8;
             case VK_FORMAT_D16_UNORM:

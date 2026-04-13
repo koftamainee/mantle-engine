@@ -138,15 +138,16 @@ namespace mantle {
             "Voxel Pass",
             [&](RenderGraphBuilder &builder, VoxelPass &pass) {
                 pass.out_image = builder.create_image({
-                    .width  = width,
+                    .width = width,
                     .height = height,
-                    .depth  = 1,
+                    .depth = 1,
                     .format = ImageFormat::Rgba32,
-                    .usage  = ImageUsage::Storage | ImageUsage::Sampled,
+                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
                 });
                 pass.out_image = builder.write(pass.out_image);
             },
-            [width, height, this](RenderPassContext &ctx, const VoxelPass &pass) {
+            [width, height, this](RenderPassContext &ctx,
+                                  const VoxelPass &pass) {
                 ctx.bind_pipeline(m_dda_pipeline);
                 ctx.dispatch(width / 8, height / 8, 1);
             });
@@ -154,7 +155,7 @@ namespace mantle {
         graph.add_pass<PresentPass>(
             "Present Pass",
             [&](RenderGraphBuilder &builder, PresentPass &pass) {
-                pass.in_image       = builder.read(voxel_pass.out_image);
+                pass.in_image = builder.read(voxel_pass.out_image);
                 pass.out_backbuffer = builder.write(backbuffer);
             },
             [this](RenderPassContext &ctx, const PresentPass &pass) {
@@ -162,13 +163,14 @@ namespace mantle {
                 ctx.draw(3, 1, 0, 0);
             });
 
-        CompiledRenderGraph compiled = graph.compile(m_renderer.resource_manager());
+        CompiledRenderGraph compiled =
+            graph.compile(m_renderer.resource_manager());
         m_renderer.execute(compiled);
 
 
         result = m_renderer.end_frame();
         if (result == Renderer::Result::FrameNeedsResize) {
-             Window::Properties::Size size = m_window.get_framebuffer_size();
+            Window::Properties::Size size = m_window.get_framebuffer_size();
             width = size.width;
             height = size.height;
             m_renderer.resize(width, height);
