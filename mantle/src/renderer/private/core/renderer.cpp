@@ -34,7 +34,7 @@ namespace mantle {
             std::pmr::vector<ImageHandle>(&m_impl->persistent_resource);
 
         m_impl->backend.init(window, vsync, heap, scratch_arena);
-        m_impl->frame_scheduler.init(&m_impl->backend, 2);
+        m_impl->frame_scheduler.init(&m_impl->backend, 3);
         m_impl->resource_manager.init(&m_impl->backend);
 
         m_impl->resource_manager.import_swapchain_images(
@@ -97,7 +97,6 @@ namespace mantle {
 
     void Renderer::resize(u32 width, u32 height) {
         check(m_is_initialized);
-
         m_impl->backend.wait_idle();
 
         m_impl->resource_manager.release_swapchain_images(

@@ -46,13 +46,18 @@ namespace mantle {
     enum class ImageFormat {
         Rgba8,
         Rgba8Srgb,
+        Bgra8,
+        Bgra8Srgb,
         Rgba16,
         Rgba32,
-        R32,
         Rg16,
-        D32,
+        R32,
+        D16,
         D24S8,
+        D32,
+        D32S8,
     };
+    
     enum class ImageUsage {
         Storage = 1 << 0,
         Sampled = 1 << 1,
@@ -101,4 +106,96 @@ namespace mantle {
         u32 index;
         u32 generation;
     };
+
+        inline static constexpr u32 RemainingMipLevels = ~0u;
+
+    enum class ImageLayout {
+        Undefined,
+        General,
+        ColorAttachment,
+        DepthAttachment,
+        AttachmentOptimal,
+        ShaderReadOnly,
+        ReadOnlyOptimal,
+        TransferSrc,
+        TransferDst,
+        Present,
+    };
+
+    enum class PipelineStage {
+        None,
+        Top,
+        Bottom,
+        AllCommands,
+        AllGraphics,
+
+        VertexInput,
+        VertexShader,
+        EarlyFragmentTests,
+        FragmentShader,
+        LateFragmentTests,
+        ColorOutput,
+
+        ComputeShader,
+
+        Transfer,
+        Blit,
+        Copy,
+        Resolve,
+        Clear,
+    };
+
+    struct ImageBarrier final {
+        ImageHandle image{};
+        ImageLayout from{};
+        ImageLayout to{};
+        PipelineStage src_stage{};
+        PipelineStage dst_stage{};
+        u32 base_mip = 0;
+        u32 mip_count = RemainingMipLevels;
+    };
+
+    enum class AttachmentLoad { Clear, Load, DontCare };
+    enum class AttachmentStore { Store, DontCare };
+    struct ColorAttachment final {
+        ImageHandle image{};
+        ImageLayout layout{};
+        AttachmentLoad load = AttachmentLoad::Clear;
+        AttachmentStore store = AttachmentStore::Store;
+        f32 clear_r = 0.0f;
+        f32 clear_g = 0.0f;
+        f32 clear_b = 0.0f;
+        f32 clear_a = 1.0f;
+        bool clear = true;
+    };
+
+    struct DepthAttachment final {
+        ImageHandle image{};
+        ImageLayout layout{};
+        f32 clear_value = 1.0f;
+        bool clear = true;
+    };
+
+    struct RenderingInfo final {
+        ColorAttachment color{};
+        DepthAttachment depth{};
+        u32 width = 0;
+        u32 height = 0;
+    };
+
+    struct DrawInfo final {
+        u32 vertex_count = 0;
+        u32 instance_count = 1;
+        u32 first_vertex = 0;
+        u32 first_instance = 0;
+    };
+
+    struct DrawIndexedInfo final {
+        u32 index_count = 0;
+        u32 instance_count = 1;
+        u32 first_index = 0;
+        i32 vertex_offset = 0;
+        u32 first_instance = 0;
+    };
+
 } // namespace mantle

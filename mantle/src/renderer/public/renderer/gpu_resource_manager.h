@@ -3,7 +3,7 @@
 
 #include <span>
 #include "core/types.h"
-#include "renderer/handles.h"
+#include "renderer/types.h"
 
 namespace mantle {
     struct SwapchainInfo;

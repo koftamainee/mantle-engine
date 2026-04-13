@@ -1,5 +1,7 @@
 #include "renderer/gpu_resource_manager.h"
 
+#include "vulkan/vulkan_backend.h"
+
 // TODO
 namespace mantle {
     GPUResourceManager::~GPUResourceManager() {}
@@ -51,7 +53,9 @@ namespace mantle {
 
     void GPUResourceManager::import_swapchain_images(
         const SwapchainInfo &swapchain_info,
-        std::pmr::vector<ImageHandle> &out_images) {}
+        std::pmr::vector<ImageHandle> &out_images) {
+        out_images.resize(swapchain_info.image_count);
+    }
 
     void GPUResourceManager::release_swapchain_images(
         std::pmr::vector<ImageHandle> &images) {}

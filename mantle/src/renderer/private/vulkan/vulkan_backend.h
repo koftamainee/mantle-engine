@@ -1,8 +1,8 @@
 #pragma once
 #include "core/memory/arena_allocator.h"
 #include "core/types.h"
-#include "renderer/handles.h"
-#include "../resources/vulkan_gpu_allocator.h"
+#include "renderer/types.h"
+#include "resources/vulkan_gpu_allocator.h"
 #include "vulkan_context.h"
 #include "vulkan_cpu_allocator.h"
 #include "vulkan_device.h"
@@ -47,12 +47,13 @@ namespace mantle {
         void rebuild_swapchain(u32 width, u32 height);
         SwapchainInfo get_swapchain_info() const;
 
-        AcquiredImage acquire_next_image(VkSemaphore image_available) const;
-        SwapchainResult present(u32 image_index, VkSemaphore render_finished) const;
 
       private:
         friend class FrameScheduler;
         friend class GPUResourceManager;
+
+        AcquiredImage acquire_next_image(VkSemaphore image_available) const;
+        SwapchainResult present(u32 image_index, VkSemaphore render_finished) const;
 
         bool m_is_initialized = false;
 

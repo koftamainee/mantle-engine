@@ -19,6 +19,8 @@ namespace mantle {
         }
 
       private:
+        // this is kinda bad for memory allocation, but i just dont want to
+        // optimize it yet
         std::vector<std::function<void()>> m_deletors;
     };
 } // namespace mantle

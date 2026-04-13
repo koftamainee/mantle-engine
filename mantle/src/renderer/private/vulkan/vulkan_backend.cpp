@@ -13,18 +13,24 @@ namespace mantle {
                 return ImageFormat::Rgba8;
             case VK_FORMAT_R8G8B8A8_SRGB:
                 return ImageFormat::Rgba8Srgb;
-            case VK_FORMAT_B8G8R8A8_UNORM:
-                return ImageFormat::Rgba8;
-            case VK_FORMAT_B8G8R8A8_SRGB:
-                return ImageFormat::Rgba8Srgb;
             case VK_FORMAT_R16G16_UNORM:
                 return ImageFormat::Rg16;
             case VK_FORMAT_R32_SFLOAT:
                 return ImageFormat::R32;
+            case VK_FORMAT_D32_SFLOAT_S8_UINT:
+                return ImageFormat::D32S8;
             case VK_FORMAT_D32_SFLOAT:
                 return ImageFormat::D32;
             case VK_FORMAT_D24_UNORM_S8_UINT:
                 return ImageFormat::D24S8;
+            case VK_FORMAT_D16_UNORM_S8_UINT:
+                return ImageFormat::D24S8;
+            case VK_FORMAT_D16_UNORM:
+                return ImageFormat::D16;
+            case VK_FORMAT_B8G8R8A8_UNORM:
+                return ImageFormat::Bgra8;
+            case VK_FORMAT_B8G8R8A8_SRGB:
+                return ImageFormat::Bgra8Srgb;
             default:
                 checkf(false, "unsupported VkFormat");
             }
@@ -136,7 +142,7 @@ namespace mantle {
     }
 
     SwapchainResult VulkanBackend::present(u32 image_index,
-                                VkSemaphore render_finished) const {
+                                           VkSemaphore render_finished) const {
         VkSwapchainKHR swapchain = m_swapchain.get_swapchain();
         VkPresentInfoKHR present_info = {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
@@ -147,7 +153,8 @@ namespace mantle {
             .pImageIndices = &image_index,
         };
 
-        VkResult result = vkQueuePresentKHR(m_device.get_present_queue(), &present_info);
+        VkResult result =
+            vkQueuePresentKHR(m_device.get_present_queue(), &present_info);
 
         auto swapchain_result = SwapchainResult::Ok;
         if (result == VK_SUBOPTIMAL_KHR) {

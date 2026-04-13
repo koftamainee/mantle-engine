@@ -1,112 +1,22 @@
 #pragma once
-
+#include <span>
+#include <vulkan/vulkan.h>
 #include "core/types.h"
 #include "renderer/gpu_resource_manager.h"
+#include "renderer/types.h"
 
 namespace mantle {
-    inline static constexpr u32 RemainingMipLevels = ~0u;
-
-    enum class ImageLayout {
-        Undefined,
-        General,
-        ColorAttachment,
-        DepthAttachment,
-        AttachmentOptimal,
-        ShaderReadOnly,
-        ReadOnlyOptimal,
-        TransferSrc,
-        TransferDst,
-        Present,
-    };
-
-    enum class PipelineStage {
-        None,
-        Top,
-        Bottom,
-        AllCommands,
-        AllGraphics,
-
-        VertexInput,
-        VertexShader,
-        EarlyFragmentTests,
-        FragmentShader,
-        LateFragmentTests,
-        ColorOutput,
-
-        ComputeShader,
-
-        Transfer,
-        Blit,
-        Copy,
-        Resolve,
-        Clear,
-    };
-
-    struct ImageBarrier final {
-        ImageHandle image{};
-        ImageLayout from{};
-        ImageLayout to{};
-        PipelineStage src_stage{};
-        PipelineStage dst_stage{};
-        u32 base_mip = 0;
-        u32 mip_count = RemainingMipLevels;
-    };
-
-    enum class AttachmentLoad { Clear, Load, DontCare };
-    enum class AttachmentStore { Store, DontCare };
-    struct ColorAttachment final {
-        ImageHandle image{};
-        ImageLayout layout{};
-        AttachmentLoad load = AttachmentLoad::Clear;
-        AttachmentStore store = AttachmentStore::Store;
-        f32 clear_r = 0.0f;
-        f32 clear_g = 0.0f;
-        f32 clear_b = 0.0f;
-        f32 clear_a = 1.0f;
-        bool clear = true;
-    };
-
-    struct DepthAttachment final {
-        ImageHandle image{};
-        ImageLayout layout{};
-        f32 clear_value = 1.0f;
-        bool clear = true;
-    };
-
-    struct RenderingInfo final {
-        ColorAttachment color{};
-        DepthAttachment depth{};
-        u32 width = 0;
-        u32 height = 0;
-    };
-
-    struct DrawInfo final {
-        u32 vertex_count = 0;
-        u32 instance_count = 1;
-        u32 first_vertex = 0;
-        u32 first_instance = 0;
-    };
-
-    struct DrawIndexedInfo final {
-        u32 index_count = 0;
-        u32 instance_count = 1;
-        u32 first_index = 0;
-        i32 vertex_offset = 0;
-        u32 first_instance = 0;
-    };
-
     class CommandRecorder final {
       public:
         CommandRecorder() = default;
-        ~CommandRecorder();
+        ~CommandRecorder() = default;
 
-        CommandRecorder(const CommandRecorder &other) = delete;
-        CommandRecorder(CommandRecorder &&other) noexcept = delete;
-        CommandRecorder &operator=(const CommandRecorder &other) = delete;
-        CommandRecorder &operator=(CommandRecorder &&other) noexcept = delete;
+        CommandRecorder(const CommandRecorder &) = delete;
+        CommandRecorder(CommandRecorder &&) noexcept = delete;
+        CommandRecorder &operator=(const CommandRecorder &) = delete;
+        CommandRecorder &operator=(CommandRecorder &&) noexcept = delete;
 
-        void init();
-        void destroy();
+        void set_command_buffer(VkCommandBuffer cmd);
 
         void image_barrier(const ImageBarrier &barrier);
         void pipeline_barriers(std::span<const ImageBarrier> barriers);
@@ -131,11 +41,10 @@ namespace mantle {
                                   u32 height);
 
         void push_constants(const void *data, u32 size);
-
         void bind_descriptor_set();
 
       private:
-        // TODO
+        VkCommandBuffer m_cmd = VK_NULL_HANDLE;
+        GPUResourceManager *m_resources = nullptr;
     };
-
 } // namespace mantle
