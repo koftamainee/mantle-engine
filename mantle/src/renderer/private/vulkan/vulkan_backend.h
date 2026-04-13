@@ -2,7 +2,6 @@
 #include "core/memory/arena_allocator.h"
 #include "core/types.h"
 #include "renderer/types.h"
-#include "resources/vulkan_gpu_allocator.h"
 #include "vulkan_context.h"
 #include "vulkan_cpu_allocator.h"
 #include "vulkan_device.h"
@@ -60,7 +59,6 @@ namespace mantle {
         VulkanContext m_context{};
         VulkanDevice m_device{};
         VulkanSwapchain m_swapchain{};
-        VulkanGPUAllocator m_gpu_allocator{};
 
         VirtualHeap *m_heap = nullptr;
         ArenaAllocator *m_scratch_arena = nullptr;

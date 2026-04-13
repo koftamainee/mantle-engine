@@ -1,106 +1,12 @@
 #include "command_recorder.h"
 
 #include <vulkan/vulkan_core.h>
+#include "vulkan/vulkan_utils.h"
 #include "resources/gpu_resource_manager_internal.h"
 
 #include "core/assert.h"
 
 namespace mantle {
-    namespace {
-        VkImageLayout to_vk(ImageLayout layout) {
-            switch (layout) {
-            case ImageLayout::Undefined:
-                return VK_IMAGE_LAYOUT_UNDEFINED;
-            case ImageLayout::General:
-                return VK_IMAGE_LAYOUT_GENERAL;
-            case ImageLayout::ColorAttachment:
-                return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            case ImageLayout::DepthAttachment:
-                return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-            case ImageLayout::AttachmentOptimal:
-                return VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL;
-            case ImageLayout::ShaderReadOnly:
-                return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            case ImageLayout::ReadOnlyOptimal:
-                return VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL;
-            case ImageLayout::TransferSrc:
-                return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-            case ImageLayout::TransferDst:
-                return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            case ImageLayout::Present:
-                return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-            default:
-                fatal(false, "unsupported ImageLayout");
-                return VK_IMAGE_LAYOUT_UNDEFINED;
-            }
-        }
-
-        VkPipelineStageFlags2 to_vk(PipelineStage stage) {
-            switch (stage) {
-            case PipelineStage::None:
-                return VK_PIPELINE_STAGE_2_NONE;
-            case PipelineStage::Top:
-                return VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
-            case PipelineStage::Bottom:
-                return VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
-            case PipelineStage::AllCommands:
-                return VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT;
-            case PipelineStage::AllGraphics:
-                return VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT;
-            case PipelineStage::VertexInput:
-                return VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT;
-            case PipelineStage::VertexShader:
-                return VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT;
-            case PipelineStage::EarlyFragmentTests:
-                return VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT;
-            case PipelineStage::FragmentShader:
-                return VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-            case PipelineStage::LateFragmentTests:
-                return VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
-            case PipelineStage::ColorOutput:
-                return VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-            case PipelineStage::ComputeShader:
-                return VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT;
-            case PipelineStage::Transfer:
-                return VK_PIPELINE_STAGE_2_ALL_TRANSFER_BIT;
-            case PipelineStage::Blit:
-                return VK_PIPELINE_STAGE_2_BLIT_BIT;
-            case PipelineStage::Copy:
-                return VK_PIPELINE_STAGE_2_COPY_BIT;
-            case PipelineStage::Resolve:
-                return VK_PIPELINE_STAGE_2_RESOLVE_BIT;
-            case PipelineStage::Clear:
-                return VK_PIPELINE_STAGE_2_CLEAR_BIT;
-            default:
-                fatal(true, "unsupported PipelineStage");
-            }
-        }
-
-        VkAccessFlags2 infer_access(ImageLayout layout, bool is_src) {
-            switch (layout) {
-            case ImageLayout::ColorAttachment:
-                return is_src ? VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT
-                              : VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT |
-                        VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-            case ImageLayout::DepthAttachment:
-                return is_src ? VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT
-                              : VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                        VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            case ImageLayout::ShaderReadOnly:
-                return VK_ACCESS_2_SHADER_READ_BIT;
-            case ImageLayout::TransferSrc:
-                return VK_ACCESS_2_TRANSFER_READ_BIT;
-            case ImageLayout::TransferDst:
-                return VK_ACCESS_2_TRANSFER_WRITE_BIT;
-            case ImageLayout::Present:
-            case ImageLayout::Undefined:
-                return VK_ACCESS_2_NONE;
-            default:
-                return VK_ACCESS_2_MEMORY_READ_BIT |
-                    VK_ACCESS_2_MEMORY_WRITE_BIT;
-            }
-        }
-    } // namespace
 
     void CommandRecorder::set_command_buffer(VkCommandBuffer cmd) {
         m_cmd = cmd;

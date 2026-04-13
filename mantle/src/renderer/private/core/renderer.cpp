@@ -2,6 +2,7 @@
 #include <spdlog/spdlog.h>
 #include "core/memory/persistent_allocator.h"
 #include "core/memory/pmr/persistent_resource.h"
+#include "resources/gpu_resource_manager_internal.h"
 #include "vulkan/command_recorder.h"
 #include "vulkan/frame_scheduler.h"
 #include "vulkan/vulkan_backend.h"
@@ -88,6 +89,8 @@ namespace mantle {
 
         FrameResult result =
             m_impl->frame_scheduler.end_frame(m_impl->current_frame);
+
+        m_impl->resource_manager.m_impl->next_frame();
 
         if (result == FrameResult::NeedsResize) {
             return Result::FrameNeedsResize;

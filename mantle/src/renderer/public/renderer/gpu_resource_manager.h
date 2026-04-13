@@ -29,10 +29,10 @@ namespace mantle {
         void destroy_graphics_pipeline(GraphicsPipelineHandle pipeline);
         void destroy_compute_pipeline(ComputePipelineHandle pipeline);
 
-        BufferHandle create_buffer(const BufferDesc &desc);
+        BufferHandle create_buffer(const BufferDesc &desc, bool map = false);
         void update_buffer(BufferHandle handle, const void *data, usize size,
                            usize offset = 0);
-        void destroy_buffer(BufferHandle buffer);
+        void destroy_buffer(BufferHandle handle);
 
         ImageHandle create_image(const ImageDesc &desc);
         void destroy_image(ImageHandle image);
@@ -56,6 +56,8 @@ namespace mantle {
         void init(VulkanBackend *backend);
         void destroy();
         struct Impl;
+
+        bool m_is_initialized = false;
         Impl *m_impl = nullptr;
     };
 } // namespace mantle
