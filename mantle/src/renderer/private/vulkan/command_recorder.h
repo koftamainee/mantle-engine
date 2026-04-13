@@ -28,16 +28,16 @@ namespace mantle {
     };
 
     struct ImageBarrier final {
-        ImageHandle image;
-        ImageLayout from;
-        ImageLayout to;
-        PipelineStage src_stage;
-        PipelineStage dst_stage;
+        ImageHandle image{};
+        ImageLayout from{};
+        ImageLayout to{};
+        PipelineStage src_stage{};
+        PipelineStage dst_stage{};
     };
 
     struct ColorAttachment final {
-        ImageHandle image;
-        ImageLayout layout;
+        ImageHandle image{};
+        ImageLayout layout{};
         f32 clear_r = 0.0f;
         f32 clear_g = 0.0f;
         f32 clear_b = 0.0f;
@@ -46,28 +46,28 @@ namespace mantle {
     };
 
     struct DepthAttachment final {
-        ImageHandle image;
-        ImageLayout layout;
+        ImageHandle image{};
+        ImageLayout layout{};
         f32 clear_value = 1.0f;
         bool clear = true;
     };
 
     struct RenderingInfo final {
-        ColorAttachment color;
-        DepthAttachment depth;
-        u32 width;
-        u32 height;
+        ColorAttachment color{};
+        DepthAttachment depth{};
+        u32 width = 0;
+        u32 height = 0;
     };
 
     struct DrawInfo final {
-        u32 vertex_count;
+        u32 vertex_count = 0;
         u32 instance_count = 1;
         u32 first_vertex = 0;
         u32 first_instance = 0;
     };
 
     struct DrawIndexedInfo final {
-        u32 index_count;
+        u32 index_count = 0;
         u32 instance_count = 1;
         u32 first_index = 0;
         i32 vertex_offset = 0;

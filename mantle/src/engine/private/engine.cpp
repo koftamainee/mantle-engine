@@ -168,6 +168,9 @@ namespace mantle {
 
         result = m_renderer.end_frame();
         if (result == Renderer::Result::FrameNeedsResize) {
+             Window::Properties::Size size = m_window.get_framebuffer_size();
+            width = size.width;
+            height = size.height;
             m_renderer.resize(width, height);
         }
     }
