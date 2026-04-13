@@ -1,10 +1,10 @@
 ### M0. Cleanup
 
-- [ ] Split up renderer into frame scheduler and render pass, also Renderer::Impl should not have any methods
+- [x] Split up renderer into frame scheduler and render pass, also Renderer::Impl should not have any methods
 - [ ] Design and implement bindless descriptor system: single global set, partially bound arrays, resource handles via push constants (`VK_EXT_descriptor_indexing`)
 - [ ] Initialize ImGui in vulkan backend, carry out into separate class with its own descriptor pool and set (separate from global bindless set)
 - [ ] Remove MVP from push constants, pass camera matrices via descriptor sets using bindless system
-- [ ] Add explicit compute-to-graphics pipeline barrier infrastructure (storage image write -> read synchronization, separate from frame-in-flight sync)
+- [x] Add explicit compute-to-graphics pipeline barrier infrastructure (storage image write -> read synchronization, separate from frame-in-flight sync)
 - [ ] Implement pool/slab allocator and its pmr version
 - [ ] Replace all STL containers with pmr versions using custom allocators, or avoid STL in hot paths
 - [ ] Add memory profiling stats to existing allocators
@@ -47,7 +47,7 @@ This milestone focuses on enhancing visual quality and renderer architecture. Di
 3. Basic render graph
     - [/] Define resource lifetime tracking per pass (read/write access per resource) -- required for automatic barrier insertion
     - [/] Create render graph class: accepts passes, computes dependencies, inserts `vkCmdPipelineBarrier`s
-    - [ ] Using render graph, build the following pass sequence:
+    - [/] Using render graph, build the following pass sequence:
         - Geometry pass -- compute, DDA raycasting, writes G-buffer
         - Lighting pass -- compute, shadow ray raycasting, reads G-buffer, writes lit image
         - Debug UI pass -- graphics, draws ImGui overlay on lit image if enabled

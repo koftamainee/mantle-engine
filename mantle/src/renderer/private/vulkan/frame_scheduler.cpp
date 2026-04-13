@@ -2,12 +2,10 @@
 
 #include "core/assert.h"
 #include "core/memory/persistent_allocator.h"
-#include "spdlog/fmt/bundled/color.h"
 #include "vkassert.h"
 #include "vulkan_backend.h"
 
 namespace mantle {
-
     FrameScheduler::~FrameScheduler() { destroy(); }
 
     void FrameScheduler::init(VulkanBackend *backend, u32 frames_in_flight) {
