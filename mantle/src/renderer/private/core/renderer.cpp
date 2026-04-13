@@ -40,7 +40,7 @@ namespace mantle {
         m_impl->resource_manager.init(&m_impl->backend);
 
         m_impl->resource_manager.import_swapchain_images(
-            m_impl->backend.get_swapchain_info(), m_impl->swapchain_images);
+            m_impl->swapchain_images);
 
         m_is_initialized = true;
         spdlog::info("Renderer is initialized");
@@ -112,7 +112,7 @@ namespace mantle {
             m_impl->backend.get_swapchain_info().image_count);
 
         m_impl->resource_manager.import_swapchain_images(
-            m_impl->backend.get_swapchain_info(), m_impl->swapchain_images);
+            m_impl->swapchain_images);
     }
 
     ImageHandle Renderer::backbuffer() const {

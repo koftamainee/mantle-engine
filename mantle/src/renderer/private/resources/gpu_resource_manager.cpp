@@ -221,12 +221,12 @@ namespace mantle {
         auto del = [img = image.resource.image,
                     alloc = image.resource.allocation,
                     view = image.resource.view, this]() {
-            if (view != VK_NULL_HANDLE) {
+            if (alloc != VK_NULL_HANDLE) { // Case for swapchain images
                 vkDestroyImageView(
                     m_impl->backend->m_device.get_device(), view,
                     m_impl->backend->m_vk_allocator.vk_allocator());
+                m_impl->gpu_allocator.destroy_image(img, alloc);
             }
-            m_impl->gpu_allocator.destroy_image(img, alloc);
         };
 
         m_impl->deletion_queues[m_impl->current_frame].push(del);
@@ -306,13 +306,54 @@ namespace mantle {
     u32 GPUResourceManager::get_bindless_index(SamplerHandle sampler) {}
 
     void GPUResourceManager::import_swapchain_images(
-        const SwapchainInfo &swapchain_info,
         std::pmr::vector<ImageHandle> &out_images) {
-        out_images.resize(swapchain_info.image_count);
+        check(m_is_initialized);
+
+        const auto &swapchain_images =
+            m_impl->backend->m_swapchain.get_images();
+        VkFormat format =
+            m_impl->backend->m_swapchain.get_surface_format().format;
+        const u32 count = static_cast<u32>(swapchain_images.size());
+
+        out_images.resize(count);
+
+        for (usize i = 0; i < count; i++) {
+            VkImage image = swapchain_images[i].image;
+            VkImageView view = swapchain_images[i].view;
+
+
+            u32 index;
+            u32 generation;
+
+            if (!m_impl->images_free_list.empty()) {
+                index = m_impl->images_free_list.back();
+                m_impl->images_free_list.pop_back();
+
+                generation = m_impl->images[index].generation;
+            } else {
+                index = static_cast<u32>(m_impl->images.size());
+                generation = 0;
+
+                m_impl->images.push_back({{}, generation});
+            }
+
+            m_impl->images[index].resource = {.image = image,
+                                              .allocation = VK_NULL_HANDLE,
+                                              .view = view,
+                                              .format = format};
+
+            out_images[i] = {.index = index, .generation = generation};
+        }
     }
 
     void GPUResourceManager::release_swapchain_images(
-        std::pmr::vector<ImageHandle> &images) {}
+        std::pmr::vector<ImageHandle> &images) {
+        for (auto &image : images) {
+            destroy_image(image);
+        }
+        // images.resize(0); // don't sure if this will work with persistent
+        // alloc
+    }
 
     void GPUResourceManager::init(VulkanBackend *backend) {
         check(!m_is_initialized);

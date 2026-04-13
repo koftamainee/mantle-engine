@@ -98,6 +98,7 @@ namespace mantle {
         RGImageHandle import_image(ImageHandle image);
         RGBufferHandle import_buffer(BufferHandle buffer);
 
+
         CompiledRenderGraph compile(GPUResourceManager &resources);
 
       private:

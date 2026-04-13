@@ -57,16 +57,16 @@ namespace mantle {
         D32,
         D32S8,
     };
-    
+
     enum class ImageUsage : u32 {
-        None        = 0,
+        None = 0,
 
-        Sampled     = 1 << 0,
-        Storage     = 1 << 1,
+        Sampled = 1 << 0,
+        Storage = 1 << 1,
 
-        Color       = 1 << 2,
-        Depth       = 1 << 3,
-        Stencil     = 1 << 4,
+        Color = 1 << 2,
+        Depth = 1 << 3,
+        Stencil = 1 << 4,
 
         TransferSrc = 1 << 5,
         TransferDst = 1 << 6,
@@ -115,7 +115,7 @@ namespace mantle {
         u32 generation;
     };
 
-        inline static constexpr u32 RemainingMipLevels = ~0u;
+    inline static constexpr u32 RemainingMipLevels = ~0u;
 
     enum class ImageLayout {
         Undefined,
