@@ -2,6 +2,8 @@
 
 // TODO
 namespace mantle {
+    struct VulkanBackend::InternalAccess {};
+
     VulkanBackend::~VulkanBackend() {}
 
     void VulkanBackend::init(const Window &window, bool vsync,
