@@ -65,10 +65,18 @@ namespace mantle {
 
       private:
 #ifdef ENABLE_VALIDATION_LAYERS
-        static constexpr std::array<const char *, 2> ms_validation_layers{
+#ifdef _WIN32
+        static constexpr std::array<const char *, 1> ms_validation_layers{
+            "VK_LAYER_KHRONOS_validation"
+        };
+#elif defined(__linux__) 
+                  static constexpr std::array<const char *, 2> ms_validation_layers{
             "VK_LAYER_KHRONOS_validation",
             "VK_LAYER_MANGOHUD_overlay_x86_64",
         };
+#elif defined(__APPLE__)
+#undef ENABLE_VALIDATION_LAYERS // go fuck yourself
+#endif
 #endif
     };
 } // namespace mantle

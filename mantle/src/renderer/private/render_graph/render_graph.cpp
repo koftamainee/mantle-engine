@@ -8,9 +8,15 @@ namespace mantle {
         check(arena != nullptr);
     }
 
-    RGImageHandle RenderGraph::import_image(ImageHandle image) {} // TODO
+    RGImageHandle RenderGraph::import_image(ImageHandle image) {
+        return {}; // TODO
+    } 
 
-    RGBufferHandle RenderGraph::import_buffer(BufferHandle buffer) {} // TODO
+    RGBufferHandle RenderGraph::import_buffer(BufferHandle buffer) {
+        return {}; // TODO
+    }
 
-    CompiledRenderGraph RenderGraph::compile(GPUResourceManager &resources) {} // TODO
+    CompiledRenderGraph RenderGraph::compile(GPUResourceManager &resources) {
+        return {}; // TODO
+    } 
 } // namespace mantle

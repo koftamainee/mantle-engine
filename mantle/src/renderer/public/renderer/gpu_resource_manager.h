@@ -73,7 +73,6 @@ namespace mantle {
 
     class GPUResourceManager final {
       public:
-        GPUResourceManager() = delete;
         ~GPUResourceManager();
 
         GPUResourceManager(const GPUResourceManager &other) = delete;
@@ -101,6 +100,8 @@ namespace mantle {
         void destroy_image(ImageHandle image);
 
       private:
+        friend class Renderer;
+        GPUResourceManager() = default; // stub FIXME
         // TODO
     };
 } // namespace mantle

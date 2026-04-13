@@ -16,7 +16,7 @@ namespace mantle {
             FrameNeedsResize,
         };
 
-        Renderer();
+        Renderer() = default;
         ~Renderer();
 
         Renderer(const Renderer &) = delete;

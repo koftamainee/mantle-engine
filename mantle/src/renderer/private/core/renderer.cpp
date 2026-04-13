@@ -15,7 +15,6 @@
 
 namespace mantle {
 
-    Renderer::Renderer() = default;
     Renderer::~Renderer() { destroy(); }
 
     void Renderer::init(const Window &window, VirtualHeap *heap,
@@ -152,9 +151,12 @@ namespace mantle {
         return Result::Ok;
     }
 
-    GPUResourceManager &Renderer::resource_manager() {} // TODO
+    GPUResourceManager &Renderer::resource_manager() {
+        static GPUResourceManager resources{};
+        return resources; // FIXME stub
+    }
 
-    ImageHandle Renderer::current_backbuffer() const {} // TODO
+    ImageHandle Renderer::current_backbuffer() const { return {}; }
 
     void Renderer::execute(const CompiledRenderGraph &render_graph) {} // TODO
 

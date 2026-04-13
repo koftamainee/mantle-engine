@@ -73,7 +73,12 @@ function(mantle_shader TARGET)
 
     if(NOT DEFINED SLANGC_EXECUTABLE)
         if(DEFINED ENV{VULKAN_SDK})
-            set(SLANGC_EXECUTABLE "$ENV{VULKAN_SDK}/bin/slangc")
+                find_program(SLANGC_EXECUTABLE
+        NAMES slangc slangc.exe
+        HINTS
+            $ENV{VULKAN_SDK}/Bin
+            $ENV{VULKAN_SDK}/bin
+    )
         else()
             message(FATAL_ERROR "VULKAN_SDK is not set and SLANGC_EXECUTABLE not provided")
         endif()

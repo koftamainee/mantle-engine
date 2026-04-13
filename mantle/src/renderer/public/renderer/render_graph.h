@@ -97,6 +97,7 @@ namespace mantle {
         const TData &add_pass(std::string_view name, TSetup &&setup,
                       TExecute &&execute) {
             // TODO
+            return {};
         }
 
         RGImageHandle import_image(ImageHandle image);
