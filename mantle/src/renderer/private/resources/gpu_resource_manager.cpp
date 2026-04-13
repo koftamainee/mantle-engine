@@ -42,4 +42,25 @@ namespace mantle {
     }
 
     void GPUResourceManager::destroy_image(ImageHandle image) {}
+
+    SamplerHandle GPUResourceManager::create_sampler(const SamplerDesc &desc) {}
+
+    void GPUResourceManager::destroy_sampler(SamplerHandle sampler) {}
+
+    u32 GPUResourceManager::get_bindless_index(SamplerHandle sampler) {}
+
+    void GPUResourceManager::import_swapchain_images(
+        const SwapchainInfo &swapchain_info,
+        std::pmr::vector<ImageHandle> &out_images) {}
+
+    void GPUResourceManager::release_swapchain_images(
+        std::pmr::vector<ImageHandle> &images) {}
+
+    void GPUResourceManager::init(VulkanBackend *backend) {}
+
+    void GPUResourceManager::destroy() {}
+
+    u32 GPUResourceManager::get_bindless_index(ImageHandle image) {}
+
+    u32 GPUResourceManager::get_bindless_index(BufferHandle buffer) {}
 } // namespace mantle

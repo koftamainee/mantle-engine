@@ -2,74 +2,12 @@
 #include <vector>
 
 #include <span>
-#include "core/enum_flags.h"
 #include "core/types.h"
+#include "renderer/handles.h"
 
 namespace mantle {
-    struct BufferHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ImageHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ShaderHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct GraphicsPipelineHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ComputePipelineHandle final {
-        u32 index;
-        u32 generation;
-    };
-
-    enum class BufferUsage {
-        Vertex = 1 << 0,
-        Index = 1 << 1,
-        Uniform = 1 << 2,
-        Storage = 1 << 3,
-        MaxEnum = (1 << 4) - 1,
-    };
-
-    enum class MemoryType {
-        Gpu,
-        CpuToGpu,
-    };
-    struct BufferDesc final {
-        usize size;
-        BufferUsage usage;
-        MemoryType memory;
-    };
-
-    enum class ImageFormat {
-        Rgba8,
-        Rgba16,
-        Rgba32,
-        R32,
-        D32,
-    };
-    enum class ImageUsage {
-        Storage = 1 << 0,
-        Sampled = 1 << 1,
-        Color = 1 << 2,
-        Depth = 1 << 3,
-        Transfer = 1 << 4,
-        MaxEnum = (1 << 5) - 1,
-    };
-    struct ImageDesc final {
-        u32 width;
-        u32 height;
-        u32 depth;
-        ImageFormat format;
-        ImageUsage usage;
-    };
-
-    struct GraphicsPipelineDesc final {}; // TODO
-    struct ComputePipelineDesc final {}; // TODO
+    struct SwapchainInfo;
+    class VulkanBackend;
 
     class GPUResourceManager final {
       public:
@@ -99,9 +37,23 @@ namespace mantle {
         ImageHandle create_image(const ImageDesc &desc);
         void destroy_image(ImageHandle image);
 
+        SamplerHandle create_sampler(const SamplerDesc &desc);
+        void destroy_sampler(SamplerHandle sampler);
+
+        u32 get_bindless_index(ImageHandle image);
+        u32 get_bindless_index(BufferHandle buffer);
+        u32 get_bindless_index(SamplerHandle sampler);
+
       private:
         friend class Renderer;
-        GPUResourceManager() = default; // stub FIXME
+        void import_swapchain_images(const SwapchainInfo &swapchain_info,
+                                     std::pmr::vector<ImageHandle> &out_images);
+        void release_swapchain_images(std::pmr::vector<ImageHandle> &images);
+
+        GPUResourceManager() = default;
+
+        void init(VulkanBackend *backend);
+        void destroy();
         // TODO
     };
 } // namespace mantle

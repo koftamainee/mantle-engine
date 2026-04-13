@@ -24,19 +24,19 @@ namespace mantle {
         Renderer(Renderer &&) noexcept = delete;
         Renderer &operator=(Renderer &&) noexcept = delete;
 
-        void init(const Window &window, VirtualHeap *heap,
+        void init(const Window &window, bool vsync, VirtualHeap *heap,
                   ArenaAllocator *scratch_arena);
         void destroy();
 
-        Result begin_frame() const;
-        Result end_frame() const;
+        Result begin_frame();
+        Result end_frame();
 
         GPUResourceManager &resource_manager();
-        ImageHandle current_backbuffer() const;
+        ImageHandle backbuffer() const;
 
         void execute(const CompiledRenderGraph &render_graph);
 
-        void resize(u32 width, u32 height) const;
+        void resize(u32 width, u32 height);
 
 
       private:

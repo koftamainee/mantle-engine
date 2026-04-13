@@ -17,7 +17,7 @@ namespace mantle {
     void VulkanSwapchain::init(VkDevice device, VkSurfaceKHR surface,
                                const SwapchainSupportDetails &support_details,
                                const QueueFamilyIndices &indices, u32 width,
-                               u32 height,
+                               u32 height, bool vsync,
                                VkAllocationCallbacks *vk_callbacks) {
         check(!m_is_initialized);
         check(device != VK_NULL_HANDLE);
@@ -26,7 +26,7 @@ namespace mantle {
 
         m_surface_format = pick_surface_format(support_details.formats);
         m_extent = pick_extent(support_details.capabilities, width, height);
-        m_present_mode = pick_present_mode(support_details.present_modes);
+        m_present_mode = pick_present_mode(support_details.present_modes, vsync);
 
         u32 image_count = support_details.capabilities.minImageCount + 1;
         if (support_details.capabilities.maxImageCount > 0 &&
@@ -61,8 +61,8 @@ namespace mantle {
             create_info.pQueueFamilyIndices = indices_array.data();
         }
 
-        vk_verify(
-            vkCreateSwapchainKHR(device, &create_info, m_alloc_callbacks, &m_swapchain));
+        vk_verify(vkCreateSwapchainKHR(device, &create_info, m_alloc_callbacks,
+                                       &m_swapchain));
 
         vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
                                           nullptr));
@@ -158,21 +158,31 @@ namespace mantle {
     }
 
     VkPresentModeKHR VulkanSwapchain::pick_present_mode(
-        const std::vector<VkPresentModeKHR> &present_modes) {
+        const std::vector<VkPresentModeKHR> &present_modes, bool vsync) {
         for (const auto &mode : present_modes) {
-            // vsync on, unlimited frames, best case
-            if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                spdlog::info(
-                    "Chosen present mode: VK_PRESENT_MODE_MAILBOX_KHR");
-                return mode;
-            }
-
-            // vsync on, sync to monitor refresh rate, supported on all devices
-            // by spec
-            if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-                spdlog::info("Preferred present mode is not available. "
-                             "Fallback to VK_PRESENT_MOD_FIFO_KHR");
-                return mode;
+            if (vsync) {
+                if (mode == VK_PRESENT_MODE_FIFO_KHR) {
+                    spdlog::info("Preferred present mode is not available. "
+                                 "Fallback to VK_PRESENT_MOD_FIFO_KHR");
+                    return mode;
+                }
+            } else {
+                if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                    spdlog::info(
+                        "Chosen present mode: VK_PRESENT_MODE_MAILBOX_KHR");
+                    return mode;
+                }
+                if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                    spdlog::info("VK_PRESENT_MODE_MAILBOX_KHR is not found. "
+                                 "Using VK_PRESENT_MODE_IMMEDIATE_KHR");
+                    return mode;
+                }
+                if (mode == VK_PRESENT_MODE_FIFO_KHR) {
+                    spdlog::warn(
+                        "vsync is off, but no supported modes available. "
+                        "Fallback to VK_PRESENT_MODE_FIFO_KHR");
+                    return mode;
+                }
             }
         }
         fatal(true, "Unsupported present mode");

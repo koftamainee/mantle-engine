@@ -1,218 +1,125 @@
-#include <core/assert.h>
-#include <renderer/renderer.h>
+#include "renderer/renderer.h"
 #include <spdlog/spdlog.h>
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "vulkan/vulkan_context.h"
-#include "vulkan/vulkan_device.h"
-#include "vulkan/vulkan_swapchain.h"
-
 #include "core/memory/persistent_allocator.h"
-#include "renderer_impl.h"
-
-#include "vulkan/vkassert.h"
-#include "window/window.h"
+#include "core/memory/pmr/persistent_resource.h"
+#include "vulkan/command_recorder.h"
+#include "vulkan/frame_scheduler.h"
+#include "vulkan/vulkan_backend.h"
 
 namespace mantle {
 
+    struct Renderer::Impl final {
+        VulkanBackend backend{};
+        FrameScheduler frame_scheduler{};
+        GPUResourceManager resource_manager{};
+        ImageHandle backbuffer{};
+        FrameContext current_frame{};
+
+        PersistentResource persistent_resource{};
+        std::pmr::vector<ImageHandle> swapchain_images{};
+    };
+
     Renderer::~Renderer() { destroy(); }
 
-    void Renderer::init(const Window &window, VirtualHeap *heap,
+    void Renderer::init(const Window &window, bool vsync, VirtualHeap *heap,
                         ArenaAllocator *scratch_arena) {
         check(!m_is_initialized);
-        check(heap != nullptr);
 
         PersistentAllocator alloc;
         alloc.init(heap);
-
         m_impl = alloc.emplace<Impl>();
-        m_impl->init(window, heap, scratch_arena);
 
-        IMGUI_CHECKVERSION();
-        ImGui::CreateContext();
-        ImGui::StyleColorsDark();
+        m_impl->persistent_resource = PersistentResource(heap);
+        m_impl->swapchain_images =
+            std::pmr::vector<ImageHandle>(&m_impl->persistent_resource);
 
-        ImGui_ImplGlfw_InitForVulkan(window.get_native_window(), true);
-        /* TODO:
-         * 1. Add vulkan descriptor pools, sets and set layouts handling
-         * 2. Initialize vulkan backend for imgui
-         * 3. Probably carry this out into separate ImGui only class
-         * 4. Renderer and m_impl are becoming too big, refactor them later
-         */
+        m_impl->backend.init(window, vsync, heap, scratch_arena);
+        m_impl->frame_scheduler.init(&m_impl->backend, 2);
+        m_impl->resource_manager.init(&m_impl->backend);
+
+        m_impl->resource_manager.import_swapchain_images(
+            m_impl->backend.get_swapchain_info(), m_impl->swapchain_images);
 
         m_is_initialized = true;
-        spdlog::info("Renderer Initialized");
+        spdlog::info("Renderer is initialized");
     }
 
     void Renderer::destroy() {
-        if (m_is_initialized) {
-
-            m_impl->destroy();
-            m_impl->~Impl();
-
-            spdlog::info("Renderer Destroyed");
-            m_is_initialized = false;
+        if (!m_is_initialized) {
+            return;
         }
+        if (m_impl == nullptr) {
+            return;
+        }
+        m_impl->backend.wait_idle();
+        m_impl->resource_manager.release_swapchain_images(
+            m_impl->swapchain_images);
+        m_impl->resource_manager.destroy();
+        m_impl->frame_scheduler.destroy();
+        m_impl->backend.destroy();
+        m_impl = nullptr;
+        m_is_initialized = false;
+        spdlog::info("Renderer is destroyed");
     }
 
-
-    Renderer::Result Renderer::begin_frame() const {
+    Renderer::Result Renderer::begin_frame() {
         check(m_is_initialized);
 
-        if (m_impl->swapchain_dirty) {
+        FrameResult result =
+            m_impl->frame_scheduler.begin_frame(m_impl->current_frame);
+
+        if (result == FrameResult::NeedsResize) {
             return Result::FrameNeedsResize;
         }
 
-        FrameData &frame = m_impl->get_current_frame();
-        VkDevice device = m_impl->device.get_device();
-
-        vk_verify(
-            vkWaitForFences(device, 1, &frame.in_flight, VK_TRUE, UINT64_MAX));
-        vk_verify(vkResetFences(device, 1, &frame.in_flight));
-
-        VkSemaphore acquire_sem =
-            m_impl->acquire_semaphores[m_impl->acquire_index];
-
-        VkResult result = vkAcquireNextImageKHR(
-            device, m_impl->swapchain.get_swapchain(), UINT64_MAX, acquire_sem,
-            VK_NULL_HANDLE, &m_impl->image_index);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-            m_impl->swapchain_dirty = true;
-            return Result::FrameNeedsResize;
-        }
-        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-            vk_verify(result);
-        }
-
-        vk_verify(vkResetCommandBuffer(frame.cmd, 0));
-
-        VkCommandBufferBeginInfo begin_info = {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
-        };
-        vk_verify(vkBeginCommandBuffer(frame.cmd, &begin_info));
+        m_impl->backbuffer =
+            m_impl->swapchain_images[m_impl->current_frame.image_index];
 
         return Result::Ok;
     }
 
-    Renderer::Result Renderer::end_frame() const {
-        auto &frame = m_impl->get_current_frame();
+    void Renderer::execute(const CompiledRenderGraph &graph) {
+        check(m_is_initialized);
+    }
 
-        VkSemaphore acquire_sem =
-            m_impl->acquire_semaphores[m_impl->acquire_index];
-        VkSemaphore render_sem = m_impl->render_semaphores[m_impl->image_index];
+    Renderer::Result Renderer::end_frame() {
+        check(m_is_initialized);
 
-        vk_verify(vkEndCommandBuffer(frame.cmd));
+        FrameResult result =
+            m_impl->frame_scheduler.end_frame(m_impl->current_frame);
 
-        VkPipelineStageFlags wait_stages[] = {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-
-        VkSubmitInfo submit = {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &acquire_sem,
-            .pWaitDstStageMask = wait_stages,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &frame.cmd,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &render_sem,
-        };
-
-        vk_verify(vkQueueSubmit(m_impl->device.get_graphics_queue(), 1, &submit,
-                                frame.in_flight));
-
-        VkSwapchainKHR swapchain = m_impl->swapchain.get_swapchain();
-
-        VkPresentInfoKHR present = {
-            .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &render_sem,
-            .swapchainCount = 1,
-            .pSwapchains = &swapchain,
-            .pImageIndices = &m_impl->image_index,
-        };
-
-        VkResult result =
-            vkQueuePresentKHR(m_impl->device.get_present_queue(), &present);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-            m_impl->swapchain_dirty = true;
-        } else {
-            vk_verify(result);
-        }
-
-        m_impl->current_frame =
-            (m_impl->current_frame + 1) % Impl::frames_in_flight;
-        m_impl->acquire_index = (m_impl->acquire_index + 1) %
-            static_cast<u32>(m_impl->acquire_semaphores.size());
-
-        if (m_impl->swapchain_dirty) {
+        if (result == FrameResult::NeedsResize) {
             return Result::FrameNeedsResize;
         }
+
         return Result::Ok;
+    }
+
+    void Renderer::resize(u32 width, u32 height) {
+        check(m_is_initialized);
+
+        m_impl->backend.wait_idle();
+
+        m_impl->resource_manager.release_swapchain_images(
+            m_impl->swapchain_images);
+
+        m_impl->backend.rebuild_swapchain(width, height);
+
+        m_impl->frame_scheduler.on_swapchain_rebuilt(
+            m_impl->backend.get_swapchain_info().image_count);
+
+        m_impl->resource_manager.import_swapchain_images(
+            m_impl->backend.get_swapchain_info(), m_impl->swapchain_images);
+    }
+
+    ImageHandle Renderer::backbuffer() const {
+        check(m_is_initialized);
+        return m_impl->backbuffer;
     }
 
     GPUResourceManager &Renderer::resource_manager() {
-        static GPUResourceManager resources{};
-        return resources; // FIXME stub
-    }
-
-    ImageHandle Renderer::current_backbuffer() const { return {}; }
-
-    void Renderer::execute(const CompiledRenderGraph &render_graph) {} // TODO
-
-
-    void Renderer::resize(u32 width, u32 height) const {
         check(m_is_initialized);
-        VkDevice device = m_impl->device.get_device();
-        VkSurfaceKHR surface = m_impl->graphics_context.get_surface();
-
-        vkDeviceWaitIdle(device);
-
-        m_impl->destroy_depth_image();
-
-        u32 old_count = static_cast<u32>(m_impl->acquire_semaphores.size());
-
-        m_impl->swapchain.destroy();
-        m_impl->swapchain.init(
-            device, surface,
-            m_impl->device.get_swapchain_support_details(surface),
-            m_impl->device.get_queue_families(), width, height,
-            m_impl->vulkan_cpu_allocator.vk_allocator());
-
-        m_impl->create_depth_image(width, height);
-
-        // NOTE: I don't sure if this needed
-        // This code handles case when image count in swapchain changes between
-        // recreations This probably not gonna happen ever, but it useful to
-        // have
-        u32 new_count = static_cast<u32>(m_impl->swapchain.get_images().size());
-        if (new_count != old_count) {
-            spdlog::warn("POTENTIAL MEMORY LEAK. using virtual heap memory "
-                         "resource to recreate objects");
-            for (auto &sem : m_impl->acquire_semaphores) {
-                vkDestroySemaphore(device, sem, nullptr);
-            }
-            for (auto &sem : m_impl->render_semaphores) {
-                vkDestroySemaphore(device, sem, nullptr);
-            }
-
-            m_impl->acquire_semaphores.resize(new_count);
-            m_impl->render_semaphores.resize(new_count);
-
-            VkSemaphoreCreateInfo sem_info = {
-                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-            };
-            for (auto &sem : m_impl->acquire_semaphores) {
-                vk_verify(vkCreateSemaphore(device, &sem_info, nullptr, &sem));
-            }
-            for (auto &sem : m_impl->render_semaphores) {
-                vk_verify(vkCreateSemaphore(device, &sem_info, nullptr, &sem));
-            }
-
-            m_impl->acquire_index = 0;
-        }
-
-        m_impl->swapchain_dirty = false;
+        return m_impl->resource_manager;
     }
 
 } // namespace mantle

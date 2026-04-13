@@ -27,7 +27,7 @@ namespace mantle {
 
         void init(VkDevice device, VkSurfaceKHR surface,
                   const SwapchainSupportDetails &support_details,
-                  const QueueFamilyIndices &indices, u32 width, u32 height, VkAllocationCallbacks *vk_callbacks);
+                  const QueueFamilyIndices &indices, u32 width, u32 height, bool vsync, VkAllocationCallbacks *vk_callbacks);
 
         void destroy();
 
@@ -43,7 +43,7 @@ namespace mantle {
         pick_extent(const VkSurfaceCapabilitiesKHR &capabilities, u32 width,
                     u32 height);
         static VkPresentModeKHR
-        pick_present_mode(const std::vector<VkPresentModeKHR> &present_modes);
+        pick_present_mode(const std::vector<VkPresentModeKHR> &present_modes, bool vsync);
 
       private:
         bool m_is_initialized = false;

@@ -23,7 +23,7 @@ namespace mantle {
 
         m_window.init(prop, &m_heap);
 
-        m_renderer.init(m_window, &m_heap, &m_scratch_arena);
+        m_renderer.init(m_window, false, &m_heap, &m_scratch_arena);
 
         m_camera.aspect = static_cast<f32>(prop.size.width) /
             static_cast<f32>(prop.size.height);
@@ -40,8 +40,6 @@ namespace mantle {
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
         m_dda_pipeline =
-            m_renderer.resource_manager().create_compute_pipeline({});
-        m_lighting_pipeline =
             m_renderer.resource_manager().create_compute_pipeline({});
         m_present_pipeline =
             m_renderer.resource_manager().create_graphics_pipeline({});
@@ -125,65 +123,38 @@ namespace mantle {
 
         RenderGraph graph(&m_rendering_arena);
 
-        struct GeometryPass final {
-            RGImageHandle out_gbuffer;
+        struct VoxelPass final {
+            RGImageHandle out_image;
         };
-        struct LightingPass final {
-            RGImageHandle in_gbuffer;
-            RGImageHandle out_lit_image;
-        };
-        struct PresentPass {
-            RGImageHandle in_lit_image;
+        struct PresentPass final {
+            RGImageHandle in_image;
             RGImageHandle out_backbuffer;
         };
 
-
-        RGImageHandle backbuffer =
-            graph.import_image(m_renderer.current_backbuffer());
-
+        RGImageHandle backbuffer = graph.import_image(m_renderer.backbuffer());
         auto [width, height] = m_window.get_framebuffer_size();
 
-        auto geometry_pass = graph.add_pass<GeometryPass>(
-            "Geometry Pass",
-            [&](RenderGraphBuilder &builder, GeometryPass &pass) {
-                pass.out_gbuffer = builder.create_image({
-                    .width = width,
+        auto voxel_pass = graph.add_pass<VoxelPass>(
+            "Voxel Pass",
+            [&](RenderGraphBuilder &builder, VoxelPass &pass) {
+                pass.out_image = builder.create_image({
+                    .width  = width,
                     .height = height,
-                    .depth = 1,
+                    .depth  = 1,
                     .format = ImageFormat::Rgba32,
-                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
+                    .usage  = ImageUsage::Storage | ImageUsage::Sampled,
                 });
-                pass.out_gbuffer = builder.write(pass.out_gbuffer);
+                pass.out_image = builder.write(pass.out_image);
             },
-            [width, height, this](RenderPassContext &ctx,
-                                  const GeometryPass &pass) {
+            [width, height, this](RenderPassContext &ctx, const VoxelPass &pass) {
                 ctx.bind_pipeline(m_dda_pipeline);
                 ctx.dispatch(width / 8, height / 8, 1);
             });
 
-        auto lighting_pass = graph.add_pass<LightingPass>(
-            "Lighting pass",
-            [&](RenderGraphBuilder &builder, LightingPass &pass) {
-                pass.in_gbuffer = builder.read(geometry_pass.out_gbuffer);
-                pass.out_lit_image = builder.create_image({
-                    .width = width,
-                    .height = height,
-                    .depth = 1,
-                    .format = ImageFormat::Rgba32,
-                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
-                });
-                pass.out_lit_image = builder.write(pass.out_lit_image);
-            },
-            [width, height, this](RenderPassContext &ctx,
-                                  const LightingPass &pass) {
-                ctx.bind_pipeline(m_lighting_pipeline);
-                ctx.dispatch(width / 8, height / 8, 1);
-            });
-
         graph.add_pass<PresentPass>(
-            "Present pass",
+            "Present Pass",
             [&](RenderGraphBuilder &builder, PresentPass &pass) {
-                pass.in_lit_image = builder.read(lighting_pass.out_lit_image);
+                pass.in_image       = builder.read(voxel_pass.out_image);
                 pass.out_backbuffer = builder.write(backbuffer);
             },
             [this](RenderPassContext &ctx, const PresentPass &pass) {
@@ -191,9 +162,7 @@ namespace mantle {
                 ctx.draw(3, 1, 0, 0);
             });
 
-        CompiledRenderGraph compiled =
-            graph.compile(m_renderer.resource_manager());
-
+        CompiledRenderGraph compiled = graph.compile(m_renderer.resource_manager());
         m_renderer.execute(compiled);
 
 

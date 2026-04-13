@@ -23,13 +23,28 @@ namespace mantle {
         VulkanContext(VulkanContext &&) noexcept = delete;
         VulkanContext &operator=(VulkanContext &&) noexcept = delete;
 
-        void init(GLFWwindow *window, ArenaAllocator *scratch_arena, VkAllocationCallbacks *vk_callbacks);
+        void init(GLFWwindow *window, ArenaAllocator *scratch_arena,
+                  VkAllocationCallbacks *vk_callbacks);
         void destroy();
 
         VkInstance get_instance() const;
         VkSurfaceKHR get_surface() const;
 
       private:
+#ifdef ENABLE_VALIDATION_LAYERS
+#ifdef _WIN32
+        static constexpr std::array<const char *, 1> ms_validation_layers{
+            "VK_LAYER_KHRONOS_validation"};
+#elif defined(__linux__)
+        static constexpr std::array<const char *, 2> ms_validation_layers{
+            "VK_LAYER_KHRONOS_validation",
+            "VK_LAYER_MANGOHUD_overlay_x86_64",
+        };
+#elif defined(__APPLE__)
+#undef ENABLE_VALIDATION_LAYERS // go fuck yourself
+#endif
+#endif
+
         void create_instance();
         void destroy_instance();
 
@@ -42,7 +57,8 @@ namespace mantle {
         void destroy_surface();
 
       private:
-        static std::pmr::vector<const char *> get_required_instance_extensions(std::pmr::memory_resource &resource);
+        static std::pmr::vector<const char *>
+        get_required_instance_extensions(std::pmr::memory_resource &resource);
 
 #ifdef ENABLE_VALIDATION_LAYERS
         static VkDebugUtilsMessengerCreateInfoEXT
@@ -62,21 +78,5 @@ namespace mantle {
 
         VkInstance m_instance = VK_NULL_HANDLE;
         VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-
-      private:
-#ifdef ENABLE_VALIDATION_LAYERS
-#ifdef _WIN32
-        static constexpr std::array<const char *, 1> ms_validation_layers{
-            "VK_LAYER_KHRONOS_validation"
-        };
-#elif defined(__linux__) 
-                  static constexpr std::array<const char *, 2> ms_validation_layers{
-            "VK_LAYER_KHRONOS_validation",
-            "VK_LAYER_MANGOHUD_overlay_x86_64",
-        };
-#elif defined(__APPLE__)
-#undef ENABLE_VALIDATION_LAYERS // go fuck yourself
-#endif
-#endif
     };
 } // namespace mantle

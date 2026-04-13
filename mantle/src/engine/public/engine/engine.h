@@ -31,7 +31,6 @@ namespace mantle {
         ArenaAllocator m_rendering_arena;
 
         ComputePipelineHandle m_dda_pipeline{};
-        ComputePipelineHandle m_lighting_pipeline{};
         GraphicsPipelineHandle m_present_pipeline{};
 
         Frustum m_frustum{};

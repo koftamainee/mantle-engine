@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Mantle - Game Design Document.md",
+                "file": "Mantle - TODO.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Mantle - Game Design Document"
+              "title": "Mantle - TODO"
             }
           }
         ],
@@ -189,10 +189,10 @@
   },
   "active": "9c397d199b1ac8e7",
   "lastOpenFiles": [
+    "Mantle - Game Design Document.md",
     "Mantle - TODO.md",
     "Excalidraw/Drawing 2026-04-11 22.44.29.excalidraw.md",
     "Untitled.base",
-    "Mantle - Game Design Document.md",
     "Excalidraw",
     "99 - Vault/Mantle - Game Design Document.md",
     "99 - Vault/mantle todo.md",
