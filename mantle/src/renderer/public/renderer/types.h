@@ -11,6 +11,10 @@ namespace mantle {
         u32 index;
         u32 generation;
     };
+    struct SamplerHandle final {
+        u32 index;
+        u32 generation;
+    };
     struct ShaderHandle final {
         u32 index;
         u32 generation;
@@ -108,11 +112,6 @@ namespace mantle {
         f32 max_anisotropy = 1.0f;
         f32 min_lod = 0.0f;
         f32 max_lod = 1.0f;
-    };
-
-    struct SamplerHandle final {
-        u32 index;
-        u32 generation;
     };
 
     inline static constexpr u32 RemainingMipLevels = ~0u;
