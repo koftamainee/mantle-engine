@@ -1,6 +1,4 @@
 #pragma once
-#include <string_view>
-#include <vector>
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
@@ -9,8 +7,6 @@
 #include "types.h"
 
 namespace mantle {
-    void load_spv(std::string_view path, std::pmr::vector<u32> &out);
-
     ImageFormat from_vk(VkFormat format);
     VkFormat to_vk(ImageFormat format);
     VkImageUsageFlags to_vk(ImageUsage usage);

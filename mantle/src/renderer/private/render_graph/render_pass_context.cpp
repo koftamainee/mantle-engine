@@ -12,11 +12,11 @@ namespace mantle {
 
     void RenderPassContext::end_rendering() {}
 
-    void RenderPassContext::draw(const DrawInfo &info) {}
+    void RenderPassContext::draw(const RGDrawInfo &info) {}
 
-    void RenderPassContext::draw_indexed(const DrawIndexedInfo &info) {}
+    void RenderPassContext::draw_indexed(const RGDrawIndexedInfo &info) {}
 
-    void RenderPassContext::dispatch(const DispatchInfo &info) {}
+    void RenderPassContext::dispatch(const RGDispatchInfo &info) {}
 
     void RenderPassContext::copy_buffer(const RGBufferCopyInfo &info) {}
 

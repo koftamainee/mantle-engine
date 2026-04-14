@@ -1,8 +1,9 @@
 #pragma once
-#include <span>
-#include "core/enum_flags.h"
 #include <array>
+#include <span>
 #include <string_view>
+#include "core/enum_flags.h"
+#include "core/types.h"
 
 namespace mantle {
     struct BufferHandle final {
@@ -37,7 +38,7 @@ namespace mantle {
         u32 index;
     };
 
-    enum class BufferUsage{
+    enum class BufferUsage {
         None = 0,
         Vertex = 1 << 0,
         Index = 1 << 1,
@@ -69,7 +70,7 @@ namespace mantle {
         D24S8,
         D32S8,
     };
-    enum class ImageUsage{
+    enum class ImageUsage {
         None = 0,
         Sampled = 1 << 0,
         Storage = 1 << 1,
@@ -110,7 +111,7 @@ namespace mantle {
         ShaderHandle shader;
     };
 
-    enum class VertexFormat{
+    enum class VertexFormat {
         Float1,
         Float2,
         Float3,
@@ -246,7 +247,7 @@ namespace mantle {
         Src1Alpha,
         OneMinusSrc1Alpha,
     };
-    enum class BlendOp{
+    enum class BlendOp {
         Add,
         Subtract,
         ReverseSubtract,
@@ -364,14 +365,14 @@ namespace mantle {
         u32 height = 0;
     };
 
-    struct DrawInfo final {
+    struct RGDrawInfo final {
         u32 vertex_count = 0;
         u32 instance_count = 1;
         u32 first_vertex = 0;
         u32 first_instance = 0;
     };
 
-    struct DrawIndexedInfo final {
+    struct RGDrawIndexedInfo final {
         u32 index_count = 0;
         u32 instance_count = 1;
         u32 first_index = 0;
@@ -379,7 +380,7 @@ namespace mantle {
         u32 first_instance = 0;
     };
 
-    struct DispatchInfo final {
+    struct RGDispatchInfo final {
         u32 x = 1;
         u32 y = 1;
         u32 z = 1;

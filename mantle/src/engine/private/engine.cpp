@@ -4,6 +4,7 @@
 #include "core/assert.h"
 #include "core/memory/memory_units.h"
 #include "renderer/renderer.h"
+#include "renderer/utils.h"
 #include "spdlog/spdlog.h"
 #include "window/window.h"
 
@@ -39,10 +40,54 @@ namespace mantle {
 
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
-        // m_dda_pipeline =
-        //     m_renderer.resource_manager().create_compute_pipeline({});
-        // m_present_pipeline =
-        //     m_renderer.resource_manager().create_graphics_pipeline({});
+
+        std::pmr::vector<u32> spv;
+        load_spv("assets/shaders/flat.spv", spv);
+        ShaderHandle shader = m_renderer.resource_manager().create_shader(spv);
+
+        ShaderModule shader_modules[] = {
+            {"vert_main", ShaderStage::Vertex, shader},
+            {"frag_main", ShaderStage::Fragment, shader},
+        };
+
+        ImageFormat color_format = ImageFormat::Bgra8Srgb; // FIXME
+
+        GraphicsPipelineDesc desc = {
+            .shaders = shader_modules,
+            .vertex_input = {},
+            .input_assembly =
+                {
+                    .topology = PrimitiveTopology::TriangleList,
+                },
+            .rasterization =
+                {
+                    .polygon_mode = PolygonMode::Fill,
+                    .cull_mode = CullMode::None,
+                    .front_face = FrontFace::Clockwise,
+                },
+            .multisample =
+                {
+                    .rasterization_samples = SampleCount::x1,
+                },
+            .depth_stencil =
+                {
+                    .depth_test_enable = false,
+                    .depth_write_enable = false,
+                },
+            .color_formats = std::span<const ImageFormat>{&color_format, 1},
+        };
+
+        ColorBlendAttachment blend_attachment = {
+            .blend_enable = false,
+            .color_write_mask = 0xF,
+        };
+        desc.color_blend.attachments =
+            std::span<const ColorBlendAttachment>{&blend_attachment, 1};
+
+        m_triangle_pipeline =
+            m_renderer.resource_manager().create_graphics_pipeline(desc);
+
+        m_renderer.resource_manager().destroy_shader(shader);
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 
@@ -130,7 +175,7 @@ namespace mantle {
                 pass.out_backbuffer = builder.write(backbuffer);
             },
             [width, height, this](RenderPassContext &ctx,
-                                              const TrianglePass &pass) {
+                                  const TrianglePass &pass) {
                 std::array<RGColorAttachment, 1> color_attachments = {{{
                     .image = pass.out_backbuffer,
                     .load = AttachmentLoad::Clear,
@@ -146,7 +191,7 @@ namespace mantle {
                     .height = height,
                 });
 
-                ctx.bind_pipeline(m_present_pipeline);
+                ctx.bind_pipeline(m_triangle_pipeline);
                 ctx.draw({.vertex_count = 3});
 
                 ctx.end_rendering();

@@ -870,9 +870,31 @@ namespace mantle {
         if (m_is_initialized) {
             m_impl->backend->wait_idle();
 
+            for (u32 i = 0; i < m_impl->compute_pipelines.size(); ++i) {
+                if (m_impl->compute_pipelines[i].resource.pipeline !=
+                    VK_NULL_HANDLE) {
+                    destroy_compute_pipeline(
+                        {i, m_impl->compute_pipelines[i].generation});
+                    }
+            }
+
+            for (u32 i = 0; i < m_impl->graphics_pipelines.size(); ++i) {
+                if (m_impl->graphics_pipelines[i].resource.pipeline !=
+                    VK_NULL_HANDLE) {
+                    destroy_graphics_pipeline(
+                        {i, m_impl->graphics_pipelines[i].generation});
+                    }
+            }
+
             for (u32 i = 0; i < m_impl->shaders.size(); i++) {
                 if (m_impl->shaders[i].resource.shader != VK_NULL_HANDLE) {
                     destroy_shader({i, m_impl->shaders[i].generation});
+                }
+            }
+
+            for (u32 i = 0; i < m_impl->samplers.size(); ++i) {
+                if (m_impl->samplers[i].resource.sampler != VK_NULL_HANDLE) {
+                    destroy_sampler({i, m_impl->samplers[i].generation});
                 }
             }
 
@@ -888,27 +910,6 @@ namespace mantle {
                 }
             }
 
-            for (u32 i = 0; i < m_impl->samplers.size(); ++i) {
-                if (m_impl->samplers[i].resource.sampler != VK_NULL_HANDLE) {
-                    destroy_sampler({i, m_impl->samplers[i].generation});
-                }
-            }
-
-            for (u32 i = 0; i < m_impl->compute_pipelines.size(); ++i) {
-                if (m_impl->compute_pipelines[i].resource.pipeline !=
-                    VK_NULL_HANDLE) {
-                    destroy_compute_pipeline(
-                        {i, m_impl->compute_pipelines[i].generation});
-                }
-            }
-
-            for (u32 i = 0; i < m_impl->graphics_pipelines.size(); ++i) {
-                if (m_impl->graphics_pipelines[i].resource.pipeline !=
-                    VK_NULL_HANDLE) {
-                    destroy_graphics_pipeline(
-                        {i, m_impl->graphics_pipelines[i].generation});
-                }
-            }
 
             for (auto &queue : m_impl->deletion_queues) {
                 queue.flush();

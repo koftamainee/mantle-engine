@@ -30,8 +30,7 @@ namespace mantle {
 
         ArenaAllocator m_rendering_arena;
 
-        ComputePipelineHandle m_dda_pipeline{};
-        GraphicsPipelineHandle m_present_pipeline{};
+        GraphicsPipelineHandle m_triangle_pipeline{};
 
         f32 m_last_time = 0.0f;
 

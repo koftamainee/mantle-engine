@@ -86,4 +86,8 @@ namespace mantle {
         u32 mip_level = 0;
     };
 
+    using DrawInfo = RGDrawInfo;
+    using DrawIndexedInfo = RGDrawIndexedInfo;
+    using DispatchInfo = RGDispatchInfo;
+
 } // namespace mantle

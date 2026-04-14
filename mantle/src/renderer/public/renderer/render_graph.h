@@ -2,11 +2,11 @@
 #include <string_view>
 #include <vector>
 
+#include <renderer/types.h>
 #include "core/memory/arena_allocator.h"
 #include "core/memory/pmr/arena_resource.h"
 #include "core/memory/scope_arena.h"
 #include "gpu_resource_manager.h"
-#include <renderer/types.h>
 
 namespace mantle {
     class RenderGraphBuilder final {
@@ -27,6 +27,7 @@ namespace mantle {
         RGImageHandle write(RGImageHandle image);
         RGBufferHandle read(RGBufferHandle buffer);
         RGBufferHandle write(RGBufferHandle buffer);
+
       private:
         // TODO
     };
@@ -45,16 +46,24 @@ namespace mantle {
         void bind_pipeline(GraphicsPipelineHandle pipeline);
         void bind_pipeline(ComputePipelineHandle pipeline);
 
-        void begin_rendering(const RGRenderingInfo& info);
+        void begin_rendering(const RGRenderingInfo &info);
         void end_rendering();
 
-        void draw(const DrawInfo &info);
-        void draw_indexed(const DrawIndexedInfo &info);
+        void draw(const RGDrawInfo &info);
+        void draw_indexed(const RGDrawIndexedInfo &info);
 
-        void dispatch(const DispatchInfo &info);
+        void dispatch(const RGDispatchInfo &info);
 
         void copy_buffer(const RGBufferCopyInfo &info);
         void copy_buffer_to_image(const RGBufferImageCopyInfo &info);
+
+        /* TODO:
+         * 1. add copy_image and blit_image, copy_image_to_buffer,set_viewport,
+         * set_scissors, clear_color_image, clear_depth_image,
+         * bind_vertex_buffer, bind_index_buffer
+         *
+         * 2. Change push_constants signature to accept info struct
+         */
 
         void push_constants(const void *data, u32 size, u32 offset = 0);
 
@@ -87,7 +96,7 @@ namespace mantle {
             CRenderPassSetupLambda<TData, TSetup> &&
             CRenderPassExecuteLambda<TData, TExecute>
         const TData &add_pass(std::string_view name, TSetup &&setup,
-                      TExecute &&execute) {
+                              TExecute &&execute) {
             // TODO
             return {};
         }
