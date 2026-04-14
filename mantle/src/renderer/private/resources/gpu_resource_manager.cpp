@@ -53,7 +53,7 @@ namespace mantle {
         fatal(handle.generation != shader.generation, "Invalid shader handle");
 
         shader.generation++;
-        m_impl->images_free_list.push_back(handle.index);
+        m_impl->shaders_free_list.push_back(handle.index);
 
         auto del = [shader_module = shader.resource.shader, this]() {
             if (shader_module != VK_NULL_HANDLE) {
@@ -62,6 +62,7 @@ namespace mantle {
                     m_impl->backend->m_vk_allocator.vk_allocator());
             }
         };
+        shader.resource.shader = VK_NULL_HANDLE;
 
         m_impl->deletion_queues[m_impl->current_frame].push_fn(del);
     }
@@ -156,8 +157,12 @@ namespace mantle {
 
         auto del = [buf = buffer.resource.buffer,
                     alloc = buffer.resource.allocation, this]() {
-            m_impl->gpu_allocator.destroy_buffer(buf, alloc);
+            if (buf != VK_NULL_HANDLE) {
+                m_impl->gpu_allocator.destroy_buffer(buf, alloc);
+            }
         };
+        buffer.resource.buffer = VK_NULL_HANDLE;
+        buffer.resource.allocation = VK_NULL_HANDLE;
 
         m_impl->deletion_queues[m_impl->current_frame].push_fn(del);
     }
@@ -278,6 +283,9 @@ namespace mantle {
                 m_impl->gpu_allocator.destroy_image(img, alloc);
             }
         };
+        image.resource.image = VK_NULL_HANDLE;
+        image.resource.view = VK_NULL_HANDLE;
+        image.resource.allocation = VK_NULL_HANDLE;
 
         m_impl->deletion_queues[m_impl->current_frame].push_fn(del);
     }
@@ -344,9 +352,12 @@ namespace mantle {
         m_impl->samplers_free_list.push_back(handle.index);
 
         auto del = [s = sampler.resource.sampler, this]() {
-            vkDestroySampler(m_impl->backend->m_device.get_device(), s,
-                             m_impl->backend->m_vk_allocator.vk_allocator());
+            if (s != VK_NULL_HANDLE) {
+                vkDestroySampler(m_impl->backend->m_device.get_device(), s,
+                                 m_impl->backend->m_vk_allocator.vk_allocator());
+            }
         };
+        sampler.resource.sampler = VK_NULL_HANDLE;
 
         m_impl->deletion_queues[m_impl->current_frame].push_fn(del);
     }
@@ -368,7 +379,6 @@ namespace mantle {
         for (usize i = 0; i < count; i++) {
             VkImage image = swapchain_images[i].image;
             VkImageView view = swapchain_images[i].view;
-
 
             u32 index;
             u32 generation;
@@ -457,14 +467,44 @@ namespace mantle {
         spdlog::info("GPU resource manager is initialized");
     }
 
-    void GPUResourceManager::destroy() {
-        if (m_is_initialized) {
-            m_impl->gpu_allocator.destroy();
+void GPUResourceManager::destroy() {
+    if (m_is_initialized) {
+        m_impl->backend->wait_idle();
 
-            m_is_initialized = false;
-            spdlog::info("GPU resource manager is destroyed");
+        for (u32 i = 0; i < m_impl->shaders.size(); i++) {
+            if (m_impl->shaders[i].resource.shader != VK_NULL_HANDLE) {
+                destroy_shader({i, m_impl->shaders[i].generation});
+            }
         }
+
+        for (u32 i = 0; i < m_impl->buffers.size(); i++) {
+            if (m_impl->buffers[i].resource.buffer != VK_NULL_HANDLE) {
+                destroy_buffer({i, m_impl->buffers[i].generation});
+            }
+        }
+
+        for (u32 i = 0; i < m_impl->images.size(); ++i) {
+            if (m_impl->images[i].resource.allocation != VK_NULL_HANDLE) {
+                destroy_image({i, m_impl->images[i].generation});
+            }
+        }
+
+        for (u32 i = 0; i < m_impl->samplers.size(); ++i) {
+            if (m_impl->samplers[i].resource.sampler != VK_NULL_HANDLE) {
+                destroy_sampler({i, m_impl->samplers[i].generation});
+            }
+        }
+
+        for (auto& queue : m_impl->deletion_queues) {
+            queue.flush();
+        }
+
+        m_impl->gpu_allocator.destroy();
+
+        m_is_initialized = false;
+        spdlog::info("GPU resource manager is destroyed");
     }
+}
 
     u32 GPUResourceManager::get_bindless_index(ImageHandle image) {}
 

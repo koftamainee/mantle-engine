@@ -45,6 +45,8 @@ namespace mantle {
             return ImageFormat::D24S8;
         case VK_FORMAT_D32_SFLOAT_S8_UINT:
             return ImageFormat::D32S8;
+        case VK_FORMAT_UNDEFINED:
+            return ImageFormat::Undefined;
         default:
             fatal(true, "unsupported VkFormat");
         }
@@ -72,7 +74,8 @@ namespace mantle {
             return VK_FORMAT_D24_UNORM_S8_UINT;
         case ImageFormat::D32S8:
             return VK_FORMAT_D32_SFLOAT_S8_UINT;
-
+        case ImageFormat::Undefined:
+            return VK_FORMAT_UNDEFINED;
         default:
             fatal(true, "unsupported ImageFormat");
         }
@@ -113,6 +116,8 @@ namespace mantle {
         case ImageFormat::D24S8:
         case ImageFormat::D32S8:
             return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+        case ImageFormat::Undefined:
+            return 0;
         default:
             return VK_IMAGE_ASPECT_COLOR_BIT;
         }
@@ -297,7 +302,6 @@ namespace mantle {
         }
     }
 
-
     VkSampleCountFlagBits to_vk(SampleCount count) {
         switch (count) {
         case SampleCount::x1:
@@ -310,6 +314,256 @@ namespace mantle {
             return VK_SAMPLE_COUNT_8_BIT;
         }
         fatal(true, "Unknown sample count");
+    }
+
+    VkShaderStageFlags to_vk(ShaderStage stage) {
+        switch (stage) {
+        case ShaderStage::Vertex:
+            return VK_SHADER_STAGE_VERTEX_BIT;
+        case ShaderStage::TessellationControl:
+            return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+        case ShaderStage::TessellationEvaluation:
+            return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+        case ShaderStage::Fragment:
+            return VK_SHADER_STAGE_FRAGMENT_BIT;
+        case ShaderStage::Compute:
+            return VK_SHADER_STAGE_COMPUTE_BIT;
+        default:
+            fatal(true, "Unknown shader stage");
+        }
+    }
+
+    VkFormat to_vk(VertexFormat format) {
+        switch (format) {
+        case VertexFormat::Float1:
+            return VK_FORMAT_R32_SFLOAT;
+        case VertexFormat::Float2:
+            return VK_FORMAT_R32G32_SFLOAT;
+        case VertexFormat::Float3:
+            return VK_FORMAT_R32G32B32_SFLOAT;
+        case VertexFormat::Float4:
+            return VK_FORMAT_R32G32B32A32_SFLOAT;
+        default:
+            fatal(true, "Unknown vertex format");
+        }
+    }
+
+    VkPrimitiveTopology to_vk(PrimitiveTopology topology) {
+        switch (topology) {
+        case PrimitiveTopology::PointList:
+            return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+        case PrimitiveTopology::LineList:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+        case PrimitiveTopology::LineStrip:
+            return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+        case PrimitiveTopology::TriangleList:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        case PrimitiveTopology::TriangleStrip:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+        case PrimitiveTopology::TriangleFan:
+            return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+        default:
+            fatal(true, "Unknown primitive topology");
+        }
+    }
+
+    VkPolygonMode to_vk(PolygonMode mode) {
+        switch (mode) {
+        case PolygonMode::Fill:
+            return VK_POLYGON_MODE_FILL;
+        case PolygonMode::Line:
+            return VK_POLYGON_MODE_LINE;
+        case PolygonMode::Point:
+            return VK_POLYGON_MODE_POINT;
+        default:
+            fatal(true, "Unknown polygon mode");
+        }
+    }
+
+    VkCullModeFlags to_vk(CullMode mode) {
+        switch (mode) {
+        case CullMode::None:
+            return VK_CULL_MODE_NONE;
+        case CullMode::Front:
+            return VK_CULL_MODE_FRONT_BIT;
+        case CullMode::Back:
+            return VK_CULL_MODE_BACK_BIT;
+        case CullMode::FrontAndBack:
+            return VK_CULL_MODE_FRONT_AND_BACK;
+        default:
+            fatal(true, "Unknown cull mode");
+        }
+    }
+
+    VkFrontFace to_vk(FrontFace face) {
+        switch (face) {
+        case FrontFace::CounterClockwise:
+            return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        case FrontFace::Clockwise:
+            return VK_FRONT_FACE_CLOCKWISE;
+        default:
+            fatal(true, "Unknown front face");
+        }
+    }
+
+    VkCompareOp to_vk(CompareOp op) {
+        switch (op) {
+        case CompareOp::Never:
+            return VK_COMPARE_OP_NEVER;
+        case CompareOp::Less:
+            return VK_COMPARE_OP_LESS;
+        case CompareOp::Equal:
+            return VK_COMPARE_OP_EQUAL;
+        case CompareOp::LessOrEqual:
+            return VK_COMPARE_OP_LESS_OR_EQUAL;
+        case CompareOp::Greater:
+            return VK_COMPARE_OP_GREATER;
+        case CompareOp::NotEqual:
+            return VK_COMPARE_OP_NOT_EQUAL;
+        case CompareOp::GreaterOrEqual:
+            return VK_COMPARE_OP_GREATER_OR_EQUAL;
+        case CompareOp::Always:
+            return VK_COMPARE_OP_ALWAYS;
+        default:
+            fatal(true, "Unknown compare op");
+        }
+    }
+
+    VkStencilOp to_vk(StencilOp op) {
+        switch (op) {
+        case StencilOp::Keep:
+            return VK_STENCIL_OP_KEEP;
+        case StencilOp::Zero:
+            return VK_STENCIL_OP_ZERO;
+        case StencilOp::Replace:
+            return VK_STENCIL_OP_REPLACE;
+        case StencilOp::IncrementAndClamp:
+            return VK_STENCIL_OP_INCREMENT_AND_CLAMP;
+        case StencilOp::DecrementAndClamp:
+            return VK_STENCIL_OP_DECREMENT_AND_CLAMP;
+        case StencilOp::Invert:
+            return VK_STENCIL_OP_INVERT;
+        case StencilOp::IncrementAndWrap:
+            return VK_STENCIL_OP_INCREMENT_AND_WRAP;
+        case StencilOp::DecrementAndWrap:
+            return VK_STENCIL_OP_DECREMENT_AND_WRAP;
+        default:
+            fatal(true, "Unknown stencil op");
+        }
+    }
+
+    VkBlendFactor to_vk(BlendFactor factor) {
+        switch (factor) {
+        case BlendFactor::Zero:
+            return VK_BLEND_FACTOR_ZERO;
+        case BlendFactor::One:
+            return VK_BLEND_FACTOR_ONE;
+        case BlendFactor::SrcColor:
+            return VK_BLEND_FACTOR_SRC_COLOR;
+        case BlendFactor::OneMinusSrcColor:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        case BlendFactor::DstColor:
+            return VK_BLEND_FACTOR_DST_COLOR;
+        case BlendFactor::OneMinusDstColor:
+            return VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR;
+        case BlendFactor::SrcAlpha:
+            return VK_BLEND_FACTOR_SRC_ALPHA;
+        case BlendFactor::OneMinusSrcAlpha:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        case BlendFactor::DstAlpha:
+            return VK_BLEND_FACTOR_DST_ALPHA;
+        case BlendFactor::OneMinusDstAlpha:
+            return VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA;
+        case BlendFactor::ConstantColor:
+            return VK_BLEND_FACTOR_CONSTANT_COLOR;
+        case BlendFactor::OneMinusConstantColor:
+            return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR;
+        case BlendFactor::ConstantAlpha:
+            return VK_BLEND_FACTOR_CONSTANT_ALPHA;
+        case BlendFactor::OneMinusConstantAlpha:
+            return VK_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA;
+        case BlendFactor::SrcAlphaSaturate:
+            return VK_BLEND_FACTOR_SRC_ALPHA_SATURATE;
+        case BlendFactor::Src1Color:
+            return VK_BLEND_FACTOR_SRC1_COLOR;
+        case BlendFactor::OneMinusSrc1Color:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR;
+        case BlendFactor::Src1Alpha:
+            return VK_BLEND_FACTOR_SRC1_ALPHA;
+        case BlendFactor::OneMinusSrc1Alpha:
+            return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
+        default:
+            fatal(true, "Unknown blend factor");
+        }
+    }
+
+    VkBlendOp to_vk(BlendOp op) {
+        switch (op) {
+        case BlendOp::Add:
+            return VK_BLEND_OP_ADD;
+        case BlendOp::Subtract:
+            return VK_BLEND_OP_SUBTRACT;
+        case BlendOp::ReverseSubtract:
+            return VK_BLEND_OP_REVERSE_SUBTRACT;
+        case BlendOp::Min:
+            return VK_BLEND_OP_MIN;
+        case BlendOp::Max:
+            return VK_BLEND_OP_MAX;
+        default:
+            fatal(true, "Unknown blend op");
+        }
+    }
+
+    VkLogicOp to_vk(LogicOp op) {
+        switch (op) {
+        case LogicOp::Clear:
+            return VK_LOGIC_OP_CLEAR;
+        case LogicOp::And:
+            return VK_LOGIC_OP_AND;
+        case LogicOp::AndReverse:
+            return VK_LOGIC_OP_AND_REVERSE;
+        case LogicOp::Copy:
+            return VK_LOGIC_OP_COPY;
+        case LogicOp::AndInverted:
+            return VK_LOGIC_OP_AND_INVERTED;
+        case LogicOp::NoOp:
+            return VK_LOGIC_OP_NO_OP;
+        case LogicOp::Xor:
+            return VK_LOGIC_OP_XOR;
+        case LogicOp::Or:
+            return VK_LOGIC_OP_OR;
+        case LogicOp::Nor:
+            return VK_LOGIC_OP_NOR;
+        case LogicOp::Equivalent:
+            return VK_LOGIC_OP_EQUIVALENT;
+        case LogicOp::Invert:
+            return VK_LOGIC_OP_INVERT;
+        case LogicOp::OrReverse:
+            return VK_LOGIC_OP_OR_REVERSE;
+        case LogicOp::CopyInverted:
+            return VK_LOGIC_OP_COPY_INVERTED;
+        case LogicOp::OrInverted:
+            return VK_LOGIC_OP_OR_INVERTED;
+        case LogicOp::Nand:
+            return VK_LOGIC_OP_NAND;
+        case LogicOp::Set:
+            return VK_LOGIC_OP_SET;
+        default:
+            fatal(true, "Unknown logic op");
+        }
+    }
+
+    VkColorComponentFlags to_vk_color_write_mask(u8 mask) {
+        VkColorComponentFlags flags = 0;
+        if (mask & 0x1)
+            flags |= VK_COLOR_COMPONENT_R_BIT;
+        if (mask & 0x2)
+            flags |= VK_COLOR_COMPONENT_G_BIT;
+        if (mask & 0x4)
+            flags |= VK_COLOR_COMPONENT_B_BIT;
+        if (mask & 0x8)
+            flags |= VK_COLOR_COMPONENT_A_BIT;
+        return flags;
     }
 
 } // namespace mantle

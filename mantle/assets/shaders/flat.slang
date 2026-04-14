@@ -1,30 +1,31 @@
-struct PushConstants {
-    float4x4 mvp;
-}
-
-[[vk::push_constant]]
-PushConstants pc;
+static const float2 positions[3] = float2[](
+    float2(0.0, -0.5),
+    float2(0.5, 0.5),
+    float2(-0.5, 0.5)
+);
+static const float3 colors[3] = float3[](
+    float3(1.0, 0.0, 0.0),
+    float3(0.0, 1.0, 0.0),
+    float3(0.0, 0.0, 1.0)
+);
 
 struct VSInput {
-    float3 position : POSITION;
-    float3 normal : NORMAL;
+    uint vertex_id : SV_VertexID;
 };
-
 struct VSOutput {
+    float3 color : COLOR;
     float4 position : SV_Position;
-    float3 normal : NORMAL;
 };
 
 [shader("vertex")]
 VSOutput vert_main(VSInput input) {
     VSOutput output;
-    output.position = mul(pc.mvp, float4(input.position, 1.0));
-    output.normal = input.normal;
+    output.position = float4(positions[input.vertex_id], 0.0, 1.0);
+    output.color = colors[input.vertex_id];
     return output;
 }
 
 [shader("fragment")]
 float4 frag_main(VSOutput input) : SV_Target {
-    float3 color = input.normal * 0.5 + 0.5;
-    return float4(color, 1.0);
+    return float4(input.color, 1.0);
 }

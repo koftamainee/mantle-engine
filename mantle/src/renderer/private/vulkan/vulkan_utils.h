@@ -22,6 +22,18 @@ namespace mantle {
     VkSamplerAddressMode to_vk(AddressMode mode);
     VkAttachmentLoadOp to_vk(AttachmentLoad load);
     VkAttachmentStoreOp to_vk(AttachmentStore store);
+    VkShaderStageFlags to_vk(ShaderStage stage);
+    VkFormat to_vk(VertexFormat format);
+    VkPrimitiveTopology to_vk(PrimitiveTopology topology);
+    VkPolygonMode to_vk(PolygonMode mode);
+    VkCullModeFlags to_vk(CullMode mode);
+    VkFrontFace to_vk(FrontFace face);
+    VkCompareOp to_vk(CompareOp op);
+    VkStencilOp to_vk(StencilOp op);
+    VkBlendFactor to_vk(BlendFactor factor);
+    VkBlendOp to_vk(BlendOp op);
+    VkLogicOp to_vk(LogicOp op);
+    VkColorComponentFlags to_vk_color_write_mask(u8 mask);
 
     VkImageLayout to_vk(ImageLayout layout);
     VkPipelineStageFlags2 to_vk(PipelineStage stage);
