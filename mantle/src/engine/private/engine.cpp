@@ -158,10 +158,10 @@ namespace mantle {
                 pass.in_image = builder.read(voxel_pass_data.out_image);
                 pass.out_backbuffer = builder.write(backbuffer);
             },
-            [backbuffer, width, height, this](RenderPassContext &ctx,
+            [width, height, this](RenderPassContext &ctx,
                                               const PresentPass &pass) {
                 std::array<RGColorAttachment, 1> color_attachments = {{{
-                    .image = backbuffer,
+                    .image = pass.out_backbuffer,
                     .load = AttachmentLoad::Clear,
                     .store = AttachmentStore::Store,
                     .clear_r = 0.1f,
