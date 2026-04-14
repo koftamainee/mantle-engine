@@ -33,7 +33,16 @@ namespace mantle {
     struct ShaderResource final {
         VkShaderModule shader = VK_NULL_HANDLE;
     };
-
+    struct GraphicsPipelineResource final {
+        VkPipeline pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout layout = VK_NULL_HANDLE;
+        GraphicsPipelineDesc desc = {};
+    };
+    struct ComputePipelineResource final {
+        VkPipeline pipeline = VK_NULL_HANDLE;
+        VkPipelineLayout layout = VK_NULL_HANDLE;
+        ComputePipelineDesc desc = {};
+    };
 
     struct GPUResourceManager::Impl final {
         static constexpr u32 frame_lag = 3;
@@ -42,14 +51,8 @@ namespace mantle {
         BufferResource &get_buffer(BufferHandle handle);
         SamplerResource &get_sampler(SamplerHandle handle);
         ShaderResource &get_shader(ShaderHandle handle);
-
-        //TODO new signatures
-        VkPipeline get_vk_pipeline(GraphicsPipelineHandle handle) const;
-        VkPipeline get_vk_pipeline(ComputePipelineHandle handle) const;
-        VkPipelineLayout
-        get_vk_pipeline_layout(GraphicsPipelineHandle handle) const;
-        VkPipelineLayout
-        get_vk_pipeline_layout(ComputePipelineHandle handle) const;
+        GraphicsPipelineResource &get_graphics_pipeline(GraphicsPipelineHandle handle);
+        ComputePipelineResource &get_compute_pipeline(ComputePipelineHandle handle);
 
         void next_frame();
 
@@ -72,5 +75,11 @@ namespace mantle {
 
         std::pmr::vector<Slot<ShaderResource>> shaders;
         std::pmr::vector<u32> shaders_free_list;
+
+        std::pmr::vector<Slot<GraphicsPipelineResource>> graphics_pipelines;
+        std::pmr::vector<u32> graphics_pipelines_free_list;
+
+        std::pmr::vector<Slot<ComputePipelineResource>> compute_pipelines;
+        std::pmr::vector<u32> compute_pipelines_free_list;
     };
 } // namespace mantle

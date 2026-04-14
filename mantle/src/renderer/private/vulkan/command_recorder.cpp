@@ -114,17 +114,19 @@ namespace mantle {
     void
     CommandRecorder::bind_graphics_pipeline(GraphicsPipelineHandle pipeline) {
         auto *impl = m_resources->m_impl;
-        m_current_layout = impl->get_vk_pipeline_layout(pipeline);
-        vkCmdBindPipeline(m_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                          impl->get_vk_pipeline(pipeline));
+        auto &pipeline_ref = impl->get_graphics_pipeline(pipeline);
+        m_current_layout = pipeline_ref.layout;
+        vkCmdBindPipeline(m_cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
+                          pipeline_ref.pipeline);
     }
 
     void
     CommandRecorder::bind_compute_pipeline(ComputePipelineHandle pipeline) {
         auto *impl = m_resources->m_impl;
-        m_current_layout = impl->get_vk_pipeline_layout(pipeline);
+        auto &pipeline_ref = impl->get_compute_pipeline(pipeline);
+        m_current_layout = pipeline_ref.layout;
         vkCmdBindPipeline(m_cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
-                          impl->get_vk_pipeline(pipeline));
+                          pipeline_ref.pipeline);
     }
 
     void CommandRecorder::push_constants(const void *data, u32 size) const {

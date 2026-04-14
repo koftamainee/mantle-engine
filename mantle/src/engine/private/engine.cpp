@@ -39,10 +39,10 @@ namespace mantle {
 
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
-        m_dda_pipeline =
-            m_renderer.resource_manager().create_compute_pipeline({});
-        m_present_pipeline =
-            m_renderer.resource_manager().create_graphics_pipeline({});
+        // m_dda_pipeline =
+        //     m_renderer.resource_manager().create_compute_pipeline({});
+        // m_present_pipeline =
+        //     m_renderer.resource_manager().create_graphics_pipeline({});
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 

@@ -26,8 +26,8 @@ namespace mantle {
         create_graphics_pipeline(const GraphicsPipelineDesc &desc);
         ComputePipelineHandle
         create_compute_pipeline(const ComputePipelineDesc &desc);
-        void destroy_graphics_pipeline(GraphicsPipelineHandle pipeline);
-        void destroy_compute_pipeline(ComputePipelineHandle pipeline);
+        void destroy_graphics_pipeline(GraphicsPipelineHandle handle);
+        void destroy_compute_pipeline(ComputePipelineHandle handle);
 
         BufferHandle create_buffer(const BufferDesc &desc, bool map = false);
         void update_buffer(BufferHandle handle, const void *data, usize size,
