@@ -272,6 +272,8 @@ namespace mantle {
 
         VkPipelineLayoutCreateInfo layout_info = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .setLayoutCount = 1,
+            .pSetLayouts = &m_impl->m_bindless_layout,
             .pushConstantRangeCount =
                 static_cast<u32>(desc.push_constants.size()),
             .pPushConstantRanges = vk_push_constants.data(),
@@ -360,6 +362,8 @@ namespace mantle {
 
         VkPipelineLayoutCreateInfo layout_info = {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .setLayoutCount = 1,
+            .pSetLayouts = &m_impl->m_bindless_layout,
             .pushConstantRangeCount = desc.push_constants.size > 0 ? 1u : 0u,
             .pPushConstantRanges =
                 desc.push_constants.size > 0 ? &push_constant_range : nullptr,
@@ -565,9 +569,13 @@ namespace mantle {
         m_impl->buffers_free_list.push_back(handle.index);
 
         auto del = [buf = buffer.resource.buffer,
-                    alloc = buffer.resource.allocation, this]() {
+                    alloc = buffer.resource.allocation,
+                    idx = buffer.resource.bindless_index, this]() {
             if (buf != VK_NULL_HANDLE) {
                 m_impl->gpu_allocator.destroy_buffer(buf, alloc);
+            }
+            if (idx != UINT32_MAX) {
+                m_impl->free_buffer_index(idx);
             }
         };
         buffer.resource.buffer = VK_NULL_HANDLE;
@@ -686,16 +694,24 @@ namespace mantle {
         image.generation++;
         m_impl->images_free_list.push_back(handle.index);
 
-        auto del = [img = image.resource.image,
-                    alloc = image.resource.allocation,
-                    view = image.resource.view, this]() {
-            if (alloc != VK_NULL_HANDLE) { // Case for swapchain images
-                vkDestroyImageView(
-                    m_impl->backend->m_device.get_device(), view,
-                    m_impl->backend->m_vk_allocator.vk_allocator());
-                m_impl->gpu_allocator.destroy_image(img, alloc);
-            }
-        };
+        auto del =
+            [img = image.resource.image, alloc = image.resource.allocation,
+             view = image.resource.view,
+             sampler_idx = image.resource.bindless_sample_index,
+             storage_idx = image.resource.bindless_storage_index, this]() {
+                if (alloc != VK_NULL_HANDLE) { // Case for swapchain images
+                    vkDestroyImageView(
+                        m_impl->backend->m_device.get_device(), view,
+                        m_impl->backend->m_vk_allocator.vk_allocator());
+                    m_impl->gpu_allocator.destroy_image(img, alloc);
+                }
+                if (sampler_idx != UINT32_MAX) {
+                    m_impl->free_sampler_index(sampler_idx);
+                }
+                if (storage_idx != UINT32_MAX) {
+                    m_impl->free_storage_image_index(storage_idx);
+                }
+            };
         image.resource.image = VK_NULL_HANDLE;
         image.resource.view = VK_NULL_HANDLE;
         image.resource.allocation = VK_NULL_HANDLE;
@@ -769,11 +785,15 @@ namespace mantle {
         sampler.generation++;
         m_impl->samplers_free_list.push_back(handle.index);
 
-        auto del = [s = sampler.resource.sampler, this]() {
+        auto del = [s = sampler.resource.sampler,
+                    idx = sampler.resource.bindless_index, this]() {
             if (s != VK_NULL_HANDLE) {
                 vkDestroySampler(
                     m_impl->backend->m_device.get_device(), s,
                     m_impl->backend->m_vk_allocator.vk_allocator());
+            }
+            if (idx != UINT32_MAX) {
+                m_impl->free_sampler_index(idx);
             }
         };
         sampler.resource.sampler = VK_NULL_HANDLE;
@@ -784,8 +804,35 @@ namespace mantle {
             m_impl->deletion_queues[m_impl->current_frame].push_fn(del);
         }
     }
+    u32 GPUResourceManager::get_bindless_index(ImageHandle handle,
+                                               BindlessImageType type) {
+        check(m_is_initialized);
+        auto &image = m_impl->get_image(handle);
+        if (type == BindlessImageType::Sampled &&
+            image.bindless_sample_index != UINT32_MAX) {
+            return image.bindless_sample_index;
+        }
+        if (type == BindlessImageType::Storage &&
+            image.bindless_storage_index != UINT32_MAX) {
+            return image.bindless_storage_index;
+        }
 
-    u32 GPUResourceManager::get_bindless_index(SamplerHandle sampler) {} // TODO
+        if (type == BindlessImageType::Sampled) {
+            checkf(image.desc.usage & ImageUsage::Sampled,
+                   "Image must have Sampled usage");
+            image.bindless_sample_index =
+                m_impl->allocate_sampled_image_index(image);
+            return image.bindless_sample_index;
+        }
+        if (type == BindlessImageType::Storage) {
+            checkf(image.desc.usage & ImageUsage::Storage,
+                   "Image must have Storage usage");
+            image.bindless_storage_index =
+                m_impl->allocate_storage_image_index(image);
+            return image.bindless_storage_index;
+        }
+    }
+
 
     void GPUResourceManager::import_swapchain_images(
         std::pmr::vector<ImageHandle> &out_images) {
@@ -849,6 +896,95 @@ namespace mantle {
             .clear(); // removes images, but capacity remains, so no memory leak
     }
 
+    void GPUResourceManager::init_bindless() {
+        VkDevice vk_device = m_impl->backend->m_device.get_device();
+        VkAllocationCallbacks *vk_callbacks =
+            m_impl->backend->m_vk_allocator.vk_allocator();
+
+        VkDescriptorPoolSize pool_sizes[] = {
+            {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, max_sampled_images},
+            {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, max_storage_images},
+            {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, max_storage_buffers},
+            {VK_DESCRIPTOR_TYPE_SAMPLER, max_samplers},
+        };
+
+        VkDescriptorPoolCreateInfo pool_info = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
+            .maxSets = 1,
+            .poolSizeCount = static_cast<u32>(std::size(pool_sizes)),
+            .pPoolSizes = pool_sizes,
+        };
+
+        vk_verify(vkCreateDescriptorPool(vk_device, &pool_info, vk_callbacks,
+                                         &m_impl->m_bindless_pool));
+
+        VkDescriptorSetLayoutBinding bindings[] = {
+            {sampled_image_binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+             max_sampled_images, VK_SHADER_STAGE_ALL, nullptr},
+            {storage_buffer_binding, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+             max_storage_images, VK_SHADER_STAGE_ALL, nullptr},
+            {storage_buffer_binding, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+             max_storage_buffers, VK_SHADER_STAGE_ALL, nullptr},
+            {sampler_binding, VK_DESCRIPTOR_TYPE_SAMPLER, max_samplers,
+             VK_SHADER_STAGE_ALL, nullptr},
+        };
+
+        VkDescriptorBindingFlags binding_flags[] = {
+            VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+            VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+            VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+            VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT |
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+        };
+
+        VkDescriptorSetLayoutBindingFlagsCreateInfo flags_info = {
+            .sType =
+                VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+            .bindingCount = static_cast<u32>(std::size(binding_flags)),
+            .pBindingFlags = binding_flags,
+        };
+
+        VkDescriptorSetLayoutCreateInfo layout_info = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .pNext = &flags_info,
+            .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
+            .bindingCount = static_cast<u32>(std::size(bindings)),
+            .pBindings = bindings,
+        };
+
+        vk_verify(vkCreateDescriptorSetLayout(
+            vk_device, &layout_info, vk_callbacks, &m_impl->m_bindless_layout));
+
+        VkDescriptorSetAllocateInfo alloc_info = {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = m_impl->m_bindless_pool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &m_impl->m_bindless_layout,
+        };
+
+        vk_verify(vkAllocateDescriptorSets(vk_device, &alloc_info,
+                                           &m_impl->m_bindless));
+    }
+
+    void GPUResourceManager::destroy_bindless() {
+        VkDevice vk_device = m_impl->backend->m_device.get_device();
+        VkAllocationCallbacks *vk_callbacks =
+            m_impl->backend->m_vk_allocator.vk_allocator();
+
+        vkDestroyDescriptorSetLayout(vk_device, m_impl->m_bindless_layout,
+                                     vk_callbacks);
+        vkDestroyDescriptorPool(vk_device, m_impl->m_bindless_pool,
+                                vk_callbacks);
+
+        m_impl->m_bindless_layout = VK_NULL_HANDLE;
+        m_impl->m_bindless_pool = VK_NULL_HANDLE;
+        m_impl->m_bindless = VK_NULL_HANDLE;
+    }
+
     void GPUResourceManager::init(VulkanBackend *backend) {
         check(!m_is_initialized);
         check(backend != nullptr);
@@ -859,7 +995,7 @@ namespace mantle {
         check(m_impl != nullptr);
 
         m_impl->backend = backend;
-        m_impl->resource = PersistentResource(backend->m_heap);
+        m_impl->resource = PersistentResource(m_impl->backend->m_heap);
 
         m_impl->buffers =
             std::pmr::vector<Slot<BufferResource>>(&m_impl->resource);
@@ -887,14 +1023,25 @@ namespace mantle {
         m_impl->compute_pipelines_free_list =
             std::pmr::vector<u32>(&m_impl->resource);
 
-        m_impl->gpu_allocator.init(backend->m_device.get_physical_device(),
-                                   backend->m_device.get_device(),
-                                   backend->m_context.get_instance(),
-                                   backend->m_vk_allocator.vk_allocator());
+        m_impl->gpu_allocator.init(
+            m_impl->backend->m_device.get_physical_device(),
+            backend->m_device.get_device(), backend->m_context.get_instance(),
+            backend->m_vk_allocator.vk_allocator());
 
         for (auto &queue : m_impl->deletion_queues) {
             queue.init(m_impl->backend->m_heap);
         }
+
+        init_bindless();
+
+        m_impl->sampled_images_free_list_bindless =
+            std::pmr::vector<u32>(&m_impl->resource);
+        m_impl->storage_images_free_list_bindless =
+            std::pmr::vector<u32>(&m_impl->resource);
+        m_impl->buffers_free_list_bindless =
+            std::pmr::vector<u32>(&m_impl->resource);
+        m_impl->samplers_free_list_bindless =
+            std::pmr::vector<u32>(&m_impl->resource);
 
         m_is_initialized = true;
         spdlog::info("GPU resource manager is initialized");
@@ -923,6 +1070,8 @@ namespace mantle {
                         {i, m_impl->graphics_pipelines[i].generation}, true);
                 }
             }
+
+            destroy_bindless(); // after pipeline layouts destroyed
 
             for (u32 i = 0; i < m_impl->shaders.size(); i++) {
                 if (m_impl->shaders[i].resource.shader != VK_NULL_HANDLE) {
@@ -955,9 +1104,30 @@ namespace mantle {
         }
     }
 
-    u32 GPUResourceManager::get_bindless_index(ImageHandle image) {} // TODO
 
-    u32 GPUResourceManager::get_bindless_index(BufferHandle buffer) {} // TODO
+    u32 GPUResourceManager::get_bindless_index(BufferHandle handle) {
+        check(m_is_initialized);
+        auto &buffer = m_impl->get_buffer(handle);
+        if (buffer.bindless_index != UINT32_MAX) {
+            return buffer.bindless_index;
+        }
+
+        checkf(buffer.desc.usage & BufferUsage::Storage,
+               "Image must have Sampled usage");
+        buffer.bindless_index = m_impl->allocate_buffer_index(buffer);
+        return buffer.bindless_index;
+    }
+
+    u32 GPUResourceManager::get_bindless_index(SamplerHandle handle) {
+        check(m_is_initialized);
+        auto &sampler = m_impl->get_sampler(handle);
+        if (sampler.bindless_index != UINT32_MAX) {
+            return sampler.bindless_index;
+        }
+
+        sampler.bindless_index = m_impl->allocate_sampler_index(sampler);
+        return sampler.bindless_index;
+    }
 
     ImageResource &GPUResourceManager::Impl::get_image(ImageHandle handle) {
         check(handle.index < images.size());
@@ -1019,6 +1189,236 @@ namespace mantle {
         }
 
         return pipeline.resource;
+    }
+
+    VkDescriptorSet GPUResourceManager::Impl::get_bindless_set() {
+        return m_bindless;
+    }
+
+    u32 GPUResourceManager::Impl::allocate_storage_image_index(
+        ImageResource &image) {
+        u32 index;
+        if (!storage_images_free_list_bindless.empty()) {
+            index = storage_images_free_list_bindless.back();
+            storage_images_free_list_bindless.pop_back();
+        } else {
+            checkf(storage_images_count_bindless < max_storage_images,
+                   "Exceeded max storage image bindless count");
+            index = storage_images_count_bindless++;
+        }
+
+        VkDescriptorImageInfo image_info = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = image.view,
+            // NOTE: render graph should transition image to layout sometime
+            .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = storage_image_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &image_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+        return index;
+    }
+
+    u32 GPUResourceManager::Impl::allocate_sampled_image_index(
+        ImageResource &image) {
+        u32 index;
+        if (!sampled_images_free_list_bindless.empty()) {
+            index = sampled_images_free_list_bindless.back();
+            sampled_images_free_list_bindless.pop_back();
+        } else {
+            checkf(sampled_images_count_bindless < max_sampled_images,
+                   "Exceeded max sampled image bindless count");
+            index = sampled_images_count_bindless++;
+        }
+
+        VkDescriptorImageInfo image_info = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = image.view,
+            // NOTE: render graph should transition image to layout sometime
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = sampled_image_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &image_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+        return index;
+    }
+
+    u32
+    GPUResourceManager::Impl::allocate_buffer_index(BufferResource &buffer) {
+        u32 index;
+        if (!buffers_free_list_bindless.empty()) {
+            index = buffers_free_list_bindless.back();
+            buffers_free_list_bindless.pop_back();
+        } else {
+            checkf(buffers_count_bindless < max_storage_buffers,
+                   "Exceeded max storage buffers bindless count");
+            index = buffers_count_bindless++;
+        }
+
+        VkDescriptorBufferInfo buffer_info = {
+            .buffer = buffer.buffer,
+            .offset = 0,
+            .range = buffer.desc.size,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = storage_buffer_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &buffer_info};
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+        return index;
+    }
+
+    u32
+    GPUResourceManager::Impl::allocate_sampler_index(SamplerResource &sampler) {
+        u32 index;
+        if (!samplers_free_list_bindless.empty()) {
+            index = samplers_free_list_bindless.back();
+            samplers_free_list_bindless.pop_back();
+        } else {
+            checkf(samplers_count_bindless < max_samplers,
+                   "Exceeded max samplers bindless count");
+            index = samplers_count_bindless++;
+        }
+
+        VkDescriptorImageInfo sampler_info = {
+            .sampler = sampler.sampler,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = sampler_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &sampler_info,
+        };
+
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+        return index;
+    }
+
+    void GPUResourceManager::Impl::free_storage_image_index(u32 index) {
+        storage_images_free_list_bindless.push_back(index);
+
+        VkDescriptorImageInfo null_info = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = storage_image_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+            .pImageInfo = &null_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+    }
+
+    void GPUResourceManager::Impl::free_sampled_image_index(u32 index) {
+        sampled_images_free_list_bindless.push_back(index);
+
+        VkDescriptorImageInfo null_info = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = sampled_image_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+            .pImageInfo = &null_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+    }
+
+    void GPUResourceManager::Impl::free_buffer_index(u32 index) {
+        buffers_free_list_bindless.push_back(index);
+
+        VkDescriptorBufferInfo null_info = {
+            .buffer = VK_NULL_HANDLE,
+            .offset = 0,
+            .range = 0,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = storage_buffer_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+            .pBufferInfo = &null_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
+    }
+
+    void GPUResourceManager::Impl::free_sampler_index(u32 index) {
+        samplers_free_list_bindless.push_back(index);
+
+        VkDescriptorImageInfo null_info = {
+            .sampler = VK_NULL_HANDLE,
+            .imageView = VK_NULL_HANDLE,
+            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+
+        VkWriteDescriptorSet write = {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_bindless,
+            .dstBinding = sampler_binding,
+            .dstArrayElement = index,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+            .pImageInfo = &null_info,
+        };
+
+        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
+                               nullptr);
     }
 
 

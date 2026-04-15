@@ -448,12 +448,22 @@ namespace mantle {
             .shaderDrawParameters = VK_TRUE,
         };
 
+        VkPhysicalDeviceDescriptorIndexingFeatures indexing = {
+            .sType =
+                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+            .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
+            .descriptorBindingStorageImageUpdateAfterBind = VK_TRUE,
+            .descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE,
+            .descriptorBindingPartiallyBound = VK_TRUE,
+        };
+
         VkPhysicalDeviceVulkan13Features vulkan13_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
             .pNext = nullptr,
             .synchronization2 = VK_TRUE,
             .dynamicRendering = VK_TRUE,
         };
+
 
         VkPhysicalDeviceExtendedDynamicStateFeaturesEXT dynamic_state_features = {
             .sType =
@@ -462,7 +472,8 @@ namespace mantle {
         };
 
         features2.pNext = &vulkan11_features;
-        vulkan11_features.pNext = &vulkan13_features;
+        vulkan11_features.pNext = &indexing;
+        indexing.pNext = &vulkan13_features;
         vulkan13_features.pNext = &dynamic_state_features;
         dynamic_state_features.pNext = nullptr;
 

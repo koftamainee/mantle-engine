@@ -1,7 +1,7 @@
 ### M0. Cleanup
 
 - [x] Split up renderer into frame scheduler and render pass, also Renderer::Impl should not have any methods
-- [ ] Design and implement bindless descriptor system: single global set, partially bound arrays, resource handles via push constants (`VK_EXT_descriptor_indexing`)
+- [x] Design and implement bindless descriptor system: single global set, partially bound arrays, resource handles via push constants (`VK_EXT_descriptor_indexing`)
 - [ ] Initialize ImGui in vulkan backend, carry out into separate class with its own descriptor pool and set (separate from global bindless set)
 - [/] Remove MVP from push constants, pass camera matrices via descriptor sets using bindless system
 - [x] Add explicit compute-to-graphics pipeline barrier infrastructure (storage image write -> read synchronization, separate from frame-in-flight sync) done by frame graph

@@ -442,4 +442,9 @@ namespace mantle {
         ImageFormat depth_format;
     };
 
+    enum class BindlessImageType {
+        Sampled,
+        Storage,
+    };
+
 } // namespace mantle

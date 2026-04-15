@@ -52,7 +52,6 @@ namespace mantle {
         void bind_index_buffer(BufferHandle buffer, usize offset = 0) const;
 
         void push_constants(const void *data, ShaderStage stage) const;
-        void bind_descriptor_set() const;
 
       private:
         VkCommandBuffer m_cmd = VK_NULL_HANDLE;

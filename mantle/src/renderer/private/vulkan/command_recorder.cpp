@@ -169,6 +169,11 @@ namespace mantle {
         m_push_constants = pipeline_ref.desc.push_constants;
         vkCmdBindPipeline(m_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
                           pipeline_ref.pipeline);
+
+        VkDescriptorSet bindless_set = m_resources->m_impl->get_bindless_set();
+        vkCmdBindDescriptorSets(m_cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                                m_current_layout, 0, 1, &bindless_set, 0,
+                                nullptr);
     }
 
     void
@@ -180,6 +185,11 @@ namespace mantle {
             std::span<PushConstantsRange>(&pipeline_ref.desc.push_constants, 1);
         vkCmdBindPipeline(m_cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
                           pipeline_ref.pipeline);
+
+        VkDescriptorSet bindless_set = m_resources->m_impl->get_bindless_set();
+        vkCmdBindDescriptorSets(m_cmd, VK_PIPELINE_BIND_POINT_COMPUTE,
+                                m_current_layout, 0, 1, &bindless_set, 0,
+                                nullptr);
     }
 
     void CommandRecorder::set_viewport(f32 x, f32 y, f32 width,
@@ -452,6 +462,4 @@ namespace mantle {
         }
         fatal(true, "Invalid stage for push constant");
     }
-
-    void CommandRecorder::bind_descriptor_set() const {}
 } // namespace mantle

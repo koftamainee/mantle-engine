@@ -38,17 +38,30 @@ namespace mantle {
         void destroy_image(ImageHandle handle, bool immediate = false);
 
         SamplerHandle create_sampler(const SamplerDesc &desc);
-        void destroy_sampler(SamplerHandle sampler, bool immediate = false);
+        void destroy_sampler(SamplerHandle handle, bool immediate = false);
 
-        u32 get_bindless_index(ImageHandle image);
-        u32 get_bindless_index(BufferHandle buffer);
-        u32 get_bindless_index(SamplerHandle sampler);
+        u32 get_bindless_index(ImageHandle handle, BindlessImageType type);
+        u32 get_bindless_index(BufferHandle handle);
+        u32 get_bindless_index(SamplerHandle handle);
 
       private:
         friend class Renderer;
         friend class CommandRecorder;
         void import_swapchain_images(std::pmr::vector<ImageHandle> &out_images);
         void release_swapchain_images(std::pmr::vector<ImageHandle> &images);
+
+        static constexpr u32 max_sampled_images = 4096;
+        static constexpr u32 max_storage_images = 1024;
+        static constexpr u32 max_storage_buffers = 1024;
+        static constexpr u32 max_samplers = 256;
+
+        static constexpr u32 sampled_image_binding = 0;
+        static constexpr u32 storage_image_binding = 1;
+        static constexpr u32 storage_buffer_binding = 2;
+        static constexpr u32 sampler_binding = 3;
+
+        void init_bindless();
+        void destroy_bindless();
 
         GPUResourceManager() = default;
 
