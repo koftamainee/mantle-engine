@@ -50,7 +50,8 @@ namespace mantle {
             {"frag_main", ShaderStage::Fragment, shader},
         };
 
-        ImageFormat color_format = m_renderer.get_swapchain_info().surface_format;
+        ImageFormat color_format =
+            m_renderer.get_swapchain_info().surface_format;
 
         GraphicsPipelineDesc desc = {
             .shaders = shader_modules,
@@ -90,6 +91,46 @@ namespace mantle {
         m_renderer.resource_manager().destroy_shader(shader, true);
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
+
+
+        struct MVP {
+            glm::mat4 model;
+            glm::mat4 view;
+            glm::mat4 projection;
+        };
+
+        BufferDesc buf_desc = {
+            .size = sizeof(MVP) * 1024,
+            .usage = BufferUsage::Storage,
+            .memory = MemoryType::CpuToGpu,
+        };
+
+        ImageDesc image_desc = {
+            .width = 1920,
+            .height = 1080,
+            .depth = 0,
+            .mip_levels = 1,
+            .array_layers = 1,
+            .sample_count = SampleCount::x8,
+            .format = ImageFormat::Rgba8,
+            .usage = ImageUsage::Sampled | ImageUsage::TransferDst,
+            .create_view = true,
+        };
+
+        auto &resources = m_renderer.resource_manager();
+
+        BufferHandle buf = resources.create_buffer(buf_desc, true);
+        u32 buf_idx = resources.get_bindless_index(buf);
+
+        ImageHandle image = resources.create_image(image_desc);
+        u32 image_idx =
+            resources.get_bindless_index(image, BindlessImageType::Sampled);
+
+
+        std::array<MVP, 1024> MVPs{};
+
+        // EVERY FRAME
+        resources.update_buffer(buf, MVPs.data(), MVPs.size() * sizeof(MVP), 0);
 
         spdlog::info("Engine is initialized. Starting the game");
     }

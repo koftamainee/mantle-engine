@@ -58,6 +58,7 @@ namespace mantle {
         };
         if (mapped_data != nullptr) {
             alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+            alloc_info.requiredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
         }
 
         VmaAllocationInfo alloc_info_out = {};

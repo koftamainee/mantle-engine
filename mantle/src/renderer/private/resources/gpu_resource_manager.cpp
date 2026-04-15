@@ -528,13 +528,16 @@ namespace mantle {
                 .buffer = buffer,
                 .allocation = allocation,
                 .mapped = memory,
+                .desc = desc,
             };
         } else {
             index = m_impl->buffers.size();
             generation = 0;
-            m_impl->buffers.push_back(
-                {{.buffer = buffer, .allocation = allocation, .mapped = memory},
-                 generation});
+            m_impl->buffers.push_back({{.buffer = buffer,
+                                        .allocation = allocation,
+                                        .mapped = memory,
+                                        .desc = desc},
+                                       generation});
         }
 
         return {
@@ -669,12 +672,13 @@ namespace mantle {
                 .image = image,
                 .allocation = allocation,
                 .view = view,
+                .desc = desc,
             };
         } else {
             index = m_impl->images.size();
             generation = 0;
             m_impl->images.push_back(
-                {{.image = image, .allocation = allocation, .view = view},
+                {{.image = image, .allocation = allocation, .view = view, .desc = desc},
                  generation});
         }
 
@@ -760,11 +764,12 @@ namespace mantle {
             generation = m_impl->samplers[index].generation;
             m_impl->samplers[index].resource = {
                 .sampler = sampler,
+                .desc = desc,
             };
         } else {
             index = m_impl->samplers.size();
             generation = 0;
-            m_impl->samplers.push_back({{.sampler = sampler}, generation});
+            m_impl->samplers.push_back({{.sampler = sampler, .desc = desc}, generation});
         }
 
         return {
@@ -1071,8 +1076,6 @@ namespace mantle {
                 }
             }
 
-            destroy_bindless(); // after pipeline layouts destroyed
-
             for (u32 i = 0; i < m_impl->shaders.size(); i++) {
                 if (m_impl->shaders[i].resource.shader != VK_NULL_HANDLE) {
                     destroy_shader({i, m_impl->shaders[i].generation}, true);
@@ -1097,6 +1100,8 @@ namespace mantle {
                 }
             }
 
+            destroy_bindless();
+
             m_impl->gpu_allocator.destroy();
 
             m_is_initialized = false;
@@ -1113,7 +1118,7 @@ namespace mantle {
         }
 
         checkf(buffer.desc.usage & BufferUsage::Storage,
-               "Image must have Sampled usage");
+               "buffer must have storage usage");
         buffer.bindless_index = m_impl->allocate_buffer_index(buffer);
         return buffer.bindless_index;
     }
@@ -1331,94 +1336,18 @@ namespace mantle {
 
     void GPUResourceManager::Impl::free_storage_image_index(u32 index) {
         storage_images_free_list_bindless.push_back(index);
-
-        VkDescriptorImageInfo null_info = {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        };
-
-        VkWriteDescriptorSet write = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = m_bindless,
-            .dstBinding = storage_image_binding,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .pImageInfo = &null_info,
-        };
-
-        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
-                               nullptr);
     }
 
     void GPUResourceManager::Impl::free_sampled_image_index(u32 index) {
         sampled_images_free_list_bindless.push_back(index);
-
-        VkDescriptorImageInfo null_info = {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        };
-
-        VkWriteDescriptorSet write = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = m_bindless,
-            .dstBinding = sampled_image_binding,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-            .pImageInfo = &null_info,
-        };
-
-        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
-                               nullptr);
     }
 
     void GPUResourceManager::Impl::free_buffer_index(u32 index) {
         buffers_free_list_bindless.push_back(index);
-
-        VkDescriptorBufferInfo null_info = {
-            .buffer = VK_NULL_HANDLE,
-            .offset = 0,
-            .range = 0,
-        };
-
-        VkWriteDescriptorSet write = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = m_bindless,
-            .dstBinding = storage_buffer_binding,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-            .pBufferInfo = &null_info,
-        };
-
-        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
-                               nullptr);
     }
 
     void GPUResourceManager::Impl::free_sampler_index(u32 index) {
         samplers_free_list_bindless.push_back(index);
-
-        VkDescriptorImageInfo null_info = {
-            .sampler = VK_NULL_HANDLE,
-            .imageView = VK_NULL_HANDLE,
-            .imageLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        };
-
-        VkWriteDescriptorSet write = {
-            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-            .dstSet = m_bindless,
-            .dstBinding = sampler_binding,
-            .dstArrayElement = index,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
-            .pImageInfo = &null_info,
-        };
-
-        vkUpdateDescriptorSets(backend->m_device.get_device(), 1, &write, 0,
-                               nullptr);
     }
 
 
