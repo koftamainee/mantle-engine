@@ -17,6 +17,10 @@ namespace mantle {
         m_resources = resources;
     }
 
+    void CommandRecorder::set_arena(ArenaResource *pmr) {
+        m_pmr = pmr;
+    }
+
     void CommandRecorder::image_barrier(const ImageBarrier &barrier) const {
         std::array<ImageBarrier, 1> arr{barrier};
         image_barriers(arr);
@@ -28,8 +32,7 @@ namespace mantle {
             return;
         }
 
-        // TODO: use custom allocator
-        std::pmr::vector<VkImageMemoryBarrier2> vk_barriers;
+        std::pmr::vector<VkImageMemoryBarrier2> vk_barriers(m_pmr);
         vk_barriers.reserve(barriers.size());
 
         for (const auto &barrier : barriers) {
@@ -78,8 +81,8 @@ namespace mantle {
         if (barriers.empty()) {
             return;
         }
-        // TODO: use custom allocator
-        std::pmr::vector<VkBufferMemoryBarrier2> vk_barriers;
+
+        std::pmr::vector<VkBufferMemoryBarrier2> vk_barriers(m_pmr);
         vk_barriers.reserve(barriers.size());
         for (const auto &barrier : barriers) {
             auto &buffer = m_resources->m_impl->get_buffer(barrier.buffer);
@@ -107,8 +110,8 @@ namespace mantle {
     }
 
     void CommandRecorder::begin_rendering(const RenderingInfo &info) const {
-        std::vector<VkRenderingAttachmentInfo>
-            color_attachments; // TODO: use custom scratch arena alloc
+        std::pmr::vector<VkRenderingAttachmentInfo>
+            color_attachments(m_pmr);
         color_attachments.reserve(info.colors.size());
 
         const VkRenderingAttachmentInfo *p_depth_attachment = nullptr;

@@ -1,6 +1,8 @@
 #pragma once
 #include <span>
 #include <vulkan/vulkan.h>
+#include "core/memory/arena_allocator.h"
+#include "core/memory/pmr/arena_resource.h"
 #include "core/types.h"
 #include "renderer/gpu_resource_manager.h"
 #include "renderer/types.h"
@@ -19,6 +21,7 @@ namespace mantle {
 
         void set_command_buffer(VkCommandBuffer cmd);
         void set_resource_manager(GPUResourceManager *resources);
+        void set_arena(ArenaResource *pmr);
 
         void image_barrier(const ImageBarrier &barrier) const;
         void image_barriers(std::span<const ImageBarrier> barriers) const;
@@ -56,6 +59,8 @@ namespace mantle {
       private:
         VkCommandBuffer m_cmd = VK_NULL_HANDLE;
         GPUResourceManager *m_resources = nullptr;
+
+        ArenaResource *m_pmr;
 
         VkPipelineLayout m_current_layout = VK_NULL_HANDLE;
         std::span<const PushConstantsRange> m_push_constants;

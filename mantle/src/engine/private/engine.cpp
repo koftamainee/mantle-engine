@@ -41,7 +41,10 @@ namespace mantle {
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
 
-        std::pmr::vector<u32> spv; // TODO: use custom allocator
+        ScopeArena arena(&m_scratch_arena);
+        ArenaResource pmr(&m_scratch_arena);
+
+        std::pmr::vector<u32> spv(&pmr);
         load_spv("assets/shaders/flat.spv", spv);
         ShaderHandle shader = m_renderer.resource_manager().create_shader(spv);
 
@@ -91,31 +94,6 @@ namespace mantle {
         m_renderer.resource_manager().destroy_shader(shader, true);
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
-
-
-        struct MVP {
-            glm::mat4 model;
-            glm::mat4 view;
-            glm::mat4 projection;
-        };
-
-        BufferDesc buf_desc = {
-            .size = sizeof(MVP) * 1024,
-            .usage = BufferUsage::Storage,
-            .memory = MemoryType::CpuToGpu,
-        };
-
-        ImageDesc image_desc = {
-            .width = 1920,
-            .height = 1080,
-            .depth = 0,
-            .mip_levels = 1,
-            .array_layers = 1,
-            .sample_count = SampleCount::x8,
-            .format = ImageFormat::Rgba8,
-            .usage = ImageUsage::Sampled | ImageUsage::TransferDst,
-            .create_view = true,
-        };
 
         spdlog::info("Engine is initialized. Starting the game");
     }
