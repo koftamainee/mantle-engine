@@ -96,9 +96,9 @@ namespace mantle {
             .image = m_impl->backbuffer,
             .from = backbuffer_ref.layout,
             .to = ImageLayout::Present,
-            .src_stage = infer_stage(backbuffer_ref.layout),
-            .dst_stage = PipelineStage::None,
-            .src_access = infer_access(backbuffer_ref.layout),
+            .src_stage = infer_swapchain_present_stage(backbuffer_ref.layout),
+            .dst_stage = PipelineStage::Bottom,
+            .src_access = infer_swapchain_present_access(backbuffer_ref.layout),
             .dst_access = AccessType::None,
         };
 
