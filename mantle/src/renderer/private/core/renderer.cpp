@@ -6,6 +6,7 @@
 #include "vulkan/command_recorder.h"
 #include "vulkan/frame_scheduler.h"
 #include "vulkan/vulkan_backend.h"
+#include "vulkan/vulkan_utils.h"
 
 namespace mantle {
 
@@ -36,7 +37,7 @@ namespace mantle {
 
         m_impl->backend.init(window, vsync, heap, scratch_arena);
         m_impl->frame_scheduler.init(&m_impl->backend,
-                                     &m_impl->resource_manager, 3);
+                                     &m_impl->resource_manager, 3, heap);
         m_impl->resource_manager.init(&m_impl->backend);
 
         m_impl->resource_manager.import_swapchain_images(
@@ -87,6 +88,21 @@ namespace mantle {
 
     Renderer::Result Renderer::end_frame() {
         check(m_is_initialized);
+
+        auto &backbuffer_ref =
+            m_impl->resource_manager.m_impl->get_image(m_impl->backbuffer);
+
+        ImageBarrier barrier = {
+            .image = m_impl->backbuffer,
+            .from = backbuffer_ref.layout,
+            .to = ImageLayout::Present,
+            .src_stage = infer_stage(backbuffer_ref.layout),
+            .dst_stage = PipelineStage::None,
+            .src_access = infer_access(backbuffer_ref.layout),
+            .dst_access = AccessType::None,
+        };
+
+        m_impl->current_frame.cmd->image_barrier(barrier);
 
         FrameResult result =
             m_impl->frame_scheduler.end_frame(m_impl->current_frame);

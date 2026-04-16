@@ -37,6 +37,7 @@ namespace mantle {
 
         for (const auto &barrier : barriers) {
             auto &image = m_resources->m_impl->get_image(barrier.image);
+            image.layout = barrier.to;
 
             vk_barriers.push_back({
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,

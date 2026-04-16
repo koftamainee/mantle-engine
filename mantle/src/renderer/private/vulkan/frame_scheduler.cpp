@@ -2,18 +2,23 @@
 
 #include "core/assert.h"
 #include "core/memory/persistent_allocator.h"
+#include "resources/gpu_resource_manager_internal.h"
 #include "vkassert.h"
 #include "vulkan_backend.h"
+#include "vulkan_utils.h"
 
 namespace mantle {
     FrameScheduler::~FrameScheduler() { destroy(); }
 
     void FrameScheduler::init(VulkanBackend *backend,
                               GPUResourceManager *resource_manager,
-                              u32 frames_in_flight) {
+                              u32 frames_in_flight, VirtualHeap *heap) {
         check(!m_is_initialized);
         check(backend != nullptr);
         check(frames_in_flight > 0);
+
+        m_frame_arena.init(heap->take(megabytes(1)));
+        m_pmr = ArenaResource(&m_frame_arena);
 
         m_backend = backend;
         m_frames_in_flight = std::min(
@@ -65,8 +70,9 @@ namespace mantle {
         }
 
         m_recorder.set_resource_manager(resource_manager);
+        m_recorder.set_arena(&m_pmr);
 
-            m_is_initialized = true;
+        m_is_initialized = true;
         spdlog::info("Frame scheduler is initialized");
     }
 
@@ -96,6 +102,8 @@ namespace mantle {
         FrameData &frame = m_frames[m_current_frame];
         VulkanDevice &device = m_backend->m_device;
         VkDevice vk_device = device.get_device();
+
+        m_frame_arena.reset();
 
         vk_verify(
             vkWaitForFences(vk_device, 1, &frame.fence, VK_TRUE, UINT64_MAX));

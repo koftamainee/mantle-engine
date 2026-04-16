@@ -644,4 +644,45 @@ namespace mantle {
             fatal(true, "unsupported AccessType");
         }
     }
+
+    PipelineStage infer_stage(ImageLayout layout) {
+        switch (layout) {
+        case ImageLayout::Undefined:
+            return PipelineStage::Top;
+        case ImageLayout::ColorAttachment:
+            return PipelineStage::ColorOutput;
+        case ImageLayout::DepthAttachment:
+            return PipelineStage::EarlyDepth | PipelineStage::LateDepth;
+        case ImageLayout::ShaderReadOnly:
+            return PipelineStage::FragmentShader;
+        case ImageLayout::TransferSrc:
+        case ImageLayout::TransferDst:
+            return PipelineStage::Transfer;
+        case ImageLayout::General:
+            return PipelineStage::ComputeShader;
+        case ImageLayout::Present:
+            return PipelineStage::Bottom;
+        default:
+            return PipelineStage::AllCommands;
+        }
+    }
+
+    AccessType infer_access(ImageLayout layout) {
+        switch (layout) {
+        case ImageLayout::ColorAttachment:
+        case ImageLayout::DepthAttachment:
+        case ImageLayout::TransferDst:
+            return AccessType::Write;
+        case ImageLayout::TransferSrc:
+        case ImageLayout::ShaderReadOnly:
+            return AccessType::Read;
+        case ImageLayout::General:
+            return AccessType::ReadWrite;
+        case ImageLayout::Undefined:
+        case ImageLayout::Present:
+            return AccessType::None;
+        default:
+            fatal(true, "Unknown layout");
+        }
+    }
 } // namespace mantle

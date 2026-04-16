@@ -60,7 +60,7 @@ namespace mantle {
         VkCommandBuffer m_cmd = VK_NULL_HANDLE;
         GPUResourceManager *m_resources = nullptr;
 
-        ArenaResource *m_pmr;
+        ArenaResource *m_pmr = nullptr;
 
         VkPipelineLayout m_current_layout = VK_NULL_HANDLE;
         std::span<const PushConstantsRange> m_push_constants;

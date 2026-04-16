@@ -5,6 +5,7 @@
 
 
 #include "command_recorder.h"
+#include "core/memory/virtual_heap.h"
 #include "core/types.h"
 
 namespace mantle {
@@ -33,7 +34,8 @@ namespace mantle {
         FrameScheduler(FrameScheduler &&) noexcept = delete;
         FrameScheduler &operator=(FrameScheduler &&) noexcept = delete;
 
-        void init(VulkanBackend *backend, GPUResourceManager *resource_manager, u32 frames_in_flight);
+        void init(VulkanBackend *backend, GPUResourceManager *resource_manager,
+                  u32 frames_in_flight, VirtualHeap *heap);
         void destroy();
 
         FrameResult begin_frame(FrameContext &out_ctx);
@@ -51,6 +53,9 @@ namespace mantle {
 
         bool m_is_initialized = false;
         VulkanBackend *m_backend = nullptr;
+
+        ArenaAllocator m_frame_arena{};
+        ArenaResource m_pmr{};
 
         u32 m_frames_in_flight = 0;
         u32 m_current_frame = 0;
