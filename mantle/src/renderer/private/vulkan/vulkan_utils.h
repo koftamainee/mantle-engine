@@ -41,8 +41,8 @@ namespace mantle {
 
 
     // NOTE: this infers are NOT safe in general case, should use it only for
-    // swapchain images to transfer them from something to PRESENT_KHR. DO NOT
-    // USE FOR ANYTHING ELSE
+    // swapchain images to transfer them from something to PRESENT_KHR.
+    // DO NOT USE FOR ANYTHING ELSE
     PipelineStage infer_swapchain_present_stage(ImageLayout layout);
     AccessType infer_swapchain_present_access(ImageLayout layout);
 } // namespace mantle
