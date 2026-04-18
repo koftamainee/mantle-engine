@@ -14,10 +14,7 @@ namespace mantle {
         PersistentAllocator() = default;
         ~PersistentAllocator() = default;
 
-        PersistentAllocator(const PersistentAllocator &) = delete;
-        PersistentAllocator &operator=(const PersistentAllocator &) = delete;
-        PersistentAllocator(PersistentAllocator &&) = delete;
-        PersistentAllocator &operator=(PersistentAllocator &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(PersistentAllocator);
 
         void init(VirtualHeap *heap);
 

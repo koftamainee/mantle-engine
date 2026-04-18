@@ -9,6 +9,8 @@
 #include "window/window.h"
 
 namespace mantle {
+    Engine::~Engine() { destroy(); }
+
     void Engine::init() {
         check(!m_is_initialized);
 

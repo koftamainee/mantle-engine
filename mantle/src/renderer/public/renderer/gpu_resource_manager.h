@@ -2,6 +2,8 @@
 #include <vector>
 
 #include <span>
+
+#include "core/macros.h"
 #include "core/types.h"
 #include "renderer/types.h"
 
@@ -13,11 +15,7 @@ namespace mantle {
       public:
         ~GPUResourceManager();
 
-        GPUResourceManager(const GPUResourceManager &other) = delete;
-        GPUResourceManager(GPUResourceManager &&other) noexcept = delete;
-        GPUResourceManager &operator=(const GPUResourceManager &other) = delete;
-        GPUResourceManager &
-        operator=(GPUResourceManager &&other) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(GPUResourceManager);
 
         ShaderHandle create_shader(std::span<const u32> spir_v);
         void destroy_shader(ShaderHandle handle, bool immediate = false);
@@ -26,8 +24,10 @@ namespace mantle {
         create_graphics_pipeline(const GraphicsPipelineDesc &desc);
         ComputePipelineHandle
         create_compute_pipeline(const ComputePipelineDesc &desc);
-        void destroy_graphics_pipeline(GraphicsPipelineHandle handle, bool immediate = false);
-        void destroy_compute_pipeline(ComputePipelineHandle handle, bool immediate = false);
+        void destroy_graphics_pipeline(GraphicsPipelineHandle handle,
+                                       bool immediate = false);
+        void destroy_compute_pipeline(ComputePipelineHandle handle,
+                                      bool immediate = false);
 
         BufferHandle create_buffer(const BufferDesc &desc, bool map = false);
         void update_buffer(BufferHandle handle, const void *data, usize size,

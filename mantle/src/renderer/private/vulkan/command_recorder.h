@@ -15,10 +15,7 @@ namespace mantle {
         CommandRecorder() = default;
         ~CommandRecorder() = default;
 
-        CommandRecorder(const CommandRecorder &) = delete;
-        CommandRecorder(CommandRecorder &&) noexcept = delete;
-        CommandRecorder &operator=(const CommandRecorder &) = delete;
-        CommandRecorder &operator=(CommandRecorder &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(CommandRecorder);
 
         void set_command_buffer(VkCommandBuffer cmd);
         void set_resource_manager(GPUResourceManager *resources);

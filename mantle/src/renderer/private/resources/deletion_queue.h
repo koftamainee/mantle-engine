@@ -1,9 +1,10 @@
 #pragma once
+#include <oneapi/tbb/detail/_template_helpers.h>
 #include <ranges>
 #include <vector>
 
-#include "core/memory/memory_units.h"
 #include "core/memory/arena_allocator.h"
+#include "core/memory/memory_units.h"
 #include "core/memory/pmr/arena_resource.h"
 
 namespace mantle {
@@ -14,6 +15,11 @@ namespace mantle {
 
     class DeletionQueue {
       public:
+        DeletionQueue() = default;
+        ~DeletionQueue() { flush(); }
+
+        MANTLE_NO_COPY_NO_MOVE(DeletionQueue);
+
         void init(VirtualHeap *heap) {
             m_arena.init(heap->take(kilobytes(256)));
             m_resource = ArenaResource(&m_arena);

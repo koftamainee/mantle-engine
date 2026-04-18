@@ -15,8 +15,4 @@ namespace mantle {
     RGBufferHandle RenderGraph::import_buffer(BufferHandle buffer) {
         return {}; // TODO
     }
-
-    CompiledRenderGraph RenderGraph::compile(GPUResourceManager &resources) {
-        return {}; // TODO
-    } 
 } // namespace mantle

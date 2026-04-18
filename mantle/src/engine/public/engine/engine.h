@@ -10,6 +10,11 @@
 namespace mantle {
     class Engine final {
       public:
+        Engine() = default;
+        ~Engine();
+
+        MANTLE_NO_COPY_NO_MOVE(Engine);
+
         void init();
         void run();
         void destroy();

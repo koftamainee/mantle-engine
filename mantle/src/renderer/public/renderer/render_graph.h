@@ -3,6 +3,8 @@
 #include <vector>
 
 #include <renderer/types.h>
+#include <sys/stat.h>
+
 #include "core/memory/arena_allocator.h"
 #include "core/memory/pmr/arena_resource.h"
 #include "core/memory/scope_arena.h"
@@ -66,7 +68,7 @@ namespace mantle {
         operator=(RenderGraphBuilder &&other) noexcept = delete;
 
         // TODO: add async_compute_enable(true);
-        //TODO: add use_render_target(<something>);
+        // TODO: add use_render_target(<something>);
 
         // TODO: add initial state for images (clear / undefined) and probably
         // TODO: something for buffers too
@@ -171,7 +173,6 @@ namespace mantle {
         struct RenderPassNode {
             std::string_view name;
             void *execute_data = nullptr;
-            void *execute_fn_ptr = nullptr;
             void (*execute_fn)(void *data, RenderPassContext &ctx) = nullptr;
         };
 

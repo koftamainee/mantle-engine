@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/macros.h"
 #include "core/types.h"
 
 namespace mantle {
@@ -9,10 +10,7 @@ namespace mantle {
         OSMemory() = default;
         ~OSMemory();
 
-        OSMemory(const OSMemory &) = delete;
-        OSMemory &operator=(const OSMemory &) = delete;
-        OSMemory(OSMemory &&) = delete;
-        OSMemory &operator=(OSMemory &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(OSMemory);
 
         void init();
         void destroy();

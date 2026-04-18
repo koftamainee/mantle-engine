@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/macros.h"
 #include "core/memory/memory_block.h"
 #include "core/types.h"
 #include "tlsf.h"
@@ -11,10 +12,7 @@ namespace mantle {
         TlsfAllocator() = default;
         ~TlsfAllocator();
 
-        TlsfAllocator(const TlsfAllocator &) = delete;
-        TlsfAllocator &operator=(const TlsfAllocator &) = delete;
-        TlsfAllocator(TlsfAllocator &&) = delete;
-        TlsfAllocator &operator=(TlsfAllocator &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(TlsfAllocator);
 
         void init(MemoryBlock block);
         void destroy();

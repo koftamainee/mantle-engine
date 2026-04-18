@@ -26,10 +26,7 @@ namespace mantle {
         VulkanBackend() = default;
         ~VulkanBackend();
 
-        VulkanBackend(const VulkanBackend &) = delete;
-        VulkanBackend &operator=(const VulkanBackend &) = delete;
-        VulkanBackend(VulkanBackend &&) noexcept = delete;
-        VulkanBackend &operator=(VulkanBackend &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanBackend);
 
         void init(const Window &window, bool vsync, VirtualHeap *heap,
                   ArenaAllocator *scratch_arena);
@@ -45,7 +42,8 @@ namespace mantle {
         friend class GPUResourceManager;
 
         AcquiredImage acquire_next_image(VkSemaphore image_available) const;
-        SwapchainResult present(u32 image_index, VkSemaphore render_finished) const;
+        SwapchainResult present(u32 image_index,
+                                VkSemaphore render_finished) const;
 
         bool m_is_initialized = false;
 

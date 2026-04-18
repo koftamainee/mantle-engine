@@ -20,10 +20,7 @@ namespace mantle {
         Renderer() = default;
         ~Renderer();
 
-        Renderer(const Renderer &) = delete;
-        Renderer &operator=(const Renderer &) = delete;
-        Renderer(Renderer &&) noexcept = delete;
-        Renderer &operator=(Renderer &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(Renderer);
 
         void init(const Window &window, bool vsync, VirtualHeap *heap,
                   ArenaAllocator *scratch_arena);

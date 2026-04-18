@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 
 #include <GLFW/glfw3.h>
+#include "core/macros.h"
 #include "vulkan_types.h"
 
 #include "core/types.h"
@@ -15,10 +16,7 @@ namespace mantle {
         VulkanSwapchain() = default;
         ~VulkanSwapchain();
 
-        VulkanSwapchain(const VulkanSwapchain &) = delete;
-        VulkanSwapchain &operator=(const VulkanSwapchain &) = delete;
-        VulkanSwapchain(VulkanSwapchain &&) noexcept = delete;
-        VulkanSwapchain &operator=(VulkanSwapchain &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanSwapchain);
 
         struct Image {
             VkImage image;
@@ -27,7 +25,8 @@ namespace mantle {
 
         void init(VkDevice device, VkSurfaceKHR surface,
                   const SwapchainSupportDetails &support_details,
-                  const QueueFamilyIndices &indices, u32 width, u32 height, bool vsync, VkAllocationCallbacks *vk_callbacks);
+                  const QueueFamilyIndices &indices, u32 width, u32 height,
+                  bool vsync, VkAllocationCallbacks *vk_callbacks);
 
         void destroy();
 
@@ -43,7 +42,8 @@ namespace mantle {
         pick_extent(const VkSurfaceCapabilitiesKHR &capabilities, u32 width,
                     u32 height);
         static VkPresentModeKHR
-        pick_present_mode(const std::vector<VkPresentModeKHR> &present_modes, bool vsync);
+        pick_present_mode(const std::vector<VkPresentModeKHR> &present_modes,
+                          bool vsync);
 
       private:
         bool m_is_initialized = false;

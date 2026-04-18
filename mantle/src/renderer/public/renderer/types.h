@@ -5,38 +5,25 @@
 #include "core/enum_flags.h"
 #include "core/types.h"
 
-namespace mantle {
-    struct BufferHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ImageHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct SamplerHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ShaderHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct GraphicsPipelineHandle final {
-        u32 index;
-        u32 generation;
-    };
-    struct ComputePipelineHandle final {
-        u32 index;
-        u32 generation;
-    };
+#define MANTLE_HANDLE(type)                                                    \
+    struct type {                                                              \
+        u32 index = UINT32_MAX;                                                \
+        u32 generation = UINT32_MAX;                                           \
+        bool is_valid() {                                                      \
+            return this->index != UINT32_MAX &&                                \
+                this->generation != UINT32_MAX;                                \
+        }                                                                      \
+    }
 
-    struct RGBufferHandle final {
-        u32 index;
-    };
-    struct RGImageHandle final {
-        u32 index;
-    };
+namespace mantle {
+    MANTLE_HANDLE(BufferHandle);
+    MANTLE_HANDLE(ImageHandle);
+    MANTLE_HANDLE(ShaderHandle);
+    MANTLE_HANDLE(SamplerHandle);
+    MANTLE_HANDLE(GraphicsPipelineHandle);
+    MANTLE_HANDLE(ComputePipelineHandle);
+    MANTLE_HANDLE(RGBufferHandle);
+    MANTLE_HANDLE(RGImageHandle);
 
     enum class BufferUsage {
         None = 0,

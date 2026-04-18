@@ -18,10 +18,7 @@ namespace mantle {
         VulkanContext() = default;
         ~VulkanContext();
 
-        VulkanContext(const VulkanContext &) = delete;
-        VulkanContext &operator=(const VulkanContext &) = delete;
-        VulkanContext(VulkanContext &&) noexcept = delete;
-        VulkanContext &operator=(VulkanContext &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanContext);
 
         void init(GLFWwindow *window, ArenaAllocator *scratch_arena,
                   VkAllocationCallbacks *vk_callbacks);

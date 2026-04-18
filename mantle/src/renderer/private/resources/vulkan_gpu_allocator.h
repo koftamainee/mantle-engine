@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+
+#include "core/macros.h"
 #include "vma/vk_mem_alloc.h"
 
 namespace mantle {
@@ -9,10 +11,7 @@ namespace mantle {
         VulkanGPUAllocator() = default;
         ~VulkanGPUAllocator();
 
-        VulkanGPUAllocator(const VulkanGPUAllocator &) = delete;
-        VulkanGPUAllocator &operator=(const VulkanGPUAllocator &) = delete;
-        VulkanGPUAllocator(VulkanGPUAllocator &&) noexcept = delete;
-        VulkanGPUAllocator &operator=(VulkanGPUAllocator &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanGPUAllocator);
 
         void init(VkPhysicalDevice physical_device, VkDevice device,
                   VkInstance instance, VkAllocationCallbacks *vk_callbacks);

@@ -45,10 +45,7 @@ namespace mantle {
         Window() = default;
         ~Window();
 
-        Window(const Window &) = delete;
-        Window &operator=(const Window &) = delete;
-        Window(Window &&) noexcept = delete;
-        Window &operator=(Window &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(Window);
 
         void init(const Properties &properties, VirtualHeap *heap);
         void destroy();

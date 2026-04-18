@@ -5,6 +5,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+#include "core/macros.h"
 #include "core/types.h"
 #include "vulkan_types.h"
 
@@ -14,12 +15,10 @@ namespace mantle {
         VulkanDevice() = default;
         ~VulkanDevice();
 
-        VulkanDevice(const VulkanDevice &) = delete;
-        VulkanDevice &operator=(const VulkanDevice &) = delete;
-        VulkanDevice(VulkanDevice &&) noexcept = delete;
-        VulkanDevice &operator=(VulkanDevice &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanDevice);
 
-        void init(VkInstance instance, VkSurfaceKHR surface, VkAllocationCallbacks *vk_callbacks);
+        void init(VkInstance instance, VkSurfaceKHR surface,
+                  VkAllocationCallbacks *vk_callbacks);
         void destroy();
 
         VkDevice get_device() const;

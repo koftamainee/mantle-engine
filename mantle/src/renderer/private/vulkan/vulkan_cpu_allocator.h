@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include "core/macros.h"
 #include "core/memory/tlsf_allocator.h"
 
 namespace mantle {
@@ -11,10 +12,7 @@ namespace mantle {
         VulkanCPUAllocator() = default;
         ~VulkanCPUAllocator() = default;
 
-        VulkanCPUAllocator(const VulkanCPUAllocator &) = delete;
-        VulkanCPUAllocator &operator=(const VulkanCPUAllocator &) = delete;
-        VulkanCPUAllocator(VulkanCPUAllocator &&) = delete;
-        VulkanCPUAllocator &operator=(VulkanCPUAllocator &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(VulkanCPUAllocator);
 
         void init(TlsfAllocator *tlsf);
 

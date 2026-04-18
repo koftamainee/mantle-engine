@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "core/macros.h"
 #include "core/memory/memory_block.h"
 #include "core/types.h"
 
@@ -14,10 +15,7 @@ namespace mantle {
         ArenaAllocator() = default;
         ~ArenaAllocator();
 
-        ArenaAllocator(const ArenaAllocator &) = delete;
-        ArenaAllocator &operator=(const ArenaAllocator &) = delete;
-        ArenaAllocator(ArenaAllocator &&) = delete;
-        ArenaAllocator &operator=(ArenaAllocator &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(ArenaAllocator);
 
         void init(MemoryBlock block);
         void destroy();

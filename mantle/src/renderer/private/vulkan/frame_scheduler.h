@@ -29,10 +29,7 @@ namespace mantle {
         FrameScheduler() = default;
         ~FrameScheduler();
 
-        FrameScheduler(const FrameScheduler &) = delete;
-        FrameScheduler &operator=(const FrameScheduler &) = delete;
-        FrameScheduler(FrameScheduler &&) noexcept = delete;
-        FrameScheduler &operator=(FrameScheduler &&) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(FrameScheduler);
 
         void init(VulkanBackend *backend, GPUResourceManager *resource_manager,
                   u32 frames_in_flight, VirtualHeap *heap);

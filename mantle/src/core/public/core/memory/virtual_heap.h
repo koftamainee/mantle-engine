@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/macros.h"
 #include "core/memory/memory_block.h"
 #include "core/memory/os_memory.h"
 #include "core/types.h"
@@ -7,14 +8,11 @@
 namespace mantle {
 
     class VirtualHeap final {
-    public:
+      public:
         VirtualHeap() = default;
         ~VirtualHeap();
 
-        VirtualHeap(const VirtualHeap &) = delete;
-        VirtualHeap &operator=(const VirtualHeap &) = delete;
-        VirtualHeap(VirtualHeap &&) = delete;
-        VirtualHeap &operator=(VirtualHeap &&) = delete;
+        MANTLE_NO_COPY_NO_MOVE(VirtualHeap);
 
         void init(OSMemory &os, usize reserve_size);
         void destroy();
@@ -25,7 +23,7 @@ namespace mantle {
         usize used() const;
         usize committed() const;
 
-    private:
+      private:
         OSMemory *m_os = nullptr;
         void *m_base = nullptr;
         usize m_reserved = 0;
