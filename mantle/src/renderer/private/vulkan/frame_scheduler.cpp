@@ -110,11 +110,11 @@ namespace mantle {
 
         AcquiredImage acquired = m_backend->acquire_next_image(
             m_frames[m_current_frame].image_available);
+        vk_verify(vkResetFences(vk_device, 1, &frame.fence));
+
         if (acquired.result == SwapchainResult::OutOfDate) {
             return FrameResult::NeedsResize;
         }
-
-        vk_verify(vkResetFences(vk_device, 1, &frame.fence));
 
         VkCommandBufferBeginInfo begin_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,

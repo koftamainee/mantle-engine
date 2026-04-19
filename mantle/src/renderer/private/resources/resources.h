@@ -1,5 +1,6 @@
 #pragma once
 #include "renderer/types.h"
+#include "types.h"
 
 #include "vulkan_gpu_allocator.h"
 
@@ -10,6 +11,9 @@ namespace mantle {
         void *mapped = nullptr;
         BufferDesc desc = {};
 
+        PipelineStage current_stage = PipelineStage::Top;
+        AccessType current_access = AccessType::None;
+
         u32 bindless_index = UINT32_MAX;
     };
     struct ImageResource final {
@@ -18,7 +22,7 @@ namespace mantle {
         VkImageView view = VK_NULL_HANDLE;
         ImageDesc desc = {};
 
-        ImageLayout layout = ImageLayout::Undefined;
+        ImageLayout current_layout = ImageLayout::Undefined;
 
         u32 bindless_sample_index = UINT32_MAX;
         u32 bindless_storage_index = UINT32_MAX;
@@ -42,4 +46,4 @@ namespace mantle {
         VkPipelineLayout layout = VK_NULL_HANDLE;
         ComputePipelineDesc desc = {};
     };
-}
+} // namespace mantle

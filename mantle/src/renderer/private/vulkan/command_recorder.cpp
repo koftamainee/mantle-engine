@@ -36,16 +36,14 @@ namespace mantle {
         for (const auto &barrier : barriers) {
             auto *image = barrier.image;
             check(image != nullptr);
-            image->layout = barrier.to;
+            image->current_layout = barrier.to;
 
             vk_barriers.push_back({
                 .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
                 .srcStageMask = to_vk(barrier.src_stage),
-                .srcAccessMask =
-                    infer_image_access(barrier.from, barrier.src_access),
+                .srcAccessMask = to_vk(barrier.src_access),
                 .dstStageMask = to_vk(barrier.dst_stage),
-                .dstAccessMask =
-                    infer_image_access(barrier.to, barrier.dst_access),
+                .dstAccessMask = to_vk(barrier.dst_access),
                 .oldLayout = to_vk(barrier.from),
                 .newLayout = to_vk(barrier.to),
                 .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
@@ -90,11 +88,9 @@ namespace mantle {
             vk_barriers.push_back({
                 .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2,
                 .srcStageMask = to_vk(barrier.src_stage),
-                .srcAccessMask =
-                    infer_buffer_access(barrier.src_stage, barrier.src_access),
+                .srcAccessMask = to_vk(barrier.src_access),
                 .dstStageMask = to_vk(barrier.dst_stage),
-                .dstAccessMask =
-                    infer_buffer_access(barrier.dst_stage, barrier.dst_access),
+                .dstAccessMask = to_vk(barrier.dst_access),
                 .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                 .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
                 .buffer = buffer->buffer,
@@ -403,8 +399,8 @@ namespace mantle {
         vkCmdCopyImageToBuffer2(m_cmd, &copy_info);
     }
 
-    void CommandRecorder::clear_color_image(const ImageResource &image, f32 r, f32 g,
-                                            f32 b, f32 a) const {
+    void CommandRecorder::clear_color_image(const ImageResource &image, f32 r,
+                                            f32 g, f32 b, f32 a) const {
         VkClearColorValue clear = {.float32 = {r, g, b, a}};
         VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT, 0,
                                          VK_REMAINING_MIP_LEVELS, 0,

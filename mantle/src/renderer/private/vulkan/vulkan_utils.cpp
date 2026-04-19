@@ -264,64 +264,6 @@ namespace mantle {
         return flags;
     }
 
-    VkAccessFlags2 infer_image_access(ImageLayout layout, AccessType access) {
-        VkAccessFlags2 read_flags = VK_ACCESS_2_NONE;
-        VkAccessFlags2 write_flags = VK_ACCESS_2_NONE;
-
-        switch (layout) {
-        case ImageLayout::ColorAttachment:
-            read_flags = VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
-            write_flags = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-            break;
-        case ImageLayout::DepthAttachment:
-            read_flags = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-            write_flags = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-            break;
-        case ImageLayout::ShaderReadOnly:
-            read_flags = VK_ACCESS_2_SHADER_READ_BIT;
-            break;
-        case ImageLayout::General:
-            read_flags = VK_ACCESS_2_SHADER_READ_BIT;
-            write_flags = VK_ACCESS_2_SHADER_WRITE_BIT;
-            break;
-        case ImageLayout::TransferSrc:
-            read_flags = VK_ACCESS_2_TRANSFER_READ_BIT;
-            break;
-        case ImageLayout::TransferDst:
-            write_flags = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-            break;
-        case ImageLayout::Present:
-        case ImageLayout::Undefined:
-            fatal(access != AccessType::None,
-                  "ImageLayout::Present/Undefined must use AccessType::None");
-            return VK_ACCESS_2_NONE;
-        default:
-            fatal(true, "unsupported ImageLayout");
-        }
-
-        const bool wants_read =
-            (access == AccessType::Read || access == AccessType::ReadWrite);
-        const bool wants_write =
-            (access == AccessType::Write || access == AccessType::ReadWrite);
-
-        fatal(wants_read && read_flags == VK_ACCESS_2_NONE,
-              "ImageLayout does not support read access");
-        fatal(wants_write && write_flags == VK_ACCESS_2_NONE,
-              "ImageLayout does not support write access");
-
-        switch (access) {
-        case AccessType::None:
-            return VK_ACCESS_2_NONE;
-        case AccessType::Read:
-            return read_flags;
-        case AccessType::Write:
-            return write_flags;
-        case AccessType::ReadWrite:
-            return read_flags | write_flags;
-        default:
-            fatal(true, "unsupported AccessType");
-        }
-    }
 
     VkSampleCountFlagBits to_vk(SampleCount count) {
         switch (count) {
@@ -574,92 +516,6 @@ namespace mantle {
         }
     }
 
-    VkAccessFlags2 infer_buffer_access(PipelineStage stage, AccessType access) {
-        VkAccessFlags2 read_flags = VK_ACCESS_2_NONE;
-        VkAccessFlags2 write_flags = VK_ACCESS_2_NONE;
-
-        switch (stage) {
-        case PipelineStage::Transfer:
-            read_flags = VK_ACCESS_2_TRANSFER_READ_BIT;
-            write_flags = VK_ACCESS_2_TRANSFER_WRITE_BIT;
-            break;
-        case PipelineStage::VertexShader:
-        case PipelineStage::FragmentShader:
-        case PipelineStage::ComputeShader:
-            read_flags = VK_ACCESS_2_SHADER_READ_BIT;
-            write_flags = VK_ACCESS_2_SHADER_WRITE_BIT;
-            break;
-        case PipelineStage::VertexInput:
-            read_flags = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT |
-                VK_ACCESS_2_INDEX_READ_BIT;
-            break;
-        case PipelineStage::DrawIndirect:
-            read_flags = VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
-            break;
-        case PipelineStage::Host:
-            read_flags = VK_ACCESS_2_HOST_READ_BIT;
-            write_flags = VK_ACCESS_2_HOST_WRITE_BIT;
-            break;
-        case PipelineStage::None:
-            fatal(access != AccessType::None,
-                  "PipelineStage::None must use AccessType::None");
-            return VK_ACCESS_2_NONE;
-        default:
-            fatal(true, "unsupported PipelineStage for buffer access");
-        }
-
-        const bool wants_read =
-            (access == AccessType::Read || access == AccessType::ReadWrite);
-        const bool wants_write =
-            (access == AccessType::Write || access == AccessType::ReadWrite);
-
-        fatal(wants_read && read_flags == VK_ACCESS_2_NONE,
-              "PipelineStage does not support read access for buffers");
-        fatal(wants_write && write_flags == VK_ACCESS_2_NONE,
-              "PipelineStage does not support write access for buffers");
-
-        switch (access) {
-        case AccessType::None:
-            return VK_ACCESS_2_NONE;
-        case AccessType::Read:
-            return read_flags;
-        case AccessType::Write:
-            return write_flags;
-        case AccessType::ReadWrite:
-            return read_flags | write_flags;
-        default:
-            fatal(true, "unsupported AccessType");
-        }
-    }
-
-    PipelineStage infer_swapchain_present_stage(ImageLayout layout) {
-        switch (layout) {
-        // NOTE: probably this should be in the end
-        case ImageLayout::Undefined:
-        case ImageLayout::Present:
-            return PipelineStage::Top;
-        case ImageLayout::ColorAttachment:
-            return PipelineStage::ColorOutput;
-        case ImageLayout::TransferDst:
-            return PipelineStage::Transfer;
-        default:
-            fatal(true, "Unexpected swapchain layout before present");
-        }
-    }
-
-    AccessType infer_swapchain_present_access(ImageLayout layout) {
-        switch (layout) {
-        // NOTE: probably this should be in the end
-        case ImageLayout::Undefined:
-        case ImageLayout::Present:
-            return AccessType::None;
-        case ImageLayout::ColorAttachment:
-        case ImageLayout::TransferDst:
-            return AccessType::Write;
-        default:
-            fatal(true, "Unexpected swapchain layout before present");
-        }
-    }
 
     VkColorComponentFlags to_vk(ColorWriteMask mask) {
         using U = std::underlying_type_t<ColorWriteMask>;
@@ -689,4 +545,32 @@ namespace mantle {
 
         return flags;
     }
+
+    VkAccessFlags2 to_vk(AccessType access) {
+        switch (access) {
+        case AccessType::None:
+            return VK_ACCESS_2_NONE;
+        case AccessType::ColorAttachmentRead:
+            return VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
+        case AccessType::ColorAttachmentWrite:
+            return VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+        case AccessType::DepthAttachmentRead:
+            return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+        case AccessType::DepthAttachmentWrite:
+            return VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        case AccessType::ShaderRead:
+            return VK_ACCESS_2_SHADER_READ_BIT;
+        case AccessType::ShaderWrite:
+            return VK_ACCESS_2_SHADER_WRITE_BIT;
+        case AccessType::ShaderReadWrite:
+            return VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT;
+        case AccessType::TransferRead:
+            return VK_ACCESS_2_TRANSFER_READ_BIT;
+        case AccessType::TransferWrite:
+            return VK_ACCESS_2_TRANSFER_WRITE_BIT;
+        default:
+            fatal(true, "unsupported AccessType");
+        }
+    }
+
 } // namespace mantle

@@ -151,7 +151,8 @@ namespace mantle {
             RGImageHandle out_backbuffer;
         };
 
-        RGImageHandle backbuffer = graph.import_image(m_renderer.backbuffer());
+        RGImageHandle backbuffer =
+        graph.import_image(m_renderer.backbuffer());
         auto [width, height] = m_window.get_framebuffer_size();
 
         graph.add_pass<TrianglePass>(
@@ -160,7 +161,7 @@ namespace mantle {
                 pass.out_backbuffer = builder.write(backbuffer);
             },
             [width, height, this](RenderPassContext &ctx,
-                                  const TrianglePass &pass) {
+                                              const TrianglePass &pass) {
                 std::array<RGColorAttachment, 1> color_attachments = {{{
                     .image = pass.out_backbuffer,
                     .load = AttachmentLoad::Clear,
@@ -175,6 +176,9 @@ namespace mantle {
                     .width = width,
                     .height = height,
                 });
+
+                ctx.set_scissor(0, 0, width, height);
+                ctx.set_viewport(0, 0, width, height);
 
                 ctx.bind_pipeline(m_triangle_pipeline);
                 ctx.draw({.vertex_count = 3});

@@ -3,12 +3,58 @@
 #include "core/memory/persistent_allocator.h"
 #include "core/memory/pmr/persistent_resource.h"
 #include "resources/gpu_resource_manager_internal.h"
+#include "types.h"
 #include "vulkan/command_recorder.h"
 #include "vulkan/frame_scheduler.h"
 #include "vulkan/vulkan_backend.h"
-#include "vulkan/vulkan_utils.h"
 
 namespace mantle {
+
+    namespace {
+        PipelineStage infer_stage(ImageLayout layout) {
+            switch (layout) {
+            case ImageLayout::Undefined:
+                return PipelineStage::Top;
+            case ImageLayout::ColorAttachment:
+                return PipelineStage::ColorOutput;
+            case ImageLayout::DepthAttachment:
+                return PipelineStage::EarlyDepth;
+            case ImageLayout::ShaderReadOnly:
+                return PipelineStage::FragmentShader;
+            case ImageLayout::TransferSrc:
+            case ImageLayout::TransferDst:
+                return PipelineStage::Transfer;
+            case ImageLayout::General:
+                return PipelineStage::ComputeShader;
+            case ImageLayout::Present:
+                return PipelineStage::Bottom;
+            default:
+                fatal(true, "unsupported ImageLayout");
+            }
+        }
+
+        AccessType infer_access(ImageLayout layout) {
+            switch (layout) {
+            case ImageLayout::Undefined:
+            case ImageLayout::Present:
+                return AccessType::None;
+            case ImageLayout::ColorAttachment:
+                return AccessType::ColorAttachmentWrite;
+            case ImageLayout::DepthAttachment:
+                return AccessType::DepthAttachmentWrite;
+            case ImageLayout::ShaderReadOnly:
+                return AccessType::ShaderRead;
+            case ImageLayout::TransferSrc:
+                return AccessType::TransferRead;
+            case ImageLayout::TransferDst:
+                return AccessType::TransferWrite;
+            case ImageLayout::General:
+                fatal(true, "General layout requires explicit access type");
+            default:
+                fatal(true, "unsupported ImageLayout");
+            }
+        }
+    } // namespace
 
     struct Renderer::Impl final {
         VulkanBackend backend{};
@@ -78,6 +124,10 @@ namespace mantle {
         m_impl->backbuffer =
             m_impl->swapchain_images[m_impl->current_frame.image_index];
 
+        auto &backbuffer =
+            m_impl->resource_manager.m_impl->get_image(m_impl->backbuffer);
+        backbuffer.current_layout = ImageLayout::Undefined;
+
         return Result::Ok;
     }
 
@@ -94,11 +144,11 @@ namespace mantle {
 
         ImageBarrier barrier = {
             .image = &backbuffer_ref,
-            .from = backbuffer_ref.layout,
+            .from = backbuffer_ref.current_layout,
             .to = ImageLayout::Present,
-            .src_stage = infer_swapchain_present_stage(backbuffer_ref.layout),
+            .src_stage = infer_stage(backbuffer_ref.current_layout),
             .dst_stage = PipelineStage::Bottom,
-            .src_access = infer_swapchain_present_access(backbuffer_ref.layout),
+            .src_access = infer_access(backbuffer_ref.current_layout),
             .dst_access = AccessType::None,
         };
 

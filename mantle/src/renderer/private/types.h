@@ -37,7 +37,21 @@ namespace mantle {
         MaxEnum = (1 << 13) - 1,
     };
 
-    enum class AccessType { None, Read, Write, ReadWrite };
+    enum class AccessType {
+        None,
+
+        ColorAttachmentRead,
+        ColorAttachmentWrite,
+        DepthAttachmentRead,
+        DepthAttachmentWrite,
+
+        ShaderRead,
+        ShaderWrite,
+        ShaderReadWrite,
+
+        TransferRead,
+        TransferWrite,
+    };
 
     struct ImageBarrier final {
         ImageResource *image = nullptr;

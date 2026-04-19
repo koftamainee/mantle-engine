@@ -889,7 +889,7 @@ namespace mantle {
                         .usage = ImageUsage::Color, // also usage::present, but
                                                     // its internal
                     },
-                .layout = ImageLayout::Undefined,
+                .current_layout = ImageLayout::Undefined,
             };
 
             out_images[i] = {.index = index, .generation = generation};
