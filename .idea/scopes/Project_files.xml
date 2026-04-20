@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Project files" pattern="(file[mantle]:*/&amp;&amp;!file[mantle]:.idea//*&amp;&amp;!file[mantle]:md/mantle/.obsidian//*&amp;&amp;!file[mantle]:mantle/third_party//*||file:mantle/third_party/CMakeLists.txt)&amp;&amp;!ext:src/*&amp;&amp;!ext:src//*" />
+</component>
