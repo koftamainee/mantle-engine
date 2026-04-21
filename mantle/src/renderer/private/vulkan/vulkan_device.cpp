@@ -4,10 +4,11 @@
 #include <core/assert.h>
 
 #include <unordered_set>
-#include "../vulkan/vkassert.h"
-#include "../vulkan/vulkan_types.h"
+#include "vulkan/vkassert.h"
+#include "vulkan/vulkan_types.h"
 
 #include <spdlog/spdlog.h>
+#include "core/memory/scope_arena.h"
 
 
 namespace mantle {
@@ -15,10 +16,20 @@ namespace mantle {
     VulkanDevice::~VulkanDevice() { destroy(); }
 
     void VulkanDevice::init(VkInstance instance, VkSurfaceKHR surface,
-                            VkAllocationCallbacks *vk_callbacks) {
+                            VkAllocationCallbacks *vk_callbacks,
+                            VirtualHeap *heap, ArenaAllocator *scratch_arena) {
         check(!m_is_initialized);
 
         m_alloc_callbacks = vk_callbacks;
+        m_resource = PersistentResource(heap);
+        m_scratch_arena = scratch_arena;
+        m_scratch_resource = ArenaResource(m_scratch_arena);
+
+
+        m_queue_family_properties =
+            std::pmr::vector<VkQueueFamilyProperties>(&m_resource);
+        m_supported_extensions =
+            std::pmr::vector<std::pmr::string>(&m_resource);
 
         create_physical_device(instance, surface);
 
@@ -42,7 +53,9 @@ namespace mantle {
                                              &extension_count, nullptr);
 
         if (extension_count > 0) {
-            std::vector<VkExtensionProperties> extensions(extension_count);
+            ScopeArena scope(m_scratch_arena);
+            std::pmr::vector<VkExtensionProperties> extensions(
+                extension_count, &m_scratch_resource);
 
             if (vkEnumerateDeviceExtensionProperties(
                     m_physical_device, nullptr, &extension_count,
@@ -338,7 +351,7 @@ namespace mantle {
     VkFormat VulkanDevice::get_supported_depth_format(
         bool check_sampling_support) const {
         check(m_is_initialized);
-        const std::vector<VkFormat> depth_formats = {
+        constexpr std::array<VkFormat, 5> depth_formats = {
             VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
             VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT,
             VK_FORMAT_D16_UNORM};
@@ -392,7 +405,9 @@ namespace mantle {
         vk_verify(vkEnumeratePhysicalDevices(instance, &device_count, nullptr));
         fatal(device_count == 0, "Failed to enumerate physical devices");
 
-        std::vector<VkPhysicalDevice> devices(device_count);
+        ScopeArena scope(m_scratch_arena);
+        std::pmr::vector<VkPhysicalDevice> devices(device_count,
+                                                   &m_scratch_resource);
         vk_verify(vkEnumeratePhysicalDevices(instance, &device_count,
                                              devices.data()));
 
@@ -428,7 +443,9 @@ namespace mantle {
 
         f32 queue_priority = 0.5f;
 
-        std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
+        ScopeArena scope(m_scratch_arena);
+        std::pmr::vector<VkDeviceQueueCreateInfo> queue_create_infos(
+            &m_scratch_resource);
         for (u32 queue_family : unique_queue_families) {
             VkDeviceQueueCreateInfo queue_create_info = {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
@@ -563,7 +580,9 @@ namespace mantle {
         vk_verify(vkEnumerateDeviceExtensionProperties(
             physical_device, nullptr, &extensions_count, nullptr));
 
-        std::vector<VkExtensionProperties> extensions(extensions_count);
+        ScopeArena scope(m_scratch_arena);
+        std::pmr::vector<VkExtensionProperties> extensions(extensions_count,
+                                                           &m_scratch_resource);
         vk_verify(vkEnumerateDeviceExtensionProperties(
             physical_device, nullptr, &extensions_count, extensions.data()));
 
@@ -598,7 +617,9 @@ namespace mantle {
         vkGetPhysicalDeviceQueueFamilyProperties(physical_device,
                                                  &queue_family_count, nullptr);
 
-        std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
+        ScopeArena scope(m_scratch_arena);
+        std::pmr::vector<VkQueueFamilyProperties> queue_families(
+            queue_family_count, &m_scratch_resource);
         vkGetPhysicalDeviceQueueFamilyProperties(
             physical_device, &queue_family_count, queue_families.data());
 

@@ -1,24 +1,29 @@
 #pragma once
 
+#include <array>
 #include <optional>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.h>
 
 #include "core/macros.h"
+#include "core/memory/arena_allocator.h"
+#include "core/memory/pmr/arena_resource.h"
+#include "core/memory/pmr/persistent_resource.h"
+#include "core/memory/virtual_heap.h"
 #include "core/types.h"
 #include "vulkan_types.h"
 
 namespace mantle {
     class VulkanDevice final {
-      public:
+    public:
         VulkanDevice() = default;
         ~VulkanDevice();
 
         MANTLE_NO_COPY_NO_MOVE(VulkanDevice);
 
         void init(VkInstance instance, VkSurfaceKHR surface,
-                  VkAllocationCallbacks *vk_callbacks);
+                  VkAllocationCallbacks *vk_callbacks, VirtualHeap *heap, ArenaAllocator *scratch_arena);
         void destroy();
 
         VkDevice get_device() const;
@@ -66,30 +71,34 @@ namespace mantle {
         VkQueue get_present_queue() const;
         VkQueue get_transfer_queue() const;
 
-      private:
+    private:
         void create_physical_device(VkInstance instance, VkSurfaceKHR surface);
         void destroy_physical_device();
 
         void create_logical_device(VkInstance instance);
         void destroy_logical_device();
 
-      private:
-        static bool
+    private:
+        bool
         is_physical_device_suitable(VkPhysicalDevice physical_device,
                                     VkSurfaceKHR surface,
                                     QueueFamilyIndices &queue_family_indices);
 
-        static bool is_physical_device_supports_required_extensions(
+        bool is_physical_device_supports_required_extensions(
             VkPhysicalDevice physical_device);
 
-        static QueueFamilyIndices
+        QueueFamilyIndices
         find_queue_families(VkPhysicalDevice physical_device,
                             VkSurfaceKHR surface);
 
-      private:
+    private:
         bool m_is_initialized = false;
 
         VkAllocationCallbacks *m_alloc_callbacks = nullptr;
+
+        ArenaAllocator *m_scratch_arena = nullptr;
+        ArenaResource m_scratch_resource{};
+        PersistentResource m_resource{};
 
         VkPhysicalDevice m_physical_device{};
         VkDevice m_device{};
@@ -97,8 +106,8 @@ namespace mantle {
         VkPhysicalDeviceFeatures m_features{};
         VkPhysicalDeviceFeatures m_enabled_features{};
         VkPhysicalDeviceMemoryProperties m_memory_properties{};
-        std::vector<VkQueueFamilyProperties> m_queue_family_properties{};
-        std::vector<std::string> m_supported_extensions{};
+        std::pmr::vector<VkQueueFamilyProperties> m_queue_family_properties{};
+        std::pmr::vector<std::pmr::string> m_supported_extensions{};
         VkCommandPool m_command_pool{};
         VkCommandPool m_transfer_command_pool{};
         QueueFamilyIndices m_queue_indices{};
@@ -109,12 +118,15 @@ namespace mantle {
 
 
       private:
-        inline static const std::vector<const char *> ms_device_extensions = {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 #ifndef NDEBUG
-            VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME, // this is for vma
-                                                             // debugging
-#endif
+        static constexpr std::array<const char *, 2> ms_device_extensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME,
         };
+#else
+        static constexpr std::array<const char *, 1> ms_device_extensions = {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+        };
+#endif
     };
 } // namespace mantle

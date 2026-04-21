@@ -12,7 +12,6 @@
 
 namespace mantle {
     class RenderGraph;
-
     // TODO: Setup phase
 
     // TODO: TransientResources system:
@@ -59,13 +58,9 @@ namespace mantle {
     class RenderGraphBuilder final {
       public:
         RenderGraphBuilder() = delete;
-        ~RenderGraphBuilder();
+        ~RenderGraphBuilder() = default;
 
-        RenderGraphBuilder(const RenderGraphBuilder &other) = delete;
-        RenderGraphBuilder(RenderGraphBuilder &&other) noexcept = delete;
-        RenderGraphBuilder &operator=(const RenderGraphBuilder &other) = delete;
-        RenderGraphBuilder &
-        operator=(RenderGraphBuilder &&other) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(RenderGraphBuilder);
 
         // TODO: add async_compute_enable(true);
         // TODO: add use_render_target(<something>);
@@ -85,19 +80,20 @@ namespace mantle {
         RGBufferHandle write(RGBufferHandle buffer);
 
       private:
-        // TODO
+        struct Impl;
+
+        friend class RenderGraph;
+        void init(Impl *impl);
+
+        Impl *m_impl;
     };
 
     class RenderPassContext final {
       public:
         RenderPassContext() = delete;
-        ~RenderPassContext();
+        ~RenderPassContext() = default;
 
-        RenderPassContext(const RenderPassContext &other) = delete;
-        RenderPassContext(RenderPassContext &&other) noexcept = delete;
-        RenderPassContext &operator=(const RenderPassContext &other) = delete;
-        RenderPassContext &
-        operator=(RenderPassContext &&other) noexcept = delete;
+        MANTLE_NO_COPY_NO_MOVE(RenderPassContext);
 
         void bind_pipeline(GraphicsPipelineHandle pipeline);
         void bind_pipeline(ComputePipelineHandle pipeline);
@@ -131,8 +127,7 @@ namespace mantle {
         struct Impl;
 
         friend class RenderGraph;
-        void init();
-        void destroy();
+        void init(Impl *impl);
 
         Impl *m_impl;
     };

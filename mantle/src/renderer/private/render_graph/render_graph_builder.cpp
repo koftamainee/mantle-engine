@@ -2,7 +2,6 @@
 
 // TODO
 namespace mantle {
-    RenderGraphBuilder::~RenderGraphBuilder() {}
 
     RGImageHandle RenderGraphBuilder::create_image(const ImageDesc &desc) {
         return {};
@@ -22,5 +21,8 @@ namespace mantle {
 
     RGBufferHandle RenderGraphBuilder::write(RGBufferHandle buffer) {
         return {};
+    }
+    void RenderGraphBuilder::init(Impl *impl) {
+        m_impl = impl;
     }
 } // namespace mantle

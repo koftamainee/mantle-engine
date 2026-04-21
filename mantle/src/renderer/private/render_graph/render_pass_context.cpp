@@ -6,12 +6,8 @@ namespace mantle {
     struct RenderPassContext::Impl final {
         CommandRecorder *cmd;
 
-        // TODO: use custom alloc
-        std::pmr::vector<ColorAttachment> color_attachments;
         GPUResourceManager *resource_manager = nullptr;
     };
-
-    RenderPassContext::~RenderPassContext() {}
 
     void RenderPassContext::bind_pipeline(GraphicsPipelineHandle pipeline) {
         m_impl->cmd->bind_graphics_pipeline(
@@ -24,7 +20,9 @@ namespace mantle {
     }
 
     void RenderPassContext::begin_rendering(const RGRenderingInfo &info) {
-        m_impl->color_attachments.reserve(info.colors.size());
+        // TODO: use custom alloc
+        std::pmr::vector<ColorAttachment> color_attachments;
+        color_attachments.reserve(info.colors.size());
 
         for (const auto &rg : info.colors) {
             ImageResource stub{};
@@ -38,7 +36,7 @@ namespace mantle {
                 .clear_a = rg.clear_a,
             };
 
-            m_impl->color_attachments.push_back(c);
+            color_attachments.push_back(c);
         }
 
         DepthAttachment depth = {};
@@ -52,8 +50,8 @@ namespace mantle {
 
 
         RenderingInfo internal_info = {
-            .colors = std::span(m_impl->color_attachments.data(),
-                                m_impl->color_attachments.size()),
+            .colors = std::span(color_attachments.data(),
+                                color_attachments.size()),
             .depth = ((info.depth != nullptr) ? &depth : nullptr),
             .width = info.width,
             .height = info.height,
@@ -99,9 +97,10 @@ namespace mantle {
 
     void RenderPassContext::push_constants(const void *data,
                                            ShaderStage stage) {}
-    void RenderPassContext::init() {}
 
-    void RenderPassContext::destroy() {}
+    void RenderPassContext::init(Impl *impl) {
+        m_impl = impl;
+    }
 
     void RenderPassContext::draw(const RGDrawInfo &info) {}
 

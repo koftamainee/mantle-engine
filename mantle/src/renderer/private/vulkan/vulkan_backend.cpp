@@ -27,7 +27,7 @@ namespace mantle {
         VkSurfaceKHR surface = m_context.get_surface();
 
         m_device.init(m_context.get_instance(), surface,
-                      m_vk_allocator.vk_allocator());
+                      m_vk_allocator.vk_allocator(), m_heap, m_scratch_arena);
         VkDevice device = m_device.get_device();
 
         auto [width, height] = window.get_framebuffer_size();
