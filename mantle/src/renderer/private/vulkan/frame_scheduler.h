@@ -44,9 +44,10 @@ namespace mantle {
         struct FrameData {
             VkFence fence;
             VkSemaphore image_available;
-            VkSemaphore render_finished;
             VkCommandBuffer cmd;
         };
+
+        VkSemaphore *m_render_finished = nullptr;
 
         bool m_is_initialized = false;
         VulkanBackend *m_backend = nullptr;
@@ -55,6 +56,7 @@ namespace mantle {
         ArenaResource m_pmr{};
 
         u32 m_frames_in_flight = 0;
+        u32 m_swapchain_image_count = 0;
         u32 m_current_frame = 0;
 
         VkCommandPool m_command_pool{};

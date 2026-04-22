@@ -21,13 +21,13 @@ namespace mantle {
         m_pmr = ArenaResource(&m_frame_arena);
 
         m_backend = backend;
-        m_frames_in_flight = std::min(
-            frames_in_flight,
-            static_cast<u32>(m_backend->m_swapchain.get_images().size()));
+        m_frames_in_flight = frames_in_flight;
+        m_swapchain_image_count = m_backend->get_swapchain_info().image_count;
 
         PersistentAllocator alloc;
         alloc.init(m_backend->m_heap);
         m_frames = alloc.push<FrameData>(m_frames_in_flight);
+        m_render_finished = alloc.push<VkSemaphore>(m_swapchain_image_count);
 
         m_command_pool = m_backend->m_device.create_command_pool(
             m_backend->m_device.get_queue_families().graphics_family);
@@ -50,7 +50,6 @@ namespace mantle {
         for (usize i = 0; i < m_frames_in_flight; i++) {
             VkFence fence;
             VkSemaphore image_available;
-            VkSemaphore render_finished;
             VkCommandBuffer cmd = device.create_command_buffer(
                 VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_command_pool);
 
@@ -58,15 +57,19 @@ namespace mantle {
                 vkCreateFence(vk_device, &fence_info, vk_callbacks, &fence));
             vk_verify(vkCreateSemaphore(vk_device, &semaphore_info,
                                         vk_callbacks, &image_available));
-            vk_verify(vkCreateSemaphore(vk_device, &semaphore_info,
-                                        vk_callbacks, &render_finished));
 
             m_frames[i] = {
                 .fence = fence,
                 .image_available = image_available,
-                .render_finished = render_finished,
                 .cmd = cmd,
             };
+        }
+
+        for (usize i = 0; i < m_swapchain_image_count; i++) {
+            VkSemaphore render_finished;
+            vk_verify(vkCreateSemaphore(vk_device, &semaphore_info,
+                                        vk_callbacks, &render_finished));
+            m_render_finished[i] = render_finished;
         }
 
         m_recorder.set_resource_manager(resource_manager);
@@ -86,8 +89,11 @@ namespace mantle {
                 vkDestroyFence(vk_device, m_frames[i].fence, vk_callbacks);
                 vkDestroySemaphore(vk_device, m_frames[i].image_available,
                                    vk_callbacks);
-                vkDestroySemaphore(vk_device, m_frames[i].render_finished,
-                                   vk_callbacks);
+            }
+
+            for (usize i = 0; i < m_swapchain_image_count; i++) {
+                vkDestroySemaphore(vk_device, m_render_finished[i],
+                   vk_callbacks);
             }
 
             vkDestroyCommandPool(vk_device, m_command_pool, vk_callbacks);
@@ -135,7 +141,7 @@ namespace mantle {
 
     FrameResult FrameScheduler::end_frame(const FrameContext &ctx) {
         check(m_is_initialized);
-        FrameData &frame = m_frames[m_current_frame];
+        FrameData &frame = m_frames[ctx.frame_index];
 
         VkPipelineStageFlags wait_stage =
             VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -147,7 +153,7 @@ namespace mantle {
             .commandBufferCount = 1,
             .pCommandBuffers = &frame.cmd,
             .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &frame.render_finished,
+            .pSignalSemaphores = &m_render_finished[ctx.image_index],
         };
 
         vk_verify(vkEndCommandBuffer(frame.cmd));
@@ -156,7 +162,7 @@ namespace mantle {
                                 &submit_info, frame.fence));
 
         SwapchainResult result =
-            m_backend->present(ctx.image_index, frame.render_finished);
+            m_backend->present(ctx.image_index, m_render_finished[ctx.image_index]);
 
         m_current_frame = (m_current_frame + 1) % m_frames_in_flight;
 
