@@ -177,8 +177,8 @@ namespace mantle {
         for (const auto &mode : present_modes) {
             if (vsync) {
                 if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-                    spdlog::info("Preferred present mode is not available. "
-                                 "Fallback to VK_PRESENT_MOD_FIFO_KHR");
+                    spdlog::info("VSync enabled. Chosen present mode: "
+                                 "VK_PRESENT_MOD_FIFO_KHR");
                     return mode;
                 }
             } else {
@@ -194,7 +194,7 @@ namespace mantle {
                 }
                 if (mode == VK_PRESENT_MODE_FIFO_KHR) {
                     spdlog::warn(
-                        "vsync is off, but no supported modes available. "
+                        "VSync is off, but no preffered modes available. "
                         "Fallback to VK_PRESENT_MODE_FIFO_KHR");
                     return mode;
                 }

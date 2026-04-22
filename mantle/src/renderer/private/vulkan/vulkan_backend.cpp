@@ -39,7 +39,7 @@ namespace mantle {
         m_swapchain.init(device, surface,
                          m_device.get_swapchain_support_details(surface, &pmr),
                          m_device.get_queue_families(), width, height, m_vsync,
-                         m_vk_allocator.vk_allocator());
+                         m_vk_allocator.vk_allocator(), m_heap, m_scratch_arena);
 
 
         m_is_initialized = true;
@@ -76,7 +76,7 @@ namespace mantle {
         m_swapchain.init(device, surface,
                          m_device.get_swapchain_support_details(surface, &pmr),
                          m_device.get_queue_families(), width, height, m_vsync,
-                         m_vk_allocator.vk_allocator());
+                         m_vk_allocator.vk_allocator(), m_heap, m_scratch_arena);
     }
 
     SwapchainInfo VulkanBackend::get_swapchain_info() const {

@@ -3,10 +3,10 @@
 - [x] Split up renderer into frame scheduler and render pass, also Renderer::Impl should not have any methods
 - [x] Design and implement bindless descriptor system: single global set, partially bound arrays, resource handles via push constants (`VK_EXT_descriptor_indexing`)
 - [ ] Initialize ImGui in vulkan backend, carry out into separate class with its own descriptor pool and set (separate from global bindless set)
-- [/] Remove MVP from push constants, pass camera matrices via descriptor sets using bindless system
+- [x] Remove MVP from push constants, pass camera matrices via descriptor sets using bindless system
 - [x] Add explicit compute-to-graphics pipeline barrier infrastructure (storage image write -> read synchronization, separate from frame-in-flight sync) done by frame graph
 - [ ] Implement pool/slab allocator and its pmr version
-- [/] Replace all STL containers with pmr versions using custom allocators, or avoid STL in hot paths
+- [x] Replace all STL containers with pmr versions using custom allocators, or avoid STL in hot paths
 - [ ] Add memory profiling stats to existing allocators
 - [ ] Remove mangohud fps overlay, add new debug overlay in ImGui (F3, F3 + 1, 2, 3, 4)
 
