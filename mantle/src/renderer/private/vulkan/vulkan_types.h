@@ -19,8 +19,8 @@ namespace mantle {
 
     struct SwapchainSupportDetails {
         VkSurfaceCapabilitiesKHR capabilities;
-        std::vector<VkSurfaceFormatKHR> formats;
-        std::vector<VkPresentModeKHR> present_modes;
+        std::pmr::vector<VkSurfaceFormatKHR> formats;
+        std::pmr::vector<VkPresentModeKHR> present_modes;
     };
 
 } // namespace mantle

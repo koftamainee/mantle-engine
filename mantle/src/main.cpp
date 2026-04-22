@@ -1,6 +1,6 @@
-#include "core/memory/virtual_heap.h"
 #include "engine/engine.h"
 #include "spdlog/spdlog.h"
+
 int main() {
 #ifndef NDEBUG
     spdlog::set_level(spdlog::level::trace);

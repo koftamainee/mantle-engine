@@ -3,6 +3,7 @@
 
 #include "core/assert.h"
 #include "core/memory/memory_units.h"
+#include "core/memory/scope_arena.h"
 #include "vkassert.h"
 
 
@@ -32,9 +33,11 @@ namespace mantle {
 
         auto [width, height] = window.get_framebuffer_size();
 
+        ScopeArena scope (m_scratch_arena);
+        ArenaResource pmr(m_scratch_arena);
 
         m_swapchain.init(device, surface,
-                         m_device.get_swapchain_support_details(surface),
+                         m_device.get_swapchain_support_details(surface, &pmr),
                          m_device.get_queue_families(), width, height, m_vsync,
                          m_vk_allocator.vk_allocator());
 
@@ -68,8 +71,10 @@ namespace mantle {
 
         VkDevice device = m_device.get_device();
         VkSurfaceKHR surface = m_context.get_surface();
+        ScopeArena scope(m_scratch_arena);
+        ArenaResource pmr(m_scratch_arena);
         m_swapchain.init(device, surface,
-                         m_device.get_swapchain_support_details(surface),
+                         m_device.get_swapchain_support_details(surface, &pmr),
                          m_device.get_queue_families(), width, height, m_vsync,
                          m_vk_allocator.vk_allocator());
     }

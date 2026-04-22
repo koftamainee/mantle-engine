@@ -8,6 +8,7 @@
 #include "../vulkan/vulkan_types.h"
 
 #include "core/assert.h"
+#include "core/memory/scope_arena.h"
 #include "vkassert.h"
 
 namespace mantle {
@@ -18,15 +19,27 @@ namespace mantle {
                                const SwapchainSupportDetails &support_details,
                                const QueueFamilyIndices &indices, u32 width,
                                u32 height, bool vsync,
-                               VkAllocationCallbacks *vk_callbacks) {
+                               VkAllocationCallbacks *vk_callbacks,
+                               VirtualHeap *heap,
+                               ArenaAllocator *scratch_arena) {
         check(!m_is_initialized);
         check(device != VK_NULL_HANDLE);
         m_device = device;
         m_alloc_callbacks = vk_callbacks;
 
+        m_scratch_arena = scratch_arena;
+        m_heap = heap;
+        m_scratch_resource = ArenaResource(m_scratch_arena);
+
+        m_persistent_allocator.init(m_heap);
+        m_persistent_resource = PersistentResource(m_heap);
+
+        m_images = std::pmr::vector<Image>(&m_persistent_resource);
+
         m_surface_format = pick_surface_format(support_details.formats);
         m_extent = pick_extent(support_details.capabilities, width, height);
-        m_present_mode = pick_present_mode(support_details.present_modes, vsync);
+        m_present_mode =
+            pick_present_mode(support_details.present_modes, vsync);
 
         u32 image_count = support_details.capabilities.minImageCount + 1;
         if (support_details.capabilities.maxImageCount > 0 &&
@@ -66,7 +79,8 @@ namespace mantle {
 
         vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
                                           nullptr));
-        std::vector<VkImage> images(image_count);
+        ScopeArena scope(m_scratch_arena);
+        std::pmr::vector<VkImage> images(image_count, &m_scratch_resource);
         vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
                                           images.data()));
 
@@ -112,7 +126,8 @@ namespace mantle {
         }
     }
 
-    std::vector<VulkanSwapchain::Image> VulkanSwapchain::get_images() const {
+    std::span<const VulkanSwapchain::Image>
+    VulkanSwapchain::get_images() const {
         check(m_is_initialized);
 
         return m_images;
@@ -134,7 +149,7 @@ namespace mantle {
     }
 
     VkSurfaceFormatKHR VulkanSwapchain::pick_surface_format(
-        const std::vector<VkSurfaceFormatKHR> &formats) {
+        const std::span<const VkSurfaceFormatKHR> formats) {
         for (const auto &format : formats) {
             if (format.format == VK_FORMAT_R8G8B8A8_SRGB &&
                 format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
@@ -158,7 +173,7 @@ namespace mantle {
     }
 
     VkPresentModeKHR VulkanSwapchain::pick_present_mode(
-        const std::vector<VkPresentModeKHR> &present_modes, bool vsync) {
+        std::span<const VkPresentModeKHR> present_modes, bool vsync) {
         for (const auto &mode : present_modes) {
             if (vsync) {
                 if (mode == VK_PRESENT_MODE_FIFO_KHR) {

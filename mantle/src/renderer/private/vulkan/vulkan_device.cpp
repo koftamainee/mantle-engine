@@ -117,13 +117,16 @@ namespace mantle {
         return m_physical_device;
     }
 
-    SwapchainSupportDetails
-    VulkanDevice::get_swapchain_support_details(VkSurfaceKHR surface) const {
+    SwapchainSupportDetails VulkanDevice::get_swapchain_support_details(
+        VkSurfaceKHR surface, std::pmr::memory_resource *pmr) const {
         check(m_is_initialized);
         check(surface != VK_NULL_HANDLE);
         check(m_physical_device != VK_NULL_HANDLE);
 
         SwapchainSupportDetails details;
+
+        details.formats = std::pmr::vector<VkSurfaceFormatKHR>(pmr);
+        details.present_modes = std::pmr::vector<VkPresentModeKHR>(pmr);
 
         vk_verify(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
             m_physical_device, surface, &details.capabilities));

@@ -29,7 +29,7 @@ namespace mantle {
         VkDevice get_device() const;
         VkPhysicalDevice get_physical_device() const;
         SwapchainSupportDetails
-        get_swapchain_support_details(VkSurfaceKHR surface) const;
+        get_swapchain_support_details(VkSurfaceKHR surface, std::pmr::memory_resource *pmr) const;
 
         u32 get_queue_family_index(VkQueueFlags queue_flags) const;
         std::optional<u32>
