@@ -85,7 +85,7 @@ namespace mantle {
                                           images.data()));
 
         m_images.resize(image_count);
-        for (u32 i = 0; i < image_count; i++) {
+        for (usize i = 0; i < image_count; i++) {
             m_images[i].image = images[i];
 
             VkImageViewCreateInfo view_info = {

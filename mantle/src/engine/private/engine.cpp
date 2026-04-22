@@ -32,7 +32,7 @@ namespace mantle {
         m_camera.aspect = static_cast<f32>(prop.size.width) /
             static_cast<f32>(prop.size.height);
 
-        m_window.set_resize_callback([&](u32 w, u32 h) {
+        m_window.set_resize_callback([this](u32 w, u32 h) {
             m_renderer.resize_swapchain(w, h);
             m_camera.aspect = static_cast<f32>(w) / static_cast<f32>(h);
         });
@@ -76,7 +76,7 @@ namespace mantle {
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 
         spdlog::info("Engine is initialized. Starting the game");
-    } // namespace mantle
+    }
 
     void Engine::run() {
         while (!m_window.should_close()) {

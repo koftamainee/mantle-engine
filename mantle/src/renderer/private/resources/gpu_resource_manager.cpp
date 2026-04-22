@@ -105,7 +105,7 @@ namespace mantle {
         std::array<VkVertexInputBindingDescription, 16> vk_bindings{};
         std::array<VkVertexInputAttributeDescription, 32> vk_attributes{};
 
-        for (u32 i = 0; i < desc.vertex_input.bindings.size(); i++) {
+        for (usize i = 0; i < desc.vertex_input.bindings.size(); i++) {
             const auto &b = desc.vertex_input.bindings[i];
             vk_bindings[i] = {
                 .binding = b.binding,
@@ -114,7 +114,7 @@ namespace mantle {
                                             : VK_VERTEX_INPUT_RATE_VERTEX,
             };
         }
-        for (u32 i = 0; i < desc.vertex_input.attributes.size(); i++) {
+        for (usize i = 0; i < desc.vertex_input.attributes.size(); i++) {
             const auto &a = desc.vertex_input.attributes[i];
             vk_attributes[i] = {
                 .location = a.location,
@@ -219,7 +219,7 @@ namespace mantle {
         };
 
         std::array<VkPipelineColorBlendAttachmentState, 8> vk_attachments{};
-        for (u32 i = 0; i < desc.color_blend.attachments.size(); i++) {
+        for (usize i = 0; i < desc.color_blend.attachments.size(); i++) {
             const auto &a = desc.color_blend.attachments[i];
             vk_attachments[i] = {
                 .blendEnable = a.blend_enable,
@@ -262,7 +262,7 @@ namespace mantle {
         std::array<VkPushConstantRange, 8> vk_push_constants{};
         checkf(desc.push_constants.size() <= 8,
                "Invalid push constants ranges");
-        for (u32 i = 0; i < desc.push_constants.size(); i++) {
+        for (usize i = 0; i < desc.push_constants.size(); i++) {
             vk_push_constants[i] = {
                 .stageFlags = to_vk(desc.push_constants[i].stage),
                 .offset = desc.push_constants[i].offset,
@@ -285,7 +285,7 @@ namespace mantle {
             m_impl->backend->m_vk_allocator.vk_allocator(), &layout));
 
         std::array<VkFormat, 8> vk_color_formats{};
-        for (u32 i = 0; i < desc.color_formats.size(); i++) {
+        for (usize i = 0; i < desc.color_formats.size(); i++) {
             vk_color_formats[i] = to_vk(desc.color_formats[i]);
         }
 

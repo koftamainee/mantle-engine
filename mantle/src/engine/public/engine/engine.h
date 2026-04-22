@@ -1,6 +1,5 @@
 #pragma once
 #include "camera/camera.h"
-#include "math/frustum.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
 

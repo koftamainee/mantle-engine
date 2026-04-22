@@ -235,7 +235,7 @@ namespace mantle {
         vk_verify(vkEnumerateInstanceExtensionProperties(
             nullptr, &vk_extensions_count, vk_extensions.data()));
 
-        for (u32 i = 0; i < glfw_extensions_count; i++) {
+        for (usize i = 0; i < glfw_extensions_count; i++) {
             bool found = false;
             for (const auto &[extension_name, _] : vk_extensions) {
                 if (std::strcmp(extension_name, glfw_extensions[i]) == 0) {

@@ -156,7 +156,7 @@ namespace mantle {
             static_cast<u32>(m_queue_family_properties.size());
 
         if (queue_flags & VK_QUEUE_COMPUTE_BIT) {
-            for (u32 i = 0; i < queue_family_count; i++) {
+            for (usize i = 0; i < queue_family_count; i++) {
                 const auto &props = m_queue_family_properties[i];
 
                 if ((props.queueFlags & VK_QUEUE_COMPUTE_BIT) &&
@@ -167,7 +167,7 @@ namespace mantle {
         }
 
         if (queue_flags & VK_QUEUE_TRANSFER_BIT) {
-            for (u32 i = 0; i < queue_family_count; i++) {
+            for (usize i = 0; i < queue_family_count; i++) {
                 const auto &props = m_queue_family_properties[i];
 
                 if ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) &&
@@ -178,7 +178,7 @@ namespace mantle {
             }
         }
 
-        for (u32 i = 0; i < queue_family_count; i++) {
+        for (usize i = 0; i < queue_family_count; i++) {
             const auto &props = m_queue_family_properties[i];
 
             if ((props.queueFlags & queue_flags) == queue_flags) {
@@ -193,7 +193,7 @@ namespace mantle {
     VulkanDevice::get_memory_type(u32 type_bits,
                                   VkMemoryPropertyFlags properties) const {
         check(m_is_initialized);
-        for (u32 i = 0; i < m_memory_properties.memoryTypeCount; i++) {
+        for (usize i = 0; i < m_memory_properties.memoryTypeCount; i++) {
             if ((type_bits & 1u) == 1u) {
                 const auto &memory_type = m_memory_properties.memoryTypes[i];
 
@@ -449,7 +449,7 @@ namespace mantle {
         ScopeArena scope(m_scratch_arena);
         std::pmr::vector<VkDeviceQueueCreateInfo> queue_create_infos(
             &m_scratch_resource);
-        for (u32 queue_family : unique_queue_families) {
+        for (auto queue_family : unique_queue_families) {
             VkDeviceQueueCreateInfo queue_create_info = {
                 .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
                 .queueFamilyIndex = queue_family,
@@ -592,7 +592,7 @@ namespace mantle {
         for (const char *required : ms_device_extensions) {
             bool found = false;
 
-            for (u32 i = 0; i < extensions_count; i++) {
+            for (usize i = 0; i < extensions_count; i++) {
                 if (std::strcmp(required, extensions[i].extensionName) == 0) {
                     found = true;
                     spdlog::trace("Found required device extension: {}",
@@ -626,14 +626,14 @@ namespace mantle {
         vkGetPhysicalDeviceQueueFamilyProperties(
             physical_device, &queue_family_count, queue_families.data());
 
-        for (u32 i = 0; i < queue_family_count; i++) {
+        for (usize i = 0; i < queue_family_count; i++) {
             if ((queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)) {
                 indices.graphics_family = i;
                 break;
             }
         }
 
-        for (u32 i = 0; i < queue_family_count; i++) {
+        for (usize i = 0; i < queue_family_count; i++) {
             const auto &props = queue_families[i];
 
             if ((props.queueFlags & VK_QUEUE_TRANSFER_BIT) &&
@@ -643,7 +643,7 @@ namespace mantle {
             }
         }
 
-        for (u32 i = 0; i < queue_family_count; i++) {
+        for (usize i = 0; i < queue_family_count; i++) {
             VkBool32 present_support = VK_FALSE;
 
             vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, surface,
