@@ -19,3 +19,5 @@
 #define MANTLE_NO_COPY_NO_MOVE(type)                                           \
     MANTLE_NO_COPY(type);                                                      \
     MANTLE_NO_MOVE(type)
+
+#define MANTLE_TODO() fatal(true, "Implement me")

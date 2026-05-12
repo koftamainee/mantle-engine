@@ -21,7 +21,13 @@ namespace mantle {
         }
     }
 
-    ImageHandle TransientResources::get_image(RGImageHandle handle) {}
+    ImageHandle TransientResources::get_image(RGImageHandle handle) {
+        // TODO
+        MANTLE_TODO();
+    }
 
-    BufferHandle TransientResources::get_buffer(RGBufferHandle handle) {}
+    BufferHandle TransientResources::get_buffer(RGBufferHandle handle) {
+        // TODO
+        MANTLE_TODO();
+    }
 } // namespace mantle
