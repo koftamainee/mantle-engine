@@ -108,6 +108,9 @@ namespace mantle {
         void clear_color_image(RGImageHandle image, f32 r, f32 g, f32 b, f32 a);
         void clear_depth_image(RGImageHandle image, f32 depth);
 
+        u32 get_bindless_index(RGImageHandle handle, BindlessImageType type);
+        u32 get_bindless_index(RGBufferHandle handle);
+
         void push_constants(const void *data, ShaderStage stage);
 
       private:

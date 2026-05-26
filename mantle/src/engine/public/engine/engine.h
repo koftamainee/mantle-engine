@@ -34,8 +34,11 @@ namespace mantle {
 
         ArenaAllocator m_rendering_arena;
 
-        GraphicsPipelineHandle m_triangle_pipeline{};
-        ComputePipelineHandle m_test_compute_pipeline{};
+        GraphicsPipelineHandle m_blit_pipeline{};
+        ComputePipelineHandle m_dda_pipeline{};
+
+        SamplerHandle m_blit_sampler{};
+        u32 m_blit_sampler_index{};
 
         f32 m_last_time = 0.0f;
 

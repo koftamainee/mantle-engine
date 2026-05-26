@@ -53,7 +53,7 @@ namespace mantle {
             case ImageLayout::TransferDst:
                 return AccessType::TransferWrite;
             case ImageLayout::General:
-                fatal(true, "General layout requires explicit access type");
+                return AccessType::ShaderWrite;
             default:
                 fatal(true, "unsupported ImageLayout");
             }

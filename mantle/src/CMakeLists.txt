@@ -10,12 +10,12 @@ mantle_executable(NAME mantle MAIN main.cpp DEPS engine)
 set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/mantle/assets/shaders")
 
 mantle_shader(mantle
-        NAME flat
-        SOURCES "${SHADERS_DIR}/flat.slang"
+        NAME blit
+        SOURCES "${SHADERS_DIR}/blit.slang"
 )
 
 mantle_shader(mantle
-        NAME test_compute
-        ENTRIES compute_main
-        SOURCES "${SHADERS_DIR}/test_compute.slang"
+        NAME dda
+        ENTRIES main
+        SOURCES "${SHADERS_DIR}/dda.slang"
 )

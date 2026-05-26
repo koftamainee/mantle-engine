@@ -43,60 +43,62 @@ namespace mantle {
 
         m_camera.position = glm::vec3(0.0f, 5.0f, 0.0f);
 
-        ScopeArena arena(&m_scratch_arena);
-        ArenaResource pmr(&m_scratch_arena);
+        {
+            ScopeArena scope(&m_scratch_arena);
+            ArenaResource resource(&m_scratch_arena);
 
-        std::pmr::vector<u32> spv(&pmr);
-        load_spv("assets/shaders/flat.spv", spv);
-        ShaderHandle shader = m_renderer.resource_manager().create_shader(spv);
+            std::pmr::vector<u32> spv(&resource);
+            load_spv("assets/shaders/dda.spv", spv);
+            ShaderHandle shader =
+                m_renderer.resource_manager().create_shader(spv);
 
-        ShaderModule shader_modules[] = {
-            {"vert_main", ShaderStage::Vertex, shader},
-            {"frag_main", ShaderStage::Fragment, shader},
-        };
-
-        ImageFormat color_format =
-            m_renderer.get_swapchain_info().surface_format;
-
-        ColorBlendState blend_state = {};
-        ColorBlendAttachment attachment = {};
-        blend_state.attachments = span(attachment);
-
-        GraphicsPipelineDesc desc = {
-            .shaders = shader_modules,
-            .rasterization = {.cull_mode = CullMode::None},
-            .color_blend = blend_state,
-            .color_formats = span(color_format),
-        };
-
-        m_triangle_pipeline =
-            m_renderer.resource_manager().create_graphics_pipeline(desc);
-
-        m_renderer.resource_manager().destroy_shader(shader, true);
+            m_dda_pipeline =
+                m_renderer.resource_manager().create_compute_pipeline({
+                    .shader = {"main", ShaderStage::Compute, shader},
+                    .push_constants = {ShaderStage::Compute, sizeof(u32), 0},
+                });
+            m_renderer.resource_manager().destroy_shader(shader, true);
+        }
 
         {
             ScopeArena scope(&m_scratch_arena);
             ArenaResource resource(&m_scratch_arena);
 
-            std::pmr::vector<u32> compute_spv(&resource);
-            load_spv("assets/shaders/test_compute.spv", compute_spv);
-            ShaderHandle compute_shader =
-                m_renderer.resource_manager().create_shader(compute_spv);
+            std::pmr::vector<u32> spv(&resource);
+            load_spv("assets/shaders/blit.spv", spv);
+            ShaderHandle shader =
+                m_renderer.resource_manager().create_shader(spv);
 
-            ShaderModule compute_module = {
-                "compute_main", ShaderStage::Compute, compute_shader,
+            ShaderModule modules[] = {
+                {"vert_main", ShaderStage::Vertex, shader},
+                {"frag_main", ShaderStage::Fragment, shader},
+            };
+            ImageFormat color_format =
+                m_renderer.get_swapchain_info().surface_format;
+            ColorBlendAttachment attachment = {};
+            ColorBlendState blend = {};
+            blend.attachments = span(attachment);
+            PushConstantsRange blit_pc[] = {
+                {ShaderStage::Fragment, sizeof(u32) * 2, 0},
             };
 
-            ComputePipelineDesc compute_desc = {
-                .shader = compute_module,
-                .push_constants = {ShaderStage::Compute, 0, 0},
-            };
-
-            m_test_compute_pipeline =
-                m_renderer.resource_manager().create_compute_pipeline(compute_desc);
-
-            m_renderer.resource_manager().destroy_shader(compute_shader, true);
+            m_blit_pipeline =
+                m_renderer.resource_manager().create_graphics_pipeline({
+                    .shaders = modules,
+                    .rasterization = {.cull_mode = CullMode::None},
+                    .color_blend = blend,
+                    .color_formats = span(color_format),
+                    .push_constants = blit_pc,
+                });
+            m_renderer.resource_manager().destroy_shader(shader, true);
         }
+
+        m_blit_sampler = m_renderer.resource_manager().create_sampler({
+            .min_filter = Filter::Nearest,
+            .mag_filter = Filter::Nearest,
+        });
+        m_blit_sampler_index =
+            m_renderer.resource_manager().get_bindless_index(m_blit_sampler);
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 
@@ -172,65 +174,73 @@ namespace mantle {
 
         RenderGraph graph(&m_rendering_arena);
 
-        struct ComputePass final {
-            RGBufferHandle out_storage;
+
+        RGImageHandle backbuffer = graph.import_image(m_renderer.backbuffer());
+        auto [width, height] = m_window.get_framebuffer_size();
+
+        struct DDAPass final {
+            RGImageHandle out_image;
         };
 
-        struct TrianglePass final {
+        struct BlitPass final {
+            RGImageHandle in_image;
             RGImageHandle out_backbuffer;
         };
 
-        RGImageHandle backbuffer =
-            graph.import_image(m_renderer.backbuffer());
-        auto [width, height] = m_window.get_framebuffer_size();
-
-        graph.add_pass<ComputePass>(
-            "Compute Test",
-            [&](RenderGraphBuilder &builder, ComputePass &pass) {
-                pass.out_storage =
-                    builder.create_buffer({
-                        .size = 64,
-                        .usage = BufferUsage::Storage,
-                        .memory = MemoryType::Gpu,
-                    });
-                builder.write(pass.out_storage, BufferWriteUsage::Storage);
+        const auto &dda = graph.add_pass<DDAPass>(
+            "DDA Raycast",
+            [&](RenderGraphBuilder &builder, DDAPass &pass) {
+                pass.out_image = builder.create_image({
+                    .width = width,
+                    .height = height,
+                    .format = ImageFormat::Rgba8,
+                    .usage = ImageUsage::Storage | ImageUsage::Sampled,
+                });
+                builder.write(pass.out_image, WriteUsage::StorageWrite);
             },
-            [this](RenderPassContext &ctx, const ComputePass &) {
-                ctx.bind_pipeline(m_test_compute_pipeline);
-                ctx.dispatch({1, 1, 1});
+            [width, height, this](RenderPassContext &ctx, const DDAPass &pass) {
+                ctx.bind_pipeline(m_dda_pipeline);
+                u32 storage_index = ctx.get_bindless_index(
+                    pass.out_image, BindlessImageType::Storage);
+                ctx.push_constants(&storage_index, ShaderStage::Compute);
+                ctx.dispatch({(width + 7) / 8, (height + 7) / 8, 1});
             });
 
-        graph.add_pass<TrianglePass>(
-            "Triangle Pass",
-            [&](RenderGraphBuilder &builder, TrianglePass &pass) {
+        graph.add_pass<BlitPass>(
+            "Blit",
+            [&](RenderGraphBuilder &builder, BlitPass &pass) {
+                pass.in_image = builder.read(dda.out_image, ReadUsage::Sampled);
                 pass.out_backbuffer =
                     builder.write(backbuffer, WriteUsage::ColorAttachment);
             },
             [width, height, this](RenderPassContext &ctx,
-                                  const TrianglePass &pass) {
-                std::array<RGColorAttachment, 1> color_attachments = {{{
+                                  const BlitPass &pass) {
+                std::array<RGColorAttachment, 1> colors = {{{
                     .image = pass.out_backbuffer,
                     .load = AttachmentLoad::Clear,
                     .store = AttachmentStore::Store,
-                    .clear_r = 0.1f,
-                    .clear_g = 0.2f,
-                    .clear_b = 0.3f,
-                    .clear_a = 1.0f,
                 }}};
-                ctx.begin_rendering({
-                    .colors = color_attachments,
-                    .width = width,
-                    .height = height,
-                });
-
-                ctx.set_scissor(0, 0, width, height);
+                ctx.begin_rendering(
+                    {.colors = colors, .width = width, .height = height});
                 ctx.set_viewport(0, 0, width, height);
+                ctx.set_scissor(0, 0, width, height);
+                ctx.bind_pipeline(m_blit_pipeline);
 
-                ctx.bind_pipeline(m_triangle_pipeline);
+                struct BlitPC {
+                    u32 sampled_index;
+                    u32 sampler_index;
+                };
+                BlitPC pc = {
+                    ctx.get_bindless_index(pass.in_image,
+                                           BindlessImageType::Sampled),
+                    m_blit_sampler_index,
+                };
+                ctx.push_constants(&pc, ShaderStage::Fragment);
+
                 ctx.draw({.vertex_count = 3});
-
                 ctx.end_rendering();
             });
+
 
         m_renderer.execute(graph);
 

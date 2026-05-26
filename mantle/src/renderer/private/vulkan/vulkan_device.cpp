@@ -471,6 +471,7 @@ namespace mantle {
         VkPhysicalDeviceDescriptorIndexingFeatures indexing = {
             .sType =
                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+            .runtimeDescriptorArray = VK_TRUE,
             .descriptorBindingSampledImageUpdateAfterBind = VK_TRUE,
             .descriptorBindingStorageImageUpdateAfterBind = VK_TRUE,
             .descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE,

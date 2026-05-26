@@ -167,6 +167,20 @@ namespace mantle {
         m_impl->cmd->push_constants(data, stage);
     }
 
+    u32 RenderPassContext::get_bindless_index(RGImageHandle handle,
+                                               BindlessImageType type) {
+        ImageHandle image_handle =
+            m_impl->transient_resources->get_image(handle);
+        return m_impl->resource_manager->get_bindless_index(image_handle,
+                                                             type);
+    }
+
+    u32 RenderPassContext::get_bindless_index(RGBufferHandle handle) {
+        BufferHandle buffer_handle =
+            m_impl->transient_resources->get_buffer(handle);
+        return m_impl->resource_manager->get_bindless_index(buffer_handle);
+    }
+
     void RenderPassContext::init(Impl *impl) { m_impl = impl; }
 
     void RenderPassContext::draw(const RGDrawInfo &info) {
