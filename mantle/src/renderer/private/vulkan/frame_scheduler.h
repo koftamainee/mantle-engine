@@ -5,6 +5,8 @@
 
 
 #include "command_recorder.h"
+#include "core/memory/arena_allocator.h"
+#include "core/memory/pmr/arena_resource.h"
 #include "core/memory/virtual_heap.h"
 #include "core/types.h"
 
@@ -39,6 +41,9 @@ namespace mantle {
         FrameResult end_frame(const FrameContext &ctx);
 
         void on_swapchain_rebuilt(u32 new_image_count) const;
+
+        ArenaAllocator &frame_arena() { return m_frame_arena; }
+        ArenaResource &frame_arena_resource() { return m_pmr; }
 
       private:
         struct FrameData {

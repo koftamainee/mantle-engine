@@ -1,20 +1,6 @@
-#include "renderer/render_graph.h"
-#include "resources/gpu_resource_manager_internal.h"
-#include "resources/transient_resources.h"
-#include "vulkan/command_recorder.h"
+#include "render_graph/render_pass_context_internal.h"
 
 namespace mantle {
-    struct RenderPassContext::Impl final {
-        CommandRecorder *cmd;
-
-        GPUResourceManager *resource_manager = nullptr;
-
-        TransientResources *transient_resources = nullptr;
-
-        ArenaAllocator *scratch_arena = nullptr;
-        ArenaResource *scratch_resource = nullptr;
-    };
-
     void RenderPassContext::bind_pipeline(GraphicsPipelineHandle pipeline) {
         m_impl->cmd->bind_graphics_pipeline(
             m_impl->resource_manager->m_impl->get_graphics_pipeline(pipeline));

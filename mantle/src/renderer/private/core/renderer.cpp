@@ -2,7 +2,11 @@
 #include <spdlog/spdlog.h>
 #include "core/memory/persistent_allocator.h"
 #include "core/memory/pmr/persistent_resource.h"
+#include "render_graph/render_graph_internal.h"
+#include "render_graph/render_pass_context_internal.h"
+#include "renderer/render_graph.h"
 #include "resources/gpu_resource_manager_internal.h"
+#include "resources/transient_resources.h"
 #include "types.h"
 #include "vulkan/command_recorder.h"
 #include "vulkan/frame_scheduler.h"
@@ -60,6 +64,7 @@ namespace mantle {
         VulkanBackend backend{};
         FrameScheduler frame_scheduler{};
         GPUResourceManager resource_manager{};
+        TransientResources transient_resources{};
         ImageHandle backbuffer{};
         FrameContext current_frame{};
 
@@ -133,7 +138,80 @@ namespace mantle {
 
     void Renderer::execute(RenderGraph &graph) {
         check(m_is_initialized);
-        // TODO
+
+        auto *cmd = m_impl->current_frame.cmd;
+        auto &resource_manager = m_impl->resource_manager;
+        auto &transient_resources = m_impl->transient_resources;
+        auto &frame_scheduler = m_impl->frame_scheduler;
+
+        transient_resources.set_imported_images(&graph.m_imported_images);
+        transient_resources.set_imported_buffers(&graph.m_imported_buffers);
+
+        for (u32 pass_idx = 0; pass_idx < graph.m_passes.size(); pass_idx++) {
+            auto &pass = graph.m_passes[pass_idx];
+
+            std::pmr::vector<ImageBarrier> barriers(
+                &frame_scheduler.frame_arena_resource());
+
+            auto resolve_layout = [&](RGImageHandle rg_handle,
+                                      ImageLayout required_layout,
+                                      PipelineStage dst_stage,
+                                      AccessType dst_access) {
+                ImageHandle img_handle =
+                    transient_resources.get_image(rg_handle);
+                ImageResource &img =
+                    resource_manager.m_impl->get_image(img_handle);
+
+                if (img.current_layout != required_layout) {
+                    PipelineStage src_stage =
+                        infer_stage(img.current_layout);
+                    AccessType src_access =
+                        infer_access(img.current_layout);
+
+                    barriers.push_back({
+                        .image = &img,
+                        .from = img.current_layout,
+                        .to = required_layout,
+                        .src_stage = src_stage,
+                        .dst_stage = dst_stage,
+                        .src_access = src_access,
+                        .dst_access = dst_access,
+                    });
+                }
+            };
+
+            for (auto &read : graph.m_image_reads) {
+                if (read.pass_index != pass_idx) continue;
+                ImageLayout layout = read_usage_to_layout(read.usage);
+                PipelineStage stage = read_usage_to_stage(read.usage);
+                AccessType access = read_usage_to_access(read.usage);
+                resolve_layout(read.handle, layout, stage, access);
+            }
+
+            for (auto &write : graph.m_image_writes) {
+                if (write.pass_index != pass_idx) continue;
+                ImageLayout layout = write_usage_to_layout(write.usage);
+                PipelineStage stage = write_usage_to_stage(write.usage);
+                AccessType access = write_usage_to_access(write.usage);
+                resolve_layout(write.handle, layout, stage, access);
+            }
+
+            if (!barriers.empty()) {
+                cmd->image_barriers(barriers);
+            }
+
+            RenderPassContext::Impl ctx_impl = {
+                .cmd = cmd,
+                .resource_manager = &resource_manager,
+                .transient_resources = &transient_resources,
+                .scratch_arena = &frame_scheduler.frame_arena(),
+                .scratch_resource = &frame_scheduler.frame_arena_resource(),
+            };
+
+            RenderPassContext ctx;
+            ctx.init(&ctx_impl);
+            pass.execute_fn(pass.execute_data, ctx);
+        }
     }
 
     Renderer::Result Renderer::end_frame() {

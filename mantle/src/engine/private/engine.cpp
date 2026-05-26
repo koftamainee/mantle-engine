@@ -64,6 +64,7 @@ namespace mantle {
 
         GraphicsPipelineDesc desc = {
             .shaders = shader_modules,
+            .rasterization = {.cull_mode = CullMode::None},
             .color_blend = blend_state,
             .color_formats = span(color_format),
         };
@@ -158,7 +159,7 @@ namespace mantle {
         graph.add_pass<TrianglePass>(
             "Triangle Pass",
             [&](RenderGraphBuilder &builder, TrianglePass &pass) {
-                pass.out_backbuffer = builder.write(backbuffer);
+                pass.out_backbuffer = builder.write(backbuffer, WriteUsage::ColorAttachment);
             },
             [width, height, this](RenderPassContext &ctx,
                                               const TrianglePass &pass) {

@@ -10,12 +10,12 @@
 #include "gpu_resource_manager.h"
 
 namespace mantle {
-    class RenderGraph;
-    // TODO: Setup phase
+    class TransientResources;
+    class Renderer;
+}
 
-    // TODO: TransientResources system:
-    // TODO: It will do heavy-lifting of allocating resources and aliasing it
-    // TODO: for render graph
+namespace mantle {
+    class RenderGraph;
 
     // TODO: Deferred created resources:
     // TODO: Create new resource in render graph only when it used
@@ -38,13 +38,6 @@ namespace mantle {
     // TODO: 2. Calculate resources lifetime
     // TODO: 3. Greedy allocate resources needed for current frame
 
-    // TODO: Execution phase:
-    // TODO: Renderer::execute(RenderGraph &render_graph);
-
-    // TODO: 1. Execute callback functions for each pass
-    // TODO: 2. Use immediate rendering code style using RenderPassContext
-    // TODO: 3. Get real GPU resources from handles, generated in setup phase
-
     // TODO: Async compute:
     // TODO: check more on it, probably introduce opt-in render passes that can
     // TODO: be executed async from main queue
@@ -56,40 +49,24 @@ namespace mantle {
 
     class RenderGraphBuilder final {
       public:
-        RenderGraphBuilder() = delete;
+        RenderGraphBuilder() = default;
         ~RenderGraphBuilder() = default;
 
         MANTLE_NO_COPY_NO_MOVE(RenderGraphBuilder);
 
-        // TODO: add async_compute_enable(true);
-        // TODO: add use_render_target(<something>);
-
-        // TODO: add initial state for images (clear / undefined) and probably
-        // TODO: something for buffers too
-        RGImageHandle create_image(const ImageDesc &desc);
-        RGBufferHandle create_buffer(const BufferDesc &desc);
-
-        // TODO: add read_flags and write_flags
-        RGImageHandle read(RGImageHandle image);
-        RGBufferHandle read(RGBufferHandle buffer);
-
-        // TODO: writes should invalidate old handle and create new ones
-        // TODO: referencing invalidated resources will produce runtime error
-        RGImageHandle write(RGImageHandle image);
-        RGBufferHandle write(RGBufferHandle buffer);
-
-      private:
-        struct Impl;
+        RGImageHandle read(RGImageHandle image, ReadUsage usage = ReadUsage::Sampled);
+        RGImageHandle write(RGImageHandle image, WriteUsage usage = WriteUsage::ColorAttachment);
 
         friend class RenderGraph;
-        void init(Impl *impl);
 
-        Impl *m_impl;
+        u32 m_pass_index = UINT32_MAX;
+        std::pmr::vector<RGImageReadAccess> *m_image_reads = nullptr;
+        std::pmr::vector<RGImageWriteAccess> *m_image_writes = nullptr;
     };
 
     class RenderPassContext final {
       public:
-        RenderPassContext() = delete;
+        RenderPassContext() = default;
         ~RenderPassContext() = default;
 
         MANTLE_NO_COPY_NO_MOVE(RenderPassContext);
@@ -126,6 +103,7 @@ namespace mantle {
         struct Impl;
 
         friend class RenderGraph;
+        friend class Renderer;
         void init(Impl *impl);
 
         Impl *m_impl;
@@ -147,6 +125,8 @@ namespace mantle {
         };
 
     class RenderGraph final {
+        friend class Renderer;
+
       public:
         explicit RenderGraph(ArenaAllocator *arena);
 
@@ -156,7 +136,33 @@ namespace mantle {
             CRenderPassExecuteLambda<TData, TExecute>
         const TData &add_pass(std::string_view name, TSetup &&setup,
                               TExecute &&execute) {
-            return {};
+            struct Combined {
+                TData data;
+                std::decay_t<TExecute> exec;
+            };
+
+            auto *combined = static_cast<Combined *>(
+                m_arena->push(sizeof(Combined), alignof(Combined)));
+            new (&combined->data) TData{};
+            new (&combined->exec) std::decay_t<TExecute>(
+                std::forward<TExecute>(execute));
+
+            RenderGraphBuilder builder;
+            builder.m_pass_index = static_cast<u32>(m_passes.size());
+            builder.m_image_reads = &m_image_reads;
+            builder.m_image_writes = &m_image_writes;
+            setup(builder, combined->data);
+
+            m_passes.push_back({
+                .name = name,
+                .execute_data = combined,
+                .execute_fn = [](void *d, RenderPassContext &ctx) {
+                    auto *c = static_cast<Combined *>(d);
+                    c->exec(ctx, c->data);
+                },
+            });
+
+            return combined->data;
         }
 
         RGImageHandle import_image(ImageHandle image);
@@ -175,5 +181,13 @@ namespace mantle {
         ScopeArena m_scope;
         ArenaResource m_resource{};
         std::pmr::vector<RenderPassNode> m_passes;
+
+        std::pmr::vector<ImageHandle> m_imported_images;
+        std::pmr::vector<BufferHandle> m_imported_buffers;
+        u32 m_next_image_index = 0;
+        u32 m_next_buffer_index = 0;
+
+        std::pmr::vector<RGImageReadAccess> m_image_reads;
+        std::pmr::vector<RGImageWriteAccess> m_image_writes;
     };
 } // namespace mantle

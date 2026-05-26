@@ -25,6 +25,27 @@ namespace mantle {
     MANTLE_HANDLE(RGBufferHandle);
     MANTLE_HANDLE(RGImageHandle);
 
+    enum class ReadUsage {
+        None = 0,
+        Sampled           = 1 << 0,
+        StorageRead       = 1 << 1,
+        InputAttachment   = 1 << 2,
+        TransferSrc       = 1 << 3,
+        IndirectArg       = 1 << 4,
+        MaxEnum           = (1 << 5) - 1,
+    };
+
+    enum class WriteUsage {
+        None = 0,
+        ColorAttachment   = 1 << 0,
+        DepthAttachment   = 1 << 1,
+        StorageWrite      = 1 << 2,
+        TransferDst       = 1 << 3,
+        Clear             = 1 << 4,
+        Present           = 1 << 5,
+        MaxEnum           = (1 << 6) - 1,
+    };
+
     enum class BufferUsage {
         None = 0,
         Vertex = 1 << 0,
@@ -338,6 +359,18 @@ namespace mantle {
 
     enum class AttachmentLoad { Clear, Load, DontCare };
     enum class AttachmentStore { Store, DontCare };
+
+    struct RGImageReadAccess {
+        u32 pass_index = UINT32_MAX;
+        RGImageHandle handle;
+        ReadUsage usage = ReadUsage::None;
+    };
+
+    struct RGImageWriteAccess {
+        u32 pass_index = UINT32_MAX;
+        RGImageHandle handle;
+        WriteUsage usage = WriteUsage::None;
+    };
 
     struct RGColorAttachment final {
         RGImageHandle image = {};

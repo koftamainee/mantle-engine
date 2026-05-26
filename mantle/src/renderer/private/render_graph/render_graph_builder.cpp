@@ -1,28 +1,24 @@
 #include "renderer/render_graph.h"
 
-// TODO
 namespace mantle {
 
-    RGImageHandle RenderGraphBuilder::create_image(const ImageDesc &desc) {
-        return {};
+    RGImageHandle RenderGraphBuilder::read(RGImageHandle image,
+                                           ReadUsage usage) {
+        m_image_reads->push_back({
+            .pass_index = m_pass_index,
+            .handle = image,
+            .usage = usage,
+        });
+        return image;
     }
 
-    RGBufferHandle RenderGraphBuilder::create_buffer(const BufferDesc &desc) {
-        return {};
-     }
-
-    RGImageHandle RenderGraphBuilder::read(RGImageHandle image) { return {}; }
-
-    RGImageHandle RenderGraphBuilder::write(RGImageHandle image) { return {}; }
-
-    RGBufferHandle RenderGraphBuilder::read(RGBufferHandle buffer) {
-        return {};
-    }
-
-    RGBufferHandle RenderGraphBuilder::write(RGBufferHandle buffer) {
-        return {};
-    }
-    void RenderGraphBuilder::init(Impl *impl) {
-        m_impl = impl;
+    RGImageHandle RenderGraphBuilder::write(RGImageHandle image,
+                                            WriteUsage usage) {
+        m_image_writes->push_back({
+            .pass_index = m_pass_index,
+            .handle = image,
+            .usage = usage,
+        });
+        return image;
     }
 } // namespace mantle

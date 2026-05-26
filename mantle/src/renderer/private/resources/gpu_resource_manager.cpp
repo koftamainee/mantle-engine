@@ -320,6 +320,18 @@ namespace mantle {
             &pipeline_info, m_impl->backend->m_vk_allocator.vk_allocator(),
             &pipeline));
 
+        GraphicsPipelineDesc stored_desc = desc;
+        if (!stored_desc.push_constants.empty()) {
+            auto *persistent_push = static_cast<PushConstantsRange *>(
+                m_impl->resource.allocate(
+                    stored_desc.push_constants.size() * sizeof(PushConstantsRange),
+                    alignof(PushConstantsRange)));
+            for (usize i = 0; i < stored_desc.push_constants.size(); i++) {
+                persistent_push[i] = stored_desc.push_constants[i];
+            }
+            stored_desc.push_constants = std::span(persistent_push, stored_desc.push_constants.size());
+        }
+
         u32 index = 0;
         u32 generation = 0;
         if (!m_impl->graphics_pipelines_free_list.empty()) {
@@ -330,13 +342,13 @@ namespace mantle {
             m_impl->graphics_pipelines[index].resource = {
                 .pipeline = pipeline,
                 .layout = layout,
-                .desc = desc,
+                .desc = stored_desc,
             };
         } else {
             index = m_impl->graphics_pipelines.size();
             generation = 0;
             m_impl->graphics_pipelines.push_back(
-                {{.pipeline = pipeline, .layout = layout, .desc = desc},
+                {{.pipeline = pipeline, .layout = layout, .desc = stored_desc},
                  generation});
         }
 
