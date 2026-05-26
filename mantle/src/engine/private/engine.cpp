@@ -75,10 +75,10 @@ namespace mantle {
         m_renderer.resource_manager().destroy_shader(shader, true);
 
         {
-            ScopeArena arena(&m_scratch_arena);
-            ArenaResource pmr(&m_scratch_arena);
+            ScopeArena scope(&m_scratch_arena);
+            ArenaResource resource(&m_scratch_arena);
 
-            std::pmr::vector<u32> compute_spv(&pmr);
+            std::pmr::vector<u32> compute_spv(&resource);
             load_spv("assets/shaders/test_compute.spv", compute_spv);
             ShaderHandle compute_shader =
                 m_renderer.resource_manager().create_shader(compute_spv);
