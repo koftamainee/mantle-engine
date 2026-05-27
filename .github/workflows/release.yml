@@ -165,23 +165,25 @@ jobs:
       - name: Build
         run: ${{ matrix.build }}
 
-      # ── Stage & upload binary ──
-      - name: Stage binary (Linux)
+      # ── Package full target dir (binary + assets) ──
+      - name: Stage target (Linux)
         if: runner.os == 'Linux'
         run: |
-          find build/target -type f -name '${{ matrix.binary }}' -exec cp {} ./${{ matrix.binary }} \; -quit
+          mkdir -p "${{ matrix.artifact }}"
+          cp -r build/target/* "${{ matrix.artifact }}/"
 
-      - name: Stage binary (Windows)
+      - name: Stage target (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $file = Get-ChildItem -Path build\target -Recurse -File -Filter "${{ matrix.binary }}" | Select-Object -First 1
-          if ($file) { Copy-Item -Path $file.FullName -Destination ".\${{ matrix.binary }}" }
+          New-Item -ItemType Directory -Force -Path "${{ matrix.artifact }}"
+          Copy-Item -Path build\target\* -Destination "${{ matrix.artifact }}\" -Recurse
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload target
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: ${{ matrix.binary }}
+          path: ${{ matrix.artifact }}
           if-no-files-found: error
 
   # ────────────────── PATCH NOTES ──────────────────
@@ -327,12 +329,19 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: mantle-linux
-          path: binaries
+          path: mantle-linux
 
       - uses: actions/download-artifact@v4
         with:
           name: mantle-windows
-          path: binaries
+          path: mantle-windows
+
+      - name: Bundle Linux
+        run: tar -czf mantle-linux.tar.gz -C mantle-linux .
+
+      - name: Bundle Windows
+        shell: pwsh
+        run: Compress-Archive -Path mantle-windows\* -DestinationPath mantle-windows.zip
 
       - uses: softprops/action-gh-release@v2
         with:
@@ -340,8 +349,8 @@ jobs:
           name: Mantle Daily Build — ${{ needs.info.outputs.tag }}
           body_path: release_body.md
           files: |
-            binaries/mantle
-            binaries/mantle.exe
+            mantle-linux.tar.gz
+            mantle-windows.zip
           fail_on_unmatched_files: false
           draft: false
           prerelease: false
