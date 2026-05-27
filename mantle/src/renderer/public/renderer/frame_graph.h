@@ -152,11 +152,11 @@ namespace mantle {
                               TExecute &&execute) {
             struct Combined {
                 TData data;
-                std::decay_t<TExecute> exec;
+                alignas(16) std::decay_t<TExecute> exec;
             };
 
             auto *combined = static_cast<Combined *>(
-                m_arena->push(sizeof(Combined), 16));
+                m_arena->push(sizeof(Combined), alignof(Combined)));
             new (&combined->data) TData{};
             new (&combined->exec) std::decay_t<TExecute>(
                 std::forward<TExecute>(execute));
