@@ -198,117 +198,38 @@ jobs:
 
       - name: Generate patch notes
         id: gen
-        env:
-          GH_MODELS_TOKEN: ${{ secrets.GH_MODELS_TOKEN }}
         run: |
           PREV="${{ needs.info.outputs.previous_tag }}"
 
-          # ── collect commit data ──
+          NOTES=""
           if [ -n "$PREV" ]; then
-            LOG=$(git log "$PREV"..HEAD --oneline --no-decorate 2>/dev/null || echo "")
-            DIFF_STAT=$(git diff "$PREV"..HEAD --stat 2>/dev/null || echo "")
-            DIFF=$(git diff "$PREV"..HEAD -- . 2>/dev/null | head -c 12000 || echo "")
+            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" --arg previous "$PREV" \
+              '{tag_name: $tag, previous_tag_name: $previous}')
           else
-            LOG=$(git log --oneline --no-decorate -30 2>/dev/null || echo "")
-            DIFF_STAT=$(git diff --stat "$(git rev-list --max-parents=0 HEAD)" HEAD 2>/dev/null || echo "")
-            DIFF=""
+            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" \
+              '{tag_name: $tag}')
           fi
 
-          # ── build prompt file (no heredocs — YAML indent) ──
-          {
-            printf '%s\n' "You are a release notes writer for the Mantle game engine project (C++23, Vulkan)."
-            printf '%s\n' ""
-            printf '%s\n' "Analyze the changes below (commit messages + code diffs) and write engaging,"
-            printf '%s\n' "informative patch notes in English. Group changes using these Markdown headings:"
-            printf '%s\n' ""
-            printf '%s\n' "  - ✨ New Features"
-            printf '%s\n' "  - 🛠 Improvements"
-            printf '%s\n' "  - 🐛 Bug Fixes"
-            printf '%s\n' "  - 🔧 Refactoring & Maintenance"
-            printf '%s\n' ""
-            printf '%s\n' "Write 2-4 sentences per item. Be specific about what files changed and why"
-            printf '%s\n' "it matters for a game engine. Use active voice; avoid commit/PR phrasing."
-            printf '%s\n' ""
-            printf '%s\n' "────────────────────────────────────────────"
-            printf '%s\n' "Commit messages:"
-            printf '%s\n' ""
-          } > /tmp/prompt.txt
+          RESP=$(curl -s -w '\n%{http_code}' -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/releases/generate-notes" \
+            -d "$JSON")
 
-          printf '%s\n' "$LOG" >> /tmp/prompt.txt
+          HTTP_CODE=$(echo "$RESP" | tail -1)
+          BODY=$(echo "$RESP" | head -n -1)
 
-          {
-            printf '%s\n' ""
-            printf '%s\n' "File changes summary:"
-            printf '%s\n' ""
-          } >> /tmp/prompt.txt
-
-          printf '%s\n' "$DIFF_STAT" >> /tmp/prompt.txt
-
-          if [ -n "$DIFF" ]; then
-            {
-              printf '%s\n' ""
-              printf '%s\n' "Code diff (truncated):"
-              printf '%s\n' ""
-            } >> /tmp/prompt.txt
-            printf '%s\n' "$DIFF" >> /tmp/prompt.txt
+          if [ "$HTTP_CODE" = "200" ]; then
+            NOTES=$(echo "$BODY" | jq -r '.body // empty')
           fi
 
-          # ── try AI via GitHub Models ──
-          AI_NOTES=""
-          if [ -n "$GH_MODELS_TOKEN" ]; then
-            jq -n --rawfile prompt /tmp/prompt.txt '{
-              model: "gpt-4o-mini",
-              messages: [{role: "user", content: $prompt}],
-              max_tokens: 2000
-            }' > /tmp/payload.json
-
-            RESP=$(curl -s -w '\n%{http_code}' -X POST \
-              "https://models.inference.ai.azure.com/chat/completions" \
-              -H "Authorization: Bearer $GH_MODELS_TOKEN" \
-              -H "Content-Type: application/json" \
-              -d @/tmp/payload.json)
-
-            HTTP_CODE=$(echo "$RESP" | tail -1)
-            BODY=$(echo "$RESP" | head -n -1)
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              AI_NOTES=$(echo "$BODY" | jq -r '.choices[0].message.content // empty')
-            else
-              echo "AI API returned HTTP $HTTP_CODE" >&2
-            fi
-          fi
-
-          # ── fallback via GitHub release-notes API ──
-          if [ -z "$AI_NOTES" ]; then
-            if [ -n "$PREV" ]; then
-              JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" --arg previous "$PREV" \
-                '{tag_name: $tag, previous_tag_name: $previous}')
-            else
-              JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" \
-                '{tag_name: $tag}')
-            fi
-
-            RESP=$(curl -s -w '\n%{http_code}' -X POST \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${{ github.repository }}/releases/generate-notes" \
-              -d "$JSON")
-
-            HTTP_CODE=$(echo "$RESP" | tail -1)
-            BODY=$(echo "$RESP" | head -n -1)
-
-            if [ "$HTTP_CODE" = "200" ]; then
-              AI_NOTES=$(echo "$BODY" | jq -r '.body // empty')
-            fi
-          fi
-
-          # ── final release body ──
-          if [ -z "$AI_NOTES" ]; then
+          if [ -z "$NOTES" ]; then
+            LOG=$(git log --oneline --no-decorate "${{ needs.info.outputs.previous_tag || 'HEAD~30' }}..HEAD" 2>/dev/null || git log --oneline --no-decorate -30 2>/dev/null)
             printf '# Mantle Daily Build — %s\n\n%s\n' \
               "${{ needs.info.outputs.tag }}" \
               "$LOG" > /tmp/release_body.md
           else
-            printf '%s' "$AI_NOTES" > /tmp/release_body.md
+            printf '%s' "$NOTES" > /tmp/release_body.md
           fi
 
       - uses: actions/upload-artifact@v4
