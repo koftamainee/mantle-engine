@@ -68,19 +68,42 @@ jobs:
           echo "VULKAN_SDK=${GITHUB_WORKSPACE}/.vulkansdk/${{ env.VULKAN_VER }}/x86_64" >> "${GITHUB_ENV}"
           echo "${GITHUB_WORKSPACE}/.vulkansdk/${{ env.VULKAN_VER }}/x86_64/bin" >> "${GITHUB_PATH}"
 
+      - name: Cache Vulkan SDK installer (Windows)
+        if: runner.os == 'Windows'
+        id: cache-installer
+        uses: actions/cache@v4
+        with:
+          path: ~\vulkansdk-${{ env.VULKAN_VER }}-installer.exe
+          key: vulkan-sdk-installer-${{ env.VULKAN_VER }}
+
+      - name: Download Vulkan SDK installer (Windows)
+        if: runner.os == 'Windows' && steps.cache-installer.outputs.cache-hit != 'true'
+        shell: pwsh
+        run: |
+          $url = "https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/windows/VulkanSDK-${{ env.VULKAN_VER }}-Installer.exe"
+          $out = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
+          Write-Host "Downloading Vulkan SDK ($url)"
+          $wc = New-Object System.Net.WebClient
+          $wc.DownloadFile($url, $out)
+          Write-Host "Download complete ($((Get-Item $out).Length / 1MB) MB)"
+
       - name: Install Vulkan SDK (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $url = "https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/windows/VulkanSDK-${{ env.VULKAN_VER }}-Installer.exe"
-          $out = "$env:TEMP\VulkanSDK-${{ env.VULKAN_VER }}-Installer.exe"
-          if (-not (Test-Path $out)) {
-            Write-Host "Downloading Vulkan SDK..."
-            Invoke-WebRequest -Uri $url -OutFile $out
+          $installer = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
+          $sdkPath = "C:\VulkanSDK\${{ env.VULKAN_VER }}"
+
+          if (Test-Path "$sdkPath\Include\vulkan\vulkan.h") {
+            Write-Host "Vulkan SDK already installed at $sdkPath"
+          } else {
+            Write-Host "Installing Vulkan SDK (this may take 2-3 min)..."
+            $p = Start-Process -FilePath $installer -ArgumentList "/S" -Wait -NoNewWindow -PassThru
+            if ($p.ExitCode -ne 0) {
+              throw "Installer failed with exit code $($p.ExitCode)"
+            }
+            Write-Host "Vulkan SDK installed"
           }
-          Write-Host "Installing Vulkan SDK..."
-          Start-Process $out -ArgumentList "/S" -Wait -NoNewWindow
-          Write-Host "Vulkan SDK installed"
 
       - name: Set Vulkan env (Windows)
         if: runner.os == 'Windows'
