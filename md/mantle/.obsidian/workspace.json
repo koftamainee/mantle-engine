@@ -89,7 +89,8 @@
               "title": "Bookmarks"
             }
           }
-        ]
+        ],
+        "currentTab": 1
       }
     ],
     "direction": "horizontal",
@@ -187,7 +188,7 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "9c397d199b1ac8e7",
+  "active": "d6eb9ebb0ecb8f0d",
   "lastOpenFiles": [
     "Mantle - Game Design Document.md",
     "Mantle - TODO.md",

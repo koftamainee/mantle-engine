@@ -217,14 +217,13 @@ namespace mantle {
 
         struct DDAPass final {
             FGImageHandle out_image;
+            Camera::GPUData camera;
         };
 
         struct BlitPass final {
             FGImageHandle in_image;
             FGImageHandle out_backbuffer;
         };
-
-        Camera::GPUData camera = m_camera.gpu_data();
 
 
         const auto &dda = graph.add_pass<DDAPass>(
@@ -236,9 +235,10 @@ namespace mantle {
                     .format = ImageFormat::Rgba8,
                     .usage = ImageUsage::Storage | ImageUsage::Sampled,
                 });
+                pass.camera = m_camera.gpu_data();
                 builder.write(pass.out_image, WriteUsage::StorageWrite);
             },
-            [width, height, camera, this](FGPassContext &ctx, const DDAPass &pass) {
+            [width, height, this](FGPassContext &ctx, const DDAPass &pass) {
                 ctx.bind_pipeline(m_dda_pipeline);
                 u32 storage_index = ctx.get_bindless_index(
                     pass.out_image, BindlessImageType::Storage);
@@ -247,7 +247,7 @@ namespace mantle {
                 DDAPC pc = {
                     .storage_index = storage_index,
                     .chunk_buffer_index = chunk_buffer_index,
-                    .camera = camera,
+                    .camera = pass.camera,
                 };
                 ctx.push_constants(&pc, ShaderStage::Compute);
                 ctx.dispatch({(width + 7) / 8, (height + 7) / 8, 1});
