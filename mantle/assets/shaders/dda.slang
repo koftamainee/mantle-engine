@@ -1,4 +1,6 @@
-[[vk::binding(1, 0)]]
+import bindings;
+
+[[vk::binding(STORAGE_IMAGE_BINDING, 0)]]
 RWTexture2D<float4> g_storage_images[];
 
 [[vk::push_constant]]

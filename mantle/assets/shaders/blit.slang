@@ -1,7 +1,9 @@
-[[vk::binding(0, 0)]]
+import bindings;
+
+[[vk::binding(SAMPLED_IMAGE_BINDING, 0)]]
 Texture2D<float4> g_textures[];
 
-[[vk::binding(3, 0)]]
+[[vk::binding(SAMPLER_BINDING, 0)]]
 SamplerState g_samplers[];
 
 [[vk::push_constant]]
