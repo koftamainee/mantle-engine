@@ -1,1 +1,1 @@
-mantle_module(NAME engine DEPS core renderer camera math world)
+mantle_module(NAME engine DEPS core renderer camera math world noise)

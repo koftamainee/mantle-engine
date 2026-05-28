@@ -85,7 +85,7 @@ void main(uint3 dispatch_id : SV_DispatchThreadID) {
         color = float4(lit, 1.0);
 
     } else {
-        color = float4(0.0, 0.0, 0.0, 0.0);
+        color = float4(0.02, 0.02, 0.04, 1.0);
     }
 
     g_storage_images[storage_image_index][dispatch_id.xy] = color;
