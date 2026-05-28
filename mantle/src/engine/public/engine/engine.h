@@ -5,6 +5,7 @@
 
 #include "core/memory/arena_allocator.h"
 #include "core/memory/virtual_heap.h"
+#include "world/chunk_generation_system.h"
 
 namespace mantle {
     class Engine final {
@@ -27,6 +28,7 @@ namespace mantle {
         Window m_window{};
         Renderer m_renderer{};
         Camera m_camera{};
+        ChunkGenerationSystem m_chunk_generation_system{};
 
         OSMemory m_os_memory;
         VirtualHeap m_heap;

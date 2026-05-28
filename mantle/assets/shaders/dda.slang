@@ -6,7 +6,7 @@ import aabb;
 RWTexture2D<float4> g_storage_images[];
 
 [[vk::binding(STORAGE_BUFFER_BINDING, 0)]]
-RWStructuredBuffer<uint> g_storage_buffers[];
+RWStructuredBuffer<uint16_t> g_storage_buffers[];
 
 [[vk::push_constant]]
 cbuffer PushConstants {

@@ -22,8 +22,8 @@ Instead of rasterizing voxels we will raytrace them using 3D DDA algorithm, all 
 - [ ] Create a DOD style Chunk struct, voxels should be array of u32/u16/u8, bit packed with material palettes, some flags, params like temperature, pressure, etc. -- for later, dont mind them yet
 - [ ] DEPRECATED: use clustered forward (like DOOM Eternal). Decide on G-buffer layout: what data DDA writes per pixel (to be finalized before M3 lighting pass)
 - [x] Add API to renderer that allows to put chunk data into pipeline to render it (already solved with frame graph)
-- [ ] Implement slang compute shader to 3D DDA raycast voxels on screen
-- [ ] Render single chunk on screen
+- [x] Implement slang compute shader to 3D DDA raycast voxels on screen
+- [x] Render single chunk on screen
 
 ### M2. World && Streaming
 
@@ -42,7 +42,7 @@ This milestone focuses on enhancing visual quality and renderer architecture. Di
     - [ ] Introduce new world buffer on GPU
     - [ ] Rewrite main slang raycasting shader: two-level DDA, outer traverses chunks, inner traverses voxels within chunk
 2. Basic lighting setup
-    - [ ] Ambient -- constant factor
+    - [x] Ambient -- constant factor
     - [ ] Point light -- position and radius. Examples: torch, lamp
 3. Basic render graph
     - [x] Define resource lifetime tracking per pass (read/write access per resource) -- automatic barrier insertion
@@ -51,10 +51,9 @@ This milestone focuses on enhancing visual quality and renderer architecture. Di
     - [x] Compute pipeline support through render graph (bind + dispatch)
     - [x] Write-invalidation: write() returns new handle, version tracking
     - [x] TransientResources: lazy alloc, persistent cache, desc-change detect, deferred destroy
-    - [] Pass sequence (blocked until DDA compute shader is ready):
+    - [x] Pass sequence (blocked until DDA compute shader is ready):
         - Geometry pass -- compute, DDA raycasting, writes G-buffer
         - Lighting pass -- compute, shadow ray raycasting, reads G-buffer, writes lit image
-        - Debug UI pass -- graphics, draws ImGui overlay on lit image if enabled
         - Blit pass -- copies lit image into swapchain, transitions image layout
 
 ### M4. First playable

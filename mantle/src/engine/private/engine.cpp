@@ -54,7 +54,7 @@ namespace mantle {
 
         m_last_time = 0;
 
-        m_is_initialized = true;
+        m_chunk_generation_system.init(42);
 
         m_camera.position = glm::vec3(1.6f, 3.0f, 1.6f);
 
@@ -124,34 +124,17 @@ namespace mantle {
             m_chunk_buffer =
                 m_renderer.resource_manager().create_buffer(desc, true);
 
-            Sampler noise_sampler = {
-                .noise_fn = perlin2,
-                .seed = 42,
-                .scale = 0.08f,
-                .octaves = 4,
-                .lacunarity = 2.0f,
-                .gain = 0.5f,
-            };
-
             Chunk chunk = {};
-            for (u32 z = 0; z < Chunk::size; z++) {
-                for (u32 x = 0; x < Chunk::size; x++) {
-                    f32 h = noise_sampler.sample_range(
-                        glm::vec2(static_cast<f32>(x), static_cast<f32>(z)),
-                        8.0f, 18.0f);
-                    u32 height = std::min(static_cast<u32>(h), Chunk::size);
-                    for (u32 y = 0; y < height; y++) {
-                        u32 idx = z * Chunk::size * Chunk::size + y * Chunk::size + x;
-                        chunk.voxels[idx] = 1;
-                    }
-                }
-            }
+            m_chunk_generation_system.generate(chunk, glm::ivec3(0));
+
+
             m_renderer.resource_manager().update_buffer(
                 m_chunk_buffer, &chunk, sizeof(Chunk));
         }
 
         m_rendering_arena.init(m_heap.take(megabytes(100)));
 
+        m_is_initialized = true;
         spdlog::info("Engine is initialized. Starting the game");
     }
 

@@ -461,10 +461,11 @@ namespace mantle {
 
         VkPhysicalDeviceFeatures2 features2 = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-            .features = {.samplerAnisotropy = VK_TRUE},
+            .features = {.samplerAnisotropy = VK_TRUE, .shaderInt16 = VK_TRUE,},
         };
         VkPhysicalDeviceVulkan11Features vulkan11_features = {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES,
+            .uniformAndStorageBuffer16BitAccess = VK_TRUE,
             .shaderDrawParameters = VK_TRUE,
         };
 
