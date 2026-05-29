@@ -97,6 +97,8 @@ namespace mantle {
 
         void draw(const FGDrawInfo &info);
         void draw_indexed(const FGDrawIndexedInfo &info);
+        void draw_indirect(const FGDrawIndirectInfo &info);
+        void draw_indexed_indirect(const FGDrawIndexedIndirectInfo &info);
         void dispatch(const FGDispatchInfo &info);
 
         void copy_buffer(const FGBufferCopyInfo &info);

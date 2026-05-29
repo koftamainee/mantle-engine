@@ -117,6 +117,21 @@ namespace mantle {
 
     using DrawInfo = FGDrawInfo;
     using DrawIndexedInfo = FGDrawIndexedInfo;
+
+    struct DrawIndirectInfo final {
+        BufferResource *buffer = nullptr;
+        usize offset = 0;
+        u32 draw_count = 1;
+        u32 stride = 0;
+    };
+
+    struct DrawIndexedIndirectInfo final {
+        BufferResource *buffer = nullptr;
+        usize offset = 0;
+        u32 draw_count = 1;
+        u32 stride = 0;
+    };
+
     using DispatchInfo = FGDispatchInfo;
 
 

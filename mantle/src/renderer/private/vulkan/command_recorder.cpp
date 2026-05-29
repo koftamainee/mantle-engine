@@ -217,6 +217,19 @@ namespace mantle {
                          info.first_instance);
     }
 
+    void CommandRecorder::draw_indirect(const DrawIndirectInfo &info) const {
+        check(info.buffer != nullptr);
+        vkCmdDrawIndirect(m_cmd, info.buffer->buffer, info.offset,
+                          info.draw_count, info.stride);
+    }
+
+    void CommandRecorder::draw_indexed_indirect(
+        const DrawIndexedIndirectInfo &info) const {
+        check(info.buffer != nullptr);
+        vkCmdDrawIndexedIndirect(m_cmd, info.buffer->buffer, info.offset,
+                                 info.draw_count, info.stride);
+    }
+
     void CommandRecorder::dispatch(const DispatchInfo &info) const {
         vkCmdDispatch(m_cmd, info.x, info.y, info.z);
     }

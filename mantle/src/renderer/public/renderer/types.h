@@ -53,7 +53,8 @@ namespace mantle {
         Uniform = 1 << 2,
         Storage = 1 << 3,
         Transfer = 1 << 4,
-        MaxEnum = (1 << 5) - 1,
+        Indirect = 1 << 5,
+        MaxEnum = (1 << 6) - 1,
     };
     enum class MemoryType {
         Gpu,
@@ -453,6 +454,20 @@ namespace mantle {
         u32 first_index = 0;
         i32 vertex_offset = 0;
         u32 first_instance = 0;
+    };
+
+    struct FGDrawIndirectInfo final {
+        FGBufferHandle buffer = {};
+        usize offset = 0;
+        u32 draw_count = 1;
+        u32 stride = 0;
+    };
+
+    struct FGDrawIndexedIndirectInfo final {
+        FGBufferHandle buffer = {};
+        usize offset = 0;
+        u32 draw_count = 1;
+        u32 stride = 0;
     };
 
     struct FGDispatchInfo final {

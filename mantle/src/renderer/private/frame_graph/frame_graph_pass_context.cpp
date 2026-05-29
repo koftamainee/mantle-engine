@@ -191,6 +191,39 @@ namespace mantle {
         m_impl->cmd->draw_indexed(info);
     }
 
+    void FGPassContext::draw_indirect(const FGDrawIndirectInfo &info) {
+        BufferHandle buffer_handle =
+            m_impl->transient_resources->get_buffer(info.buffer);
+        BufferResource &buffer_resource =
+            m_impl->resource_manager->m_impl->get_buffer(buffer_handle);
+
+        DrawIndirectInfo info_internal = {
+            .buffer = &buffer_resource,
+            .offset = info.offset,
+            .draw_count = info.draw_count,
+            .stride = info.stride,
+        };
+
+        m_impl->cmd->draw_indirect(info_internal);
+    }
+
+    void FGPassContext::draw_indexed_indirect(
+        const FGDrawIndexedIndirectInfo &info) {
+        BufferHandle buffer_handle =
+            m_impl->transient_resources->get_buffer(info.buffer);
+        BufferResource &buffer_resource =
+            m_impl->resource_manager->m_impl->get_buffer(buffer_handle);
+
+        DrawIndexedIndirectInfo info_internal = {
+            .buffer = &buffer_resource,
+            .offset = info.offset,
+            .draw_count = info.draw_count,
+            .stride = info.stride,
+        };
+
+        m_impl->cmd->draw_indexed_indirect(info_internal);
+    }
+
     void FGPassContext::dispatch(const FGDispatchInfo &info) {
         m_impl->cmd->dispatch(info);
     }
