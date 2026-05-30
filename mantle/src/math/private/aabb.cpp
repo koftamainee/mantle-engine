@@ -24,7 +24,7 @@ namespace mantle {
 
     glm::vec3 AABB::size() const { return max - min; }
 
-    glm::vec3 AABB::center() const { return (max - min) * 0.5f; }
+    glm::vec3 AABB::center() const { return (max + min) * 0.5f; }
 
     void AABB::expand(glm::vec3 point) {
         min.x = std::min(min.x, point.x);
