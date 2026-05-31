@@ -74,15 +74,15 @@ namespace mantle {
 
     void ChunkRenderingSystem::add_passes(FrameGraph &graph,
                                        Blackboard &blackboard) const {
-        auto backbuffer = blackboard.get<BbBackbuffer>()->handle;
-        auto camera_data = blackboard.get<BbCameraData>();
-        auto fb_size = blackboard.get<BbFramebufferSize>();
-        auto vertex_fg = blackboard.get<BbChunkVertex>();
-        auto index_fg = blackboard.get<BbChunkIndex>();
-        auto indirect_fg = blackboard.get<BbChunkIndirect>();
+        auto backbuffer = blackboard.get<BbBackbuffer>().handle;
+        const auto& camera_data = blackboard.get<BbCameraData>();
+        const auto& fb_size = blackboard.get<BbFramebufferSize>();
+        const auto& vertex_fg = blackboard.get<BbChunkVertex>();
+        const auto& index_fg = blackboard.get<BbChunkIndex>();
+        const auto& indirect_fg = blackboard.get<BbChunkIndirect>();
 
-        u32 width = fb_size->width;
-        u32 height = fb_size->height;
+        u32 width = fb_size.width;
+        u32 height = fb_size.height;
 
         struct RenderPass final {
             FGBufferHandle vertex;
@@ -101,10 +101,10 @@ namespace mantle {
                     .usage = ImageUsage::Depth,
                 });
                 pass.vertex =
-                    builder.read(vertex_fg->handle, BufferReadUsage::Vertex);
+                    builder.read(vertex_fg.handle, BufferReadUsage::Vertex);
                 pass.index =
-                    builder.read(index_fg->handle, BufferReadUsage::Index);
-                pass.indirect = builder.read(indirect_fg->handle,
+                    builder.read(index_fg.handle, BufferReadUsage::Index);
+                pass.indirect = builder.read(indirect_fg.handle,
                                              BufferReadUsage::IndirectArg);
                 pass.color =
                     builder.write(backbuffer, WriteUsage::ColorAttachment);
@@ -134,7 +134,7 @@ namespace mantle {
                 ctx.set_scissor(0, 0, width, height);
                 ctx.bind_pipeline(m_mesh_pipeline);
 
-                ctx.push_constants(&camera_data->view_proj,
+                ctx.push_constants(&camera_data.view_proj,
                                    ShaderStage::Vertex);
 
                 ctx.bind_vertex_buffer(pass.vertex, 0);

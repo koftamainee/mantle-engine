@@ -1,4 +1,5 @@
 #pragma once
+#include "core/assert.h"
 #include "core/macros.h"
 #include "core/types.h"
 
@@ -28,33 +29,44 @@ namespace mantle {
         MANTLE_NO_COPY_NO_MOVE(Blackboard);
 
         template <typename T>
-        void add(T value) {
+        T &add(T value) {
             u32 tid = TypeId<T>::id();
+            checkf(!m_entries.contains(tid),
+                   "Blackboard::add(): type already added. "
+                   "Keep the T& from add() to modify instead of adding again.");
             auto *ptr = m_entries.get_allocator()
                             .resource()
                             ->allocate(sizeof(T), alignof(T));
             new (ptr) T(std::move(value));
             m_entries[tid] = ptr;
+            return *static_cast<T *>(ptr);
         }
 
         template <typename T>
-        T *get() {
+            requires std::is_default_constructible_v<T>
+        T &add() {
             u32 tid = TypeId<T>::id();
-            auto it = m_entries.find(tid);
-            if (it != m_entries.end()) {
-                return static_cast<T *>(it->second);
-            }
-            return nullptr;
+            checkf(!m_entries.contains(tid),
+                   "Blackboard::add(): type already added. "
+                   "Keep the T& from add() to modify instead of adding again.");
+            auto *ptr = m_entries.get_allocator()
+                            .resource()
+                            ->allocate(sizeof(T), alignof(T));
+            new (ptr) T{};
+            m_entries[tid] = ptr;
+            return *static_cast<T *>(ptr);
         }
 
         template <typename T>
-        const T *get() const {
+        const T &get() const {
             u32 tid = TypeId<T>::id();
             auto it = m_entries.find(tid);
-            if (it != m_entries.end()) {
-                return static_cast<const T *>(it->second);
-            }
-            return nullptr;
+            checkf(it != m_entries.end(),
+                   "Blackboard::get(): type not found. "
+                   "Call add<T>() before get<T>(). "
+                   "Check that the producing module's add_passes() "
+                   "runs before this one.");
+            return *static_cast<const T *>(it->second);
         }
 
         template <typename T>
