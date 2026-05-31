@@ -117,8 +117,10 @@ TEST(BGM, VertexFormat) {
     ASSERT_EQ(mesh.quad_count, 6u);
     ASSERT_EQ(mesh.vertex_count(), 24u);
 
-    u32 expected_packed = (1u << 8u);
-    EXPECT_EQ(mesh.vertices[0].packed, expected_packed);
+    u32 packed = mesh.vertices[0].packed;
+    EXPECT_EQ(packed & 0x7, 0u);               // face_index = 0 (axis=0, pos=0)
+    EXPECT_EQ((packed >> 3) & 0x3, 0u);         // AO = 0
+    EXPECT_EQ((packed >> 8) & 0xFFFF, 1u);      // material = 1
 
     EXPECT_FLOAT_EQ(mesh.vertices[0].x, 0.0f);
     EXPECT_FLOAT_EQ(mesh.vertices[0].y, 0.0f);

@@ -7,8 +7,9 @@ struct MeshVertex {
 
 struct VSOut {
     float4 pos : SV_Position;
-    float3 normal : TEXCOORD1;
-    float3 color : TEXCOORD2;
+    float3 color : TEXCOORD1;
+    float ao : TEXCOORD2;
+    float top_bias : TEXCOORD3;
 };
 
 [[vk::push_constant]]
@@ -17,12 +18,12 @@ cbuffer PushConstants {
 };
 
 static const float3 face_normals[6] = {
-    float3(1, 0, 0),
-    float3(-1, 0, 0),
-    float3(0, 1, 0),
-    float3(0, -1, 0),
-    float3(0, 0, 1),
-    float3(0, 0, -1),
+    float3(-1, 0, 0),    // 0: axis=0 (X), positive=0  → -X
+    float3(1, 0, 0),     // 1: axis=0 (X), positive=1  → +X
+    float3(0, -1, 0),    // 2: axis=1 (Y), positive=0  → -Y
+    float3(0, 1, 0),     // 3: axis=1 (Y), positive=1  → +Y
+    float3(0, 0, -1),    // 4: axis=2 (Z), positive=0  → -Z
+    float3(0, 0, 1),     // 5: axis=2 (Z), positive=1  → +Z
 };
 
 static const float3 block_colors[8] = {
@@ -40,24 +41,22 @@ VSOut vert_main(MeshVertex vertex) {
     output.pos = mul(view_proj, float4(vertex.position, 1.0));
 
     uint face_index = vertex.packed & 0x7;
-    uint block_type = (vertex.packed >> 8) & 0xFF;
+    uint ao_raw = (vertex.packed >> 3) & 0x3;
+    uint block_type = (vertex.packed >> 8) & 0xFFFF;
 
-    output.normal = face_normals[face_index];
     output.color = block_colors[block_type < 16 ? block_type : 0];
+    output.ao = ao_raw / 3.0;
+
+    float3 N = face_normals[face_index];
+    output.top_bias = max(dot(N, float3(0, 1, 0)), 0.0);
 
     return output;
 }
 
 [shader("fragment")]
 float4 frag_main(VSOut input) : SV_Target {
-    float3 N = normalize(input.normal);
-
-    float3 light_dir = normalize(float3(0.5, 1.0, 0.3));
-
-    float diff = max(dot(N, light_dir), 0.0);
-    float3 lighting = 0.3 + diff * 0.7;
-
-    float3 color = input.color * lighting;
-
+    float ambient = 0.85 + 0.15 * input.top_bias;
+    float ao_factor = 1.0 - input.ao * 0.4;
+    float3 color = input.color * ambient * ao_factor;
     return float4(color, 1.0);
 }

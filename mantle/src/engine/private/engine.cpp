@@ -72,6 +72,7 @@ namespace mantle {
 
         spdlog::info("Generating chunks. This might take a while...");
 
+        f32 gen_start = m_window.get_time();
         {
             std::vector<GenTask> tasks;
             tasks.reserve(num_chunks);
@@ -89,9 +90,16 @@ namespace mantle {
             }
             m_worker_pool.wait();
         }
+        f32 gen_elapsed = (m_window.get_time() - gen_start) * 1000.0f;
+        spdlog::info("Generation: {} chunks, {:.2f} ms total, {:.4f} ms avg",
+                     num_chunks, gen_elapsed, gen_elapsed / num_chunks);
 
+        f32 mesh_start = m_window.get_time();
         m_chunk_meshing_system.upload_dirty(m_renderer, m_chunk_storage_system,
                                             m_meshing_arena, &m_worker_pool);
+        f32 mesh_elapsed = (m_window.get_time() - mesh_start) * 1000.0f;
+        spdlog::info("Meshing: {} chunks, {:.2f} ms total, {:.4f} ms avg",
+                     num_chunks, mesh_elapsed, mesh_elapsed / num_chunks);
 
         m_is_initialized = true;
         spdlog::info("Engine is initialized. Starting the game");
