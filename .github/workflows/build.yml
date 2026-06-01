@@ -18,18 +18,40 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            build_type: RelWithDebInfo
             configure: >
               cmake -B build -G Ninja
               -DCMAKE_BUILD_TYPE=RelWithDebInfo
-              -DCMAKE_C_COMPILER=clang
-              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_C_COMPILER=gcc
+              -DCMAKE_CXX_COMPILER=g++
             build: cmake --build build
             ctest: ctest --test-dir build --output-on-failure
+            artifact: mantle-relwithdebinfo-linux-x64
+
+          - os: ubuntu-latest
+            build_type: Debug
+            configure: >
+              cmake -B build -G Ninja
+              -DCMAKE_BUILD_TYPE=Debug
+              -DCMAKE_C_COMPILER=gcc
+              -DCMAKE_CXX_COMPILER=g++
+            build: cmake --build build
+            ctest: ctest --test-dir build --output-on-failure
+            artifact: mantle-debug-linux-x64
 
           - os: windows-latest
+            build_type: RelWithDebInfo
             configure: cmake -B build -G "Visual Studio 17 2022" -A x64
             build: cmake --build build --config RelWithDebInfo
             ctest: ctest --test-dir build --output-on-failure -C RelWithDebInfo
+            artifact: mantle-relwithdebinfo-windows-x64
+
+          - os: windows-latest
+            build_type: Debug
+            configure: cmake -B build -G "Visual Studio 17 2022" -A x64
+            build: cmake --build build --config Debug
+            ctest: ctest --test-dir build --output-on-failure -C Debug
+            artifact: mantle-debug-windows-x64
 
     runs-on: ${{ matrix.os }}
 
@@ -43,7 +65,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            clang ninja-build \
+            gcc g++ ninja-build \
             libwayland-dev wayland-protocols libxkbcommon-dev \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
             mesa-common-dev libgl-dev
@@ -135,19 +157,19 @@ jobs:
       - name: Stage game package (Linux)
         if: runner.os == 'Linux'
         run: |
-          mkdir -p mantle-linux-x64
-          cp -r build/target/* mantle-linux-x64/
+          mkdir -p ${{ matrix.artifact }}
+          cp -r build/target/* ${{ matrix.artifact }}/
 
       - name: Stage game package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path mantle-windows-x64
-          Copy-Item -Path build\target\* -Destination mantle-windows-x64\ -Recurse
+          New-Item -ItemType Directory -Force -Path ${{ matrix.artifact }}
+          Copy-Item -Path build\target\* -Destination ${{ matrix.artifact }}\ -Recurse
 
       - name: Upload package
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os == 'Linux' && 'mantle-linux-x64' || 'mantle-windows-x64' }}
-          path: ${{ runner.os == 'Linux' && 'mantle-linux-x64' || 'mantle-windows-x64' }}
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
           if-no-files-found: error

@@ -11,6 +11,9 @@ foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_UPPER} "${CMAKE_BINARY_DIR}/lib")
     set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${CFG_UPPER} "${CMAKE_BINARY_DIR}/lib")
 endforeach()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/target")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 if(MSVC)
     set(MANTLE_COMPILE_FLAGS /W4 /GR-)
@@ -133,6 +136,10 @@ function(mantle_executable)
     add_executable(${EXE_NAME} ${EXE_MAIN})
     target_compile_options(${EXE_NAME} PRIVATE ${MANTLE_COMPILE_FLAGS})
 
+    if(UNIX)
+        target_link_options(${EXE_NAME} PRIVATE "-Wl,-rpath,$ORIGIN/lib")
+    endif()
+
     if(EXE_DEPS)
         target_link_libraries(${EXE_NAME} PRIVATE ${EXE_DEPS})
     endif()
@@ -146,6 +153,22 @@ function(mantle_executable)
             COMMENT "Copying assets"
             VERBATIM
     )
+
+    if(DEFINED ENV{VULKAN_SDK})
+        if(UNIX)
+            add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/target/lib"
+                COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/lib/libvulkan.so.1" "${CMAKE_BINARY_DIR}/target/lib/libvulkan.so.1"
+                COMMENT "Copying Vulkan loader (libvulkan.so.1)"
+            )
+        elseif(WIN32)
+            add_custom_command(TARGET ${EXE_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/target/lib"
+                COMMAND ${CMAKE_COMMAND} -E copy "$ENV{VULKAN_SDK}/Bin/vulkan-1.dll" "${CMAKE_BINARY_DIR}/target/lib/"
+                COMMENT "Copying Vulkan loader (vulkan-1.dll)"
+            )
+        endif()
+    endif()
 endfunction()
 
 enable_testing()
