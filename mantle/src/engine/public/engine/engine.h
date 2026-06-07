@@ -60,14 +60,6 @@ namespace mantle {
         f32 m_fps_exec_accum = 0.0f;
         f32 m_fps_end_accum = 0.0f;
 
-
-
-        f32 m_camera_speed = m_base_camera_speed;
-
-        static constexpr f32 m_base_camera_speed = 5.0f;
-        static constexpr f32 m_mouse_sensitivity = 0.5f;
-        static constexpr f32 m_controller_look_sensitivity = 120.0f;
-
         spdlog::logger *m_logger = nullptr;
     };
 } // namespace mantle

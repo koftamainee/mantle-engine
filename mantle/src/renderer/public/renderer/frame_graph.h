@@ -13,7 +13,7 @@
 namespace mantle {
     class TransientResources;
     class Renderer;
-}
+} // namespace mantle
 
 namespace mantle {
     class FrameGraph;
@@ -56,13 +56,19 @@ namespace mantle {
         MANTLE_NO_COPY_NO_MOVE(FrameGraphBuilder);
 
         FGImageHandle create_image(const ImageDesc &desc);
-        FGImageHandle read(FGImageHandle image, ReadUsage usage = ReadUsage::Sampled);
-        FGImageHandle write(FGImageHandle image, WriteUsage usage = WriteUsage::ColorAttachment);
+        FGImageHandle read(FGImageHandle image,
+                           ReadUsage usage = ReadUsage::Sampled);
+        FGImageHandle write(FGImageHandle image,
+                            WriteUsage usage = WriteUsage::ColorAttachment);
 
         FGBufferHandle create_buffer(const BufferDesc &desc);
-        FGBufferHandle read(FGBufferHandle buffer, BufferReadUsage usage = BufferReadUsage::Vertex);
-        FGBufferHandle write(FGBufferHandle buffer, BufferWriteUsage usage = BufferWriteUsage::Storage);
+        FGBufferHandle read(FGBufferHandle buffer,
+                            BufferReadUsage usage = BufferReadUsage::Vertex);
+        FGBufferHandle
+        write(FGBufferHandle buffer,
+              BufferWriteUsage usage = BufferWriteUsage::Storage);
 
+      private:
         friend class FrameGraph;
 
         u32 m_pass_index = UINT32_MAX;
@@ -155,6 +161,9 @@ namespace mantle {
             CRenderPassExecuteLambda<TData, TExecute>
         const TData &add_pass(std::string_view name, TSetup &&setup,
                               TExecute &&execute) {
+            static_assert(
+                std::is_trivially_destructible_v<std::decay_t<TExecute>>,
+                "Render pass lambdas must be trivially destructible.");
             struct Combined {
                 TData data;
                 alignas(16) std::decay_t<TExecute> exec;
@@ -163,8 +172,8 @@ namespace mantle {
             auto *combined = static_cast<Combined *>(
                 m_arena->push(sizeof(Combined), alignof(Combined)));
             new (&combined->data) TData{};
-            new (&combined->exec) std::decay_t<TExecute>(
-                std::forward<TExecute>(execute));
+            new (&combined->exec)
+                std::decay_t<TExecute>(std::forward<TExecute>(execute));
 
             FrameGraphBuilder builder;
             builder.m_pass_index = static_cast<u32>(m_passes.size());
@@ -181,10 +190,11 @@ namespace mantle {
             m_passes.push_back({
                 .name = name,
                 .execute_data = combined,
-                .execute_fn = [](void *d, FGPassContext &ctx) {
-                    auto *c = static_cast<Combined *>(d);
-                    c->exec(ctx, c->data);
-                },
+                .execute_fn =
+                    [](void *d, FGPassContext &ctx) {
+                        auto *c = static_cast<Combined *>(d);
+                        c->exec(ctx, c->data);
+                    },
             });
 
             return combined->data;

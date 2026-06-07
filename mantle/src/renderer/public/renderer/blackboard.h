@@ -18,7 +18,7 @@ namespace mantle {
         template <typename T>
         struct TypeId : TypeIdBase {
             static u32 id() {
-                static u32 s_id = s_next++;
+                static std::atomic<u32> s_id = s_next++;
                 return s_id;
             }
         };

@@ -44,15 +44,16 @@ endif()
 add_compile_definitions(
         GLM_FORCE_DEPTH_ZERO_TO_ONE
         GLM_FORCE_RIGHT_HANDED
-
-        MANTLE_DEBUG
-
         MANTLE_GIT_HASH="${MANTLE_GIT_HASH}"
         MANTLE_VERSION="${MANTLE_VERSION}"
         MANTLE_BUILD_TYPE="${CMAKE_BUILD_TYPE}"
         MANTLE_BUILD_DATE="${MANTLE_BUILD_DATE}"
         MANTLE_COMPILER="${MANTLE_COMPILER}"
 )
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_definitions(MANTLE_DEBUG)
+endif()
 
 function(mantle_module)
     cmake_parse_arguments(MOD "" "NAME" "DEPS" ${ARGN})

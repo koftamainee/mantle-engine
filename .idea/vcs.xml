@@ -2,11 +2,14 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mantle/third_party/JoltPhysics" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mantle/third_party/LuaJIT" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/flecs" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/glm" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/googletest" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/sdl" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/mantle/third_party/sol2" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/spdlog" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/mantle/third_party/tlsf" vcs="Git" />
   </component>
