@@ -1,1 +1,1 @@
-mantle_module(NAME engine DEPS core build_info system_info renderer math world noise ecs)
+mantle_module(NAME engine DEPS core build_info system_info renderer math world noise ecs lua)

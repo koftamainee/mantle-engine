@@ -60,7 +60,7 @@ namespace mantle {
 
 #if DO_CHECK
 
-#define check(expr)                                                            \
+#define MANTLE_CHECK(expr)                                                            \
     do {                                                                       \
         if (MANTLE_UNLIKELY(!(expr))) {                                        \
             ::mantle::debug_assert_failed(#expr, __FILE__, __LINE__, "");      \
@@ -68,7 +68,7 @@ namespace mantle {
     }                                                                          \
     while (0)
 
-#define checkf(expr, fmt, ...)                                                 \
+#define MANTLE_CHECKF(expr, fmt, ...)                                                 \
     do {                                                                       \
         if (MANTLE_UNLIKELY(!(expr))) {                                        \
             ::mantle::debug_assert_failed(#expr, __FILE__, __LINE__, fmt,      \
@@ -95,7 +95,7 @@ namespace mantle {
 
 #if DO_CHECK
 
-#define ensure(expr)                                                           \
+#define MANTLE_ENSURE(expr)                                                           \
     ([&]() -> bool {                                                           \
         if (MANTLE_UNLIKELY(!(expr))) {                                        \
             ::mantle::debug_ensure_failed(#expr, __FILE__, __LINE__, "");      \
@@ -104,7 +104,7 @@ namespace mantle {
         return true;                                                           \
     })()
 
-#define ensuref(expr, fmt, ...)                                                \
+#define MANTLE_ENSUREF(expr, fmt, ...)                                                \
     ([&]() -> bool {                                                           \
         if (MANTLE_UNLIKELY(!(expr))) {                                        \
             ::mantle::debug_ensure_failed(#expr, __FILE__, __LINE__, fmt,      \

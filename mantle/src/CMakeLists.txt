@@ -8,6 +8,7 @@ add_subdirectory(math)
 add_subdirectory(world)
 add_subdirectory(noise)
 add_subdirectory(ecs)
+add_subdirectory(lua)
 
 mantle_executable(NAME mantle MAIN main.cpp DEPS engine)
 
