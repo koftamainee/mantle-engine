@@ -87,10 +87,7 @@ namespace mantle {
             .instance = instance,
         };
 
-#ifndef NDEBUG
-        create_info.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT |
-            VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
-#endif
+        create_info.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 
         vk_verify(vmaCreateAllocator(&create_info, &m_allocator));
 
@@ -194,4 +191,5 @@ namespace mantle {
         vmaGetAllocationInfo(m_allocator, allocation, &info);
         return info.size;
     }
+
 } // namespace mantle

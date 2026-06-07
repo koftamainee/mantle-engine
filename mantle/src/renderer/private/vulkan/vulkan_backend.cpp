@@ -93,6 +93,14 @@ namespace mantle {
         };
     }
 
+    std::string_view VulkanBackend::gpu_name() const {
+        return m_device.gpu_name();
+    }
+
+    u64 VulkanBackend::vram_bytes() const {
+        return m_device.vram_bytes();
+    }
+
     AcquiredImage
     VulkanBackend::acquire_next_image(VkSemaphore image_available) const {
         check(m_is_initialized);

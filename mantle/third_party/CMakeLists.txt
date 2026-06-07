@@ -1,10 +1,11 @@
 add_subdirectory(glm)
 
 
-set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-add_subdirectory(glfw)
+# SDL3
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON CACHE BOOL "" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "" FORCE)
+add_subdirectory(sdl)
 
 
 set(SPDLOG_BUILD_EXAMPLE     OFF CACHE BOOL "" FORCE)
@@ -32,7 +33,7 @@ add_library(imgui STATIC
         ${IMGUI_DIR}/imgui_draw.cpp
         ${IMGUI_DIR}/imgui_tables.cpp
         ${IMGUI_DIR}/imgui_widgets.cpp
-        ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+        ${IMGUI_DIR}/backends/imgui_impl_sdl3.cpp
         ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp
 )
 
@@ -43,6 +44,6 @@ target_include_directories(imgui PUBLIC
 
 find_package(Vulkan REQUIRED)
 
-target_link_libraries(imgui PUBLIC glfw Vulkan::Vulkan)
+target_link_libraries(imgui PUBLIC SDL3::SDL3-static Vulkan::Vulkan)
 
 target_compile_definitions(imgui PUBLIC IMGUI_IMPL_VULKAN_USE_DYNAMIC_RENDERING=1)

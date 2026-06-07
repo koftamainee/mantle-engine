@@ -38,6 +38,8 @@ namespace mantle {
 
         void resize_swapchain(u32 width, u32 height);
         SwapchainInfo get_swapchain_info();
+        std::string_view gpu_name() const;
+        u64 vram_bytes() const;
 
       private:
         bool m_is_initialized = false;

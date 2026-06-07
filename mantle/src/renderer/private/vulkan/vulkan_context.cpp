@@ -62,7 +62,7 @@ namespace mantle {
 
     VulkanContext::~VulkanContext() { destroy(); }
 
-    void VulkanContext::init(GLFWwindow *window, ArenaAllocator *scratch_arena,
+    void VulkanContext::init(SDL_Window *window, ArenaAllocator *scratch_arena,
                              VkAllocationCallbacks *vk_callbacks) {
         check(!m_is_initialized);
 
@@ -104,9 +104,9 @@ namespace mantle {
             .pNext = nullptr,
             .pApplicationName = "Mantle",
             .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-            .pEngineName = "No engine",
+            .pEngineName = "Mantle engine",
             .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-            .apiVersion = VK_API_VERSION_1_3, // no 1.4 :(
+            .apiVersion = VK_API_VERSION_1_3,
         };
 
         ScopeArena scope(m_scratch_arena);
@@ -196,12 +196,11 @@ namespace mantle {
     }
 #endif
 
-    void VulkanContext::create_surface(GLFWwindow *glfw_window) {
+    void VulkanContext::create_surface(SDL_Window *window) {
         check(m_instance != VK_NULL_HANDLE);
 
-        fatal(glfwCreateWindowSurface(m_instance, glfw_window,
-                                      m_alloc_callbacks,
-                                      &m_surface) != VK_SUCCESS,
+        fatal(!SDL_Vulkan_CreateSurface(window, m_instance,
+                                        m_alloc_callbacks, &m_surface),
               "Failed to create surface");
 
         m_logger->info("Surface created");
@@ -221,11 +220,11 @@ namespace mantle {
     std::pmr::vector<const char *>
     VulkanContext::get_required_instance_extensions(
         std::pmr::memory_resource &resource) {
-        u32 glfw_extensions_count = 0;
-        const char **glfw_extensions =
-            glfwGetRequiredInstanceExtensions(&glfw_extensions_count);
-
-        fatal(glfw_extensions_count == 0, "Failed to get GLFW extensions");
+        Uint32 sdl_extensions_count = 0;
+        const char *const *sdl_extensions =
+            SDL_Vulkan_GetInstanceExtensions(&sdl_extensions_count);
+        fatal(sdl_extensions == nullptr,
+              "Failed to get SDL Vulkan extensions");
 
         u32 vk_extensions_count = 0;
         vk_verify(vkEnumerateInstanceExtensionProperties(
@@ -236,31 +235,34 @@ namespace mantle {
         vk_verify(vkEnumerateInstanceExtensionProperties(
             nullptr, &vk_extensions_count, vk_extensions.data()));
 
-        for (usize i = 0; i < glfw_extensions_count; i++) {
+        for (Uint32 i = 0; i < sdl_extensions_count; i++) {
             bool found = false;
             for (const auto &[extension_name, _] : vk_extensions) {
-                if (std::strcmp(extension_name, glfw_extensions[i]) == 0) {
+                if (std::strcmp(extension_name, sdl_extensions[i]) == 0) {
                     found = true;
-                    spdlog::get("vulkan")->trace("Found extension: {}", extension_name);
+                    spdlog::get("vulkan")->trace("Found extension: {}",
+                                                 extension_name);
                     break;
                 }
             }
-            fatal(!found, "Required GLFW extensions are not supported");
+            fatal(!found, "Required SDL Vulkan extensions are not supported");
         }
 
         std::pmr::vector<const char *> extensions(&resource);
 #ifdef ENABLE_VALIDATION_LAYERS
-        extensions.resize(glfw_extensions_count + 1);
+        extensions.resize(sdl_extensions_count + 1);
 #else
-        extensions.resize(glfw_extensions_count);
+        extensions.resize(sdl_extensions_count);
 #endif
 
-        std::memcpy(extensions.data(), glfw_extensions,
-                    sizeof(const char *) * glfw_extensions_count);
+        for (Uint32 i = 0; i < sdl_extensions_count; i++) {
+            extensions[i] = sdl_extensions[i];
+        }
 
 #ifdef ENABLE_VALIDATION_LAYERS
-        extensions[glfw_extensions_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
-        spdlog::get("vulkan")->info("Validation layers are enabled. Enabling VK_EXT_debug_utils");
+        extensions[sdl_extensions_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
+        spdlog::get("vulkan")->info(
+            "Validation layers are enabled. Enabling VK_EXT_debug_utils");
 #endif
 
         return extensions;
@@ -301,7 +303,8 @@ namespace mantle {
             for (const auto &vk_layer : vk_layers) {
                 if (strcmp(needed_layer, vk_layer.layerName) == 0) {
                     found = true;
-                    spdlog::get("vulkan")->trace("Found validation layer: {}", needed_layer);
+                    spdlog::get("vulkan")->trace(
+                        "Found validation layer: {}", needed_layer);
                     break;
                 }
             }

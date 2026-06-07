@@ -38,6 +38,9 @@ namespace mantle {
         void rebuild_swapchain(u32 width, u32 height);
         SwapchainInfo get_swapchain_info() const;
 
+        std::string_view gpu_name() const;
+        u64 vram_bytes() const;
+
 
       private:
         friend class FrameScheduler;

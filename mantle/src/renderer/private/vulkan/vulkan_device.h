@@ -73,6 +73,9 @@ namespace mantle {
         VkQueue get_present_queue() const;
         VkQueue get_transfer_queue() const;
 
+        std::string_view gpu_name() const;
+        u64 vram_bytes() const;
+
     private:
         void create_physical_device(VkInstance instance, VkSurfaceKHR surface);
         void destroy_physical_device();
@@ -110,6 +113,8 @@ namespace mantle {
         VkPhysicalDeviceMemoryProperties m_memory_properties{};
         std::pmr::vector<VkQueueFamilyProperties> m_queue_family_properties{};
         std::pmr::vector<std::pmr::string> m_supported_extensions{};
+        std::pmr::string m_gpu_name{};
+        u64 m_vram_bytes = 0;
         VkCommandPool m_command_pool{};
         VkCommandPool m_transfer_command_pool{};
         QueueFamilyIndices m_queue_indices{};

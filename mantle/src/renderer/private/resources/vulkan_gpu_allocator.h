@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "core/macros.h"
+#include "core/types.h"
 #include "vma/vk_mem_alloc.h"
 
 namespace spdlog { class logger; }

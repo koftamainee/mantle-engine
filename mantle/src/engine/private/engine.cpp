@@ -3,11 +3,14 @@
 #include <algorithm>
 #include <cfloat>
 #include <random>
+#include <string_view>
 
+#include "build_info/build_info.h"
 #include "core/assert.h"
 #include "core/logger.h"
 #include "core/memory/memory_units.h"
 #include "renderer/blackboard_types.h"
+#include "system_info/system_info.h"
 #include "window/window.h"
 #include "world/light_propagation.h"
 
@@ -37,7 +40,7 @@ namespace mantle {
             d->gen->generate(*d->chunk, d->pos);
         }
 
-    } // anonymous namespace
+    } // namespace
 
     Engine::~Engine() { destroy(); }
 
@@ -46,24 +49,25 @@ namespace mantle {
 
         m_logger = spdlog::get("engine").get();
 
+        if constexpr (std::string_view(MANTLE_GIT_HASH).ends_with("-dirty")) {
+            m_logger->warn("Working tree is dirty. Build may not be reproducible");
+        }
+
         m_os_memory.init();
         m_heap.init(m_os_memory, gigabytes(2));
         MemoryBlock memory = m_heap.take(megabytes(1));
         m_scratch_arena.init(memory);
 
-        Window::Properties prop = {
-            .title = "Mantle",
-            .size = {.width = 2560, .height = 1600},
-        };
-
-        m_window.init(prop, &m_heap);
+        m_window.init({}, &m_heap);
 
         m_renderer.init(m_window, false, &m_heap, &m_scratch_arena);
 
-        m_camera.aspect = static_cast<f32>(prop.size.width) /
-            static_cast<f32>(prop.size.height);
+        m_camera.aspect = static_cast<f32>(m_window.get_width()) /
+            static_cast<f32>(m_window.get_height());
 
         m_window.set_resize_callback([this](u32 w, u32 h) {
+            m_logger->info(
+                "Swapchain recreation triggered by window resize: {}x{}", w, h);
             m_renderer.resize_swapchain(w, h);
             m_camera.aspect = static_cast<f32>(w) / static_cast<f32>(h);
         });
@@ -89,7 +93,7 @@ namespace mantle {
 
         m_logger->info("Generating chunks. This might take a while...");
 
-        f32 gen_start = static_cast<f32>(m_window.get_time());
+        u64 gen_start = m_window.get_time_ns();
         {
             std::vector<GenTask> tasks;
             tasks.reserve(num_chunks);
@@ -108,11 +112,11 @@ namespace mantle {
             m_worker_pool.wait();
         }
         f32 gen_elapsed =
-            (static_cast<f32>(m_window.get_time()) - gen_start) * 1000.0f;
+            static_cast<f32>(m_window.get_time_ns() - gen_start) / 1e6f;
         m_logger->info("Generation: {} chunks, {:.2f} ms total, {:.4f} ms avg",
-                     num_chunks, gen_elapsed, gen_elapsed / num_chunks);
+                       num_chunks, gen_elapsed, gen_elapsed / num_chunks);
 
-        f32 light_start = static_cast<f32>(m_window.get_time());
+        u64 light_start = m_window.get_time_ns();
         {
             for (i32 x = -R; x <= R; x++) {
                 for (i32 y = -R; y <= R; y++) {
@@ -142,17 +146,17 @@ namespace mantle {
             }
         }
         f32 light_elapsed =
-            static_cast<f32>(m_window.get_time() - light_start) * 1000.0f;
+            static_cast<f32>(m_window.get_time_ns() - light_start) / 1e6f;
         m_logger->info("Light propagation: {:.2f} ms", light_elapsed);
 
-        f32 mesh_start = static_cast<f32>(m_window.get_time());
+        u64 mesh_start = m_window.get_time_ns();
         m_chunk_meshing_system.upload_dirty(m_renderer, m_chunk_storage_system,
                                             m_meshing_arena, &m_worker_pool,
                                             m_chunk_rendering_system);
         f32 mesh_elapsed =
-            static_cast<f32>(m_window.get_time() - mesh_start) * 1000.0f;
+            static_cast<f32>(m_window.get_time_ns() - mesh_start) / 1e6f;
         m_logger->info("Meshing: {} chunks, {:.2f} ms total, {:.4f} ms avg",
-                     num_chunks, mesh_elapsed, mesh_elapsed / num_chunks);
+                       num_chunks, mesh_elapsed, mesh_elapsed / num_chunks);
 
         m_is_initialized = true;
         m_logger->info("Engine initialized. Starting the game");
@@ -169,16 +173,25 @@ namespace mantle {
             | $$ \/  | $$|  $$$$$$$| $$  | $$  |  $$$$/| $$|  $$$$$$$
             |__/     |__/ \_______/|__/  |__/   \___/  |__/ \_______/
 
-================================================================================
 )";
-        mantle::raw_logger()->info(art);
+        raw_logger()->info(art);
+        raw_logger()->info("{}", build_string());
+        raw_logger()->info("Built at: " MANTLE_BUILD_DATE " UTC");
+        log_system_info(raw_logger(), m_renderer.gpu_name(), m_renderer.vram_bytes(),
+                        m_window.get_width(), m_window.get_height(),
+                        false, m_window.get_refresh_rate(),
+                        m_window.is_fullscreen());
+        raw_logger()->info(
+            "================================================================"
+            "================");
+        raw_logger()->info("");
     }
 
     void Engine::run() {
-        m_fps_timer = static_cast<f32>(m_window.get_time());
+        m_fps_timer = static_cast<f32>(m_window.get_time_ns());
         while (!m_window.should_close()) {
-            auto current_time = static_cast<f32>(m_window.get_time());
-            f32 delta_time = current_time - m_last_time;
+            auto current_time = static_cast<f32>(m_window.get_time_ns());
+            f32 delta_time = (current_time - m_last_time) / 1e9f;
             m_last_time = current_time;
 
             m_fps_frame_count++;
@@ -188,16 +201,27 @@ namespace mantle {
             if (delta_time > m_fps_frametime_max)
                 m_fps_frametime_max = delta_time;
 
-            if (current_time - m_fps_timer >= 1.0f) {
+            if (current_time - m_fps_timer >= 1e9f) {
                 f32 avg_ms = m_fps_frametime_accum /
                     static_cast<f32>(m_fps_frame_count) * 1000.0f;
 
-                m_logger->info("{} FPS | {:>4.1f} ms", m_fps_frame_count, avg_ms);
+                m_logger->info(
+                    "{} FPS | {:>4.1f} ms | begin: {:.2f} | exec: {:.2f} | "
+                    "end: {:.2f} | heap: {}/{} MB",
+                    m_fps_frame_count, avg_ms,
+                    m_fps_begin_accum / static_cast<f32>(m_fps_frame_count),
+                    m_fps_exec_accum / static_cast<f32>(m_fps_frame_count),
+                    m_fps_end_accum / static_cast<f32>(m_fps_frame_count),
+                    m_heap.used() / 1024 / 1024,
+                    m_heap.reserved() / 1024 / 1024);
 
                 m_fps_frame_count = 0;
                 m_fps_frametime_accum = 0.0f;
                 m_fps_frametime_min = FLT_MAX;
                 m_fps_frametime_max = 0.0f;
+                m_fps_begin_accum = 0.0f;
+                m_fps_exec_accum = 0.0f;
+                m_fps_end_accum = 0.0f;
                 m_fps_timer = current_time;
             }
 
@@ -222,47 +246,104 @@ namespace mantle {
     void Engine::update(f32 delta_time) {
         m_window.update();
 
-        auto [mouse_x, mouse_y] = m_window.get_mouse_position();
+        bool is_sprinting = false;
 
-        float dx = m_mouse_x - mouse_x;
-        float dy = m_mouse_y - mouse_y;
-        m_mouse_x = mouse_x;
-        m_mouse_y = mouse_y;
-        dx *= m_mouse_sensitivity;
-        dy *= m_mouse_sensitivity;
+        if (m_window.is_controller_active()) {
+            constexpr f32 stick_deadzone = 0.15f;
+            constexpr f32 trigger_deadzone = 0.1f;
 
-        m_camera.rotate(dx, dy);
+            f32 rx =
+                m_window.get_controller_axis(Window::ControllerAxis::RightX);
+            f32 ry =
+                m_window.get_controller_axis(Window::ControllerAxis::RightY);
+            if (std::abs(rx) > stick_deadzone ||
+                std::abs(ry) > stick_deadzone) {
+                m_camera.rotate(rx * m_controller_look_sensitivity * delta_time,
+                                -ry * m_controller_look_sensitivity *
+                                    delta_time);
+            }
 
-        if (m_window.is_key_pressed(Window::Key::W)) {
-            m_camera.position += m_camera.front * m_camera_speed * delta_time;
+            f32 lx =
+                m_window.get_controller_axis(Window::ControllerAxis::LeftX);
+            f32 ly =
+                m_window.get_controller_axis(Window::ControllerAxis::LeftY);
+            if (std::abs(lx) > stick_deadzone) {
+                m_camera.position +=
+                    m_camera.right * lx * m_camera_speed * delta_time;
+            }
+            if (std::abs(ly) > stick_deadzone) {
+                m_camera.position -=
+                    m_camera.front * ly * m_camera_speed * delta_time;
+            }
+
+            f32 lt = m_window.get_controller_axis(
+                Window::ControllerAxis::LeftTrigger);
+            f32 rt = m_window.get_controller_axis(
+                Window::ControllerAxis::RightTrigger);
+            if (lt > trigger_deadzone) {
+                m_camera.position -=
+                    Camera::world_up * lt * m_camera_speed * delta_time;
+            }
+            if (rt > trigger_deadzone) {
+                m_camera.position +=
+                    Camera::world_up * rt * m_camera_speed * delta_time;
+            }
+
+            if (m_window.is_controller_button_pressed(
+                    Window::ControllerButton::B)) {
+                is_sprinting = true;
+                m_window.set_controller_rumble(0x6000, 0x1000, UINT32_MAX);
+            } else {
+                m_window.stop_controller_rumble();
+            }
+        } else {
+            Window::MouseDelta md = m_window.get_mouse_delta();
+            md.x *= m_mouse_sensitivity;
+            md.y *= m_mouse_sensitivity;
+
+            m_camera.rotate(md.x, md.y);
+
+            if (m_window.is_key_pressed(Window::Key::W)) {
+                m_camera.position +=
+                    m_camera.front * m_camera_speed * delta_time;
+            }
+            if (m_window.is_key_pressed(Window::Key::S)) {
+                m_camera.position -=
+                    m_camera.front * m_camera_speed * delta_time;
+            }
+            if (m_window.is_key_pressed(Window::Key::A)) {
+                m_camera.position -=
+                    m_camera.right * m_camera_speed * delta_time;
+            }
+            if (m_window.is_key_pressed(Window::Key::D)) {
+                m_camera.position +=
+                    m_camera.right * m_camera_speed * delta_time;
+            }
+            if (m_window.is_key_pressed(Window::Key::LShift)) {
+                m_camera.position -=
+                    Camera::world_up * m_camera_speed * delta_time;
+            }
+            if (m_window.is_key_pressed(Window::Key::Space)) {
+                m_camera.position +=
+                    Camera::world_up * m_camera_speed * delta_time;
+            }
+
+            is_sprinting = m_window.is_key_pressed(Window::Key::LControl);
         }
-        if (m_window.is_key_pressed(Window::Key::S)) {
-            m_camera.position -= m_camera.front * m_camera_speed * delta_time;
-        }
-        if (m_window.is_key_pressed(Window::Key::A)) {
-            m_camera.position -= m_camera.right * m_camera_speed * delta_time;
-        }
-        if (m_window.is_key_pressed(Window::Key::D)) {
-            m_camera.position += m_camera.right * m_camera_speed * delta_time;
-        }
-        if (m_window.is_key_pressed(Window::Key::Shift)) {
-            m_camera.position -= Camera::world_up * m_camera_speed * delta_time;
-        }
-        if (m_window.is_key_pressed(Window::Key::Space)) {
-            m_camera.position += Camera::world_up * m_camera_speed * delta_time;
-        }
-        if (m_window.is_key_just_pressed(Window::Key::Ctrl)) {
-            m_camera_speed = m_base_camera_speed * 2;
-        }
-        if (m_window.is_key_just_released(Window::Key::Ctrl)) {
-            m_camera_speed = m_base_camera_speed;
-        }
+
+        m_camera_speed =
+            is_sprinting ? m_base_camera_speed * 2 : m_base_camera_speed;
     }
 
     void Engine::render() {
+        u64 t0 = m_window.get_time_ns();
         Renderer::Result result = m_renderer.begin_frame();
+        u64 t1 = m_window.get_time_ns();
         if (result == Renderer::Result::FrameNeedsResize) {
             auto [width, height] = m_window.get_framebuffer_size();
+            m_logger->info(
+                "Swapchain recreation: after acquiring image ({}x{})", width,
+                height);
             m_renderer.resize_swapchain(width, height);
             return;
         }
@@ -284,13 +365,21 @@ namespace mantle {
         m_chunk_rendering_system.add_passes(graph, bb);
 
         m_renderer.execute(graph);
+        u64 t2 = m_window.get_time_ns();
 
         result = m_renderer.end_frame();
+        u64 t3 = m_window.get_time_ns();
         if (result == Renderer::Result::FrameNeedsResize) {
             Window::Properties::Size size = m_window.get_framebuffer_size();
             width = size.width;
             height = size.height;
+            m_logger->info("Swapchain recreation: after presentation ({}x{})",
+                           width, height);
             m_renderer.resize_swapchain(width, height);
         }
+
+        m_fps_begin_accum += static_cast<f32>(t1 - t0) / 1e6f;
+        m_fps_exec_accum += static_cast<f32>(t2 - t1) / 1e6f;
+        m_fps_end_accum += static_cast<f32>(t3 - t2) / 1e6f;
     }
 } // namespace mantle

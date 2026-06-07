@@ -12,6 +12,19 @@
 
 
 namespace mantle {
+    namespace {
+        std::string_view vendor_name(std::uint32_t id) {
+            switch (id) {
+            case 0x1002: return "AMD";
+            case 0x10DE: return "NVIDIA";
+            case 0x8086: return "Intel";
+            case 0x13B5: return "Arm";
+            case 0x5143: return "Qualcomm";
+            case 0x1010: return "Imagination";
+            default:     return "Unknown";
+            }
+        }
+    } // anonymous namespace
 
     VulkanDevice::~VulkanDevice() { destroy(); }
 
@@ -33,8 +46,8 @@ namespace mantle {
             std::pmr::vector<std::pmr::string>(&m_resource);
 
         create_physical_device(instance, surface);
+        m_gpu_name = m_properties.deviceName;
 
-        vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
         vkGetPhysicalDeviceFeatures(m_physical_device, &m_features);
         vkGetPhysicalDeviceMemoryProperties(m_physical_device,
                                             &m_memory_properties);
@@ -77,6 +90,30 @@ namespace mantle {
         m_transfer_command_pool =
             create_command_pool(m_queue_indices.transfer_family);
         m_logger->info("Logical device command pool created");
+
+        VkDeviceSize total_vram = 0;
+        for (u32 i = 0; i < m_memory_properties.memoryHeapCount; i++) {
+            if (m_memory_properties.memoryHeaps[i].flags &
+                VK_MEMORY_HEAP_DEVICE_LOCAL_BIT) {
+                total_vram += m_memory_properties.memoryHeaps[i].size;
+            }
+        }
+        m_vram_bytes = static_cast<u64>(total_vram);
+
+        m_logger->info("Selected GPU: {} ({}, api={}.{}.{}, driver={}.{}.{}, VRAM={} MB)",
+                       m_properties.deviceName, vendor_name(m_properties.vendorID),
+                       VK_API_VERSION_MAJOR(m_properties.apiVersion),
+                       VK_API_VERSION_MINOR(m_properties.apiVersion),
+                       VK_API_VERSION_PATCH(m_properties.apiVersion),
+                       VK_API_VERSION_MAJOR(m_properties.driverVersion),
+                       VK_API_VERSION_MINOR(m_properties.driverVersion),
+                       VK_API_VERSION_PATCH(m_properties.driverVersion),
+                       total_vram / 1024 / 1024);
+
+        m_logger->info("Enabled device extensions ({}):", ms_device_extensions.size());
+        for (const char *ext : ms_device_extensions) {
+            m_logger->info("  {}", ext);
+        }
     }
 
     void VulkanDevice::destroy() {
@@ -207,6 +244,14 @@ namespace mantle {
         }
 
         return std::nullopt;
+    }
+
+    std::string_view VulkanDevice::gpu_name() const {
+        return m_gpu_name;
+    }
+
+    u64 VulkanDevice::vram_bytes() const {
+        return m_vram_bytes;
     }
 
     VkResult VulkanDevice::copy_buffer(VkBuffer src, VkBuffer dst,
@@ -402,7 +447,7 @@ namespace mantle {
     }
 
     void VulkanDevice::create_physical_device(VkInstance instance,
-                                              VkSurfaceKHR surface) {
+                                               VkSurfaceKHR surface) {
         check(instance != VK_NULL_HANDLE);
 
         u32 device_count = 0;
@@ -415,17 +460,29 @@ namespace mantle {
         vk_verify(vkEnumeratePhysicalDevices(instance, &device_count,
                                              devices.data()));
 
+        m_logger->info("Available GPUs ({}):", device_count);
+        for (const auto &candidate : devices) {
+            VkPhysicalDeviceProperties props;
+            vkGetPhysicalDeviceProperties(candidate, &props);
+            m_logger->info("  {} ({}, api={}.{}.{})",
+                           props.deviceName, vendor_name(props.vendorID),
+                           VK_API_VERSION_MAJOR(props.apiVersion),
+                           VK_API_VERSION_MINOR(props.apiVersion),
+                           VK_API_VERSION_PATCH(props.apiVersion));
+        }
+
         for (const auto &physical_device_candidate : devices) {
             if (is_physical_device_suitable(physical_device_candidate, surface,
                                             m_queue_indices)) {
                 m_physical_device = physical_device_candidate;
-                m_logger->info("Physical device created");
                 break;
             }
         }
 
         fatal(m_physical_device == VK_NULL_HANDLE,
               "Supported physical Device not found");
+
+        vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
     }
 
     void VulkanDevice::destroy_physical_device() {

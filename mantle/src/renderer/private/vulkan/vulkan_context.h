@@ -1,7 +1,6 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include <SDL3/SDL_vulkan.h>
 #include <array>
 #include <vector>
 #include <vulkan/vulkan.h>
@@ -22,7 +21,7 @@ namespace mantle {
 
         MANTLE_NO_COPY_NO_MOVE(VulkanContext);
 
-        void init(GLFWwindow *window, ArenaAllocator *scratch_arena,
+        void init(SDL_Window *window, ArenaAllocator *scratch_arena,
                   VkAllocationCallbacks *vk_callbacks);
         void destroy();
 
@@ -40,7 +39,7 @@ namespace mantle {
             "VK_LAYER_MANGOHUD_overlay_x86_64",
         };
 #elif defined(__APPLE__)
-#undef ENABLE_VALIDATION_LAYERS // go fuck yourself
+#undef ENABLE_VALIDATION_LAYERS
 #endif
 #endif
 
@@ -52,7 +51,7 @@ namespace mantle {
         void destroy_debug_messenger_ext();
 #endif
 
-        void create_surface(GLFWwindow *glfw_window);
+        void create_surface(SDL_Window *window);
         void destroy_surface();
 
       private:

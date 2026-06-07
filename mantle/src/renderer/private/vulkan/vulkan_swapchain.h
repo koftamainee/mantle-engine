@@ -4,7 +4,6 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-#include <GLFW/glfw3.h>
 #include "core/macros.h"
 #include "vulkan_types.h"
 
@@ -44,14 +43,14 @@ namespace mantle {
         VkSurfaceFormatKHR get_surface_format() const;
 
       private:
-        static VkSurfaceFormatKHR
-        pick_surface_format(std::span<const VkSurfaceFormatKHR> formats);
-        static VkExtent2D
+        VkSurfaceFormatKHR
+        pick_surface_format(std::span<const VkSurfaceFormatKHR> formats) const;
+        VkExtent2D
         pick_extent(const VkSurfaceCapabilitiesKHR &capabilities, u32 width,
-                    u32 height);
-        static VkPresentModeKHR
+                    u32 height) const;
+        VkPresentModeKHR
         pick_present_mode(std::span<const VkPresentModeKHR> present_modes,
-                          bool vsync);
+                          bool vsync) const;
 
       private:
         bool m_is_initialized = false;

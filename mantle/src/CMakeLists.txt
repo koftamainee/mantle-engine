@@ -1,4 +1,6 @@
 add_subdirectory(core)
+add_subdirectory(build_info)
+add_subdirectory(system_info)
 add_subdirectory(window)
 add_subdirectory(renderer)
 add_subdirectory(camera)

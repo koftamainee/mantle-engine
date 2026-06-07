@@ -108,8 +108,7 @@ namespace mantle {
         }
 
         m_is_initialized = true;
-        m_logger->info("Swapchain {}x{} created", m_extent.width,
-                     m_extent.height);
+        m_logger->info("Swapchain created");
     }
 
     void VulkanSwapchain::destroy() {
@@ -151,58 +150,137 @@ namespace mantle {
         return m_surface_format;
     }
 
-    VkSurfaceFormatKHR VulkanSwapchain::pick_surface_format(
-        const std::span<const VkSurfaceFormatKHR> formats) {
-        for (const auto &format : formats) {
-            if (format.format == VK_FORMAT_R8G8B8A8_SRGB &&
-                format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                return format;
+    namespace {
+        const char *format_name(VkFormat format) {
+            switch (format) {
+            case VK_FORMAT_R8G8B8A8_UNORM:
+                return "R8G8B8A8_UNORM";
+            case VK_FORMAT_R8G8B8A8_SRGB:
+                return "R8G8B8A8_SRGB";
+            case VK_FORMAT_B8G8R8A8_UNORM:
+                return "B8G8R8A8_UNORM";
+            case VK_FORMAT_B8G8R8A8_SRGB:
+                return "B8G8R8A8_SRGB";
+            case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+                return "A8B8G8R8_UNORM_PACK32";
+            case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+                return "A8B8G8R8_SRGB_PACK32";
+            default:
+                return "UNKNOWN";
             }
         }
-        fatal(true, "Unsupported surface format");
+
+        const char *colorspace_name(VkColorSpaceKHR cs) {
+            switch (cs) {
+            case VK_COLOR_SPACE_SRGB_NONLINEAR_KHR:
+                return "SRGB_NONLINEAR_KHR";
+            default:
+                return "UNKNOWN";
+            }
+        }
+    } // namespace
+
+    VkSurfaceFormatKHR VulkanSwapchain::pick_surface_format(
+        const std::span<const VkSurfaceFormatKHR> formats) const {
+
+        m_logger->info("Available surface formats ({}):", formats.size());
+        for (const auto &fmt : formats) {
+            m_logger->info("  {} / {}", format_name(fmt.format),
+                         colorspace_name(fmt.colorSpace));
+        }
+
+        constexpr std::array preferred_formats = {
+            VK_FORMAT_R8G8B8A8_SRGB,        VK_FORMAT_B8G8R8A8_SRGB,
+            VK_FORMAT_A8B8G8R8_SRGB_PACK32, VK_FORMAT_R8G8B8A8_UNORM,
+            VK_FORMAT_B8G8R8A8_UNORM,       VK_FORMAT_A8B8G8R8_UNORM_PACK32,
+        };
+
+        for (VkFormat pref : preferred_formats) {
+            for (const auto &fmt : formats) {
+                if (fmt.format == pref &&
+                    fmt.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+                    m_logger->info("Chosen surface format: {} / {}",
+                                 format_name(fmt.format),
+                                 colorspace_name(fmt.colorSpace));
+                    return fmt;
+                }
+            }
+        }
+
+        m_logger->warn(
+            "No preferred surface format found, using first available: {} / {}",
+            format_name(formats[0].format),
+            colorspace_name(formats[0].colorSpace));
+        return formats[0];
     }
 
     VkExtent2D
     VulkanSwapchain::pick_extent(const VkSurfaceCapabilitiesKHR &capabilities,
-                                 u32 width, u32 height) {
+                                 u32 width, u32 height) const {
         if (capabilities.currentExtent.width != UINT32_MAX) {
+            m_logger->info("Swapchain extent: {}x{} (fixed)",
+                           capabilities.currentExtent.width,
+                           capabilities.currentExtent.height);
             return capabilities.currentExtent;
         }
 
-        return {std::clamp<u32>(width, capabilities.minImageExtent.width,
-                                capabilities.maxImageExtent.width),
-                std::clamp<u32>(height, capabilities.minImageExtent.height,
-                                capabilities.maxImageExtent.height)};
+        VkExtent2D extent = {
+            std::clamp<u32>(width, capabilities.minImageExtent.width,
+                            capabilities.maxImageExtent.width),
+            std::clamp<u32>(height, capabilities.minImageExtent.height,
+                            capabilities.maxImageExtent.height),
+        };
+
+        m_logger->info("Swapchain extent: {}x{} (clamped [{}-{}]x[{}-{}])",
+                       extent.width, extent.height,
+                       capabilities.minImageExtent.width,
+                       capabilities.maxImageExtent.width,
+                       capabilities.minImageExtent.height,
+                       capabilities.maxImageExtent.height);
+        return extent;
     }
 
     VkPresentModeKHR VulkanSwapchain::pick_present_mode(
-        std::span<const VkPresentModeKHR> present_modes, bool vsync) {
-        for (const auto &mode : present_modes) {
-            if (vsync) {
+        std::span<const VkPresentModeKHR> present_modes, bool vsync) const {
+        if (vsync) {
+            for (const auto &mode : present_modes) {
                 if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-                    spdlog::get("vulkan")->info("VSync enabled. Chosen present mode: "
-                                                "VK_PRESENT_MOD_FIFO_KHR");
-                    return mode;
-                }
-            } else {
-                if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                    spdlog::get("vulkan")->info(
-                        "Chosen present mode: VK_PRESENT_MODE_MAILBOX_KHR");
-                    return mode;
-                }
-                if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
-                    spdlog::get("vulkan")->info("VK_PRESENT_MODE_MAILBOX_KHR is not found. "
-                                                "Using VK_PRESENT_MODE_IMMEDIATE_KHR");
-                    return mode;
-                }
-                if (mode == VK_PRESENT_MODE_FIFO_KHR) {
-                    spdlog::get("vulkan")->warn(
-                        "VSync is off, but no preffered modes available. "
-                        "Fallback to VK_PRESENT_MODE_FIFO_KHR");
+                    m_logger->info(
+                        "VSync enabled. Chosen present mode: "
+                        "VK_PRESENT_MODE_FIFO_KHR");
                     return mode;
                 }
             }
+            m_logger->warn("VK_PRESENT_MODE_FIFO_KHR not found, using first available");
+            return present_modes[0];
         }
+
+        for (const auto &mode : present_modes) {
+            if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
+                m_logger->info(
+                    "Chosen present mode: VK_PRESENT_MODE_MAILBOX_KHR");
+                return mode;
+            }
+        }
+
+        for (const auto &mode : present_modes) {
+            if (mode == VK_PRESENT_MODE_IMMEDIATE_KHR) {
+                m_logger->info(
+                    "VK_PRESENT_MODE_MAILBOX_KHR not available. "
+                    "Using VK_PRESENT_MODE_IMMEDIATE_KHR");
+                return mode;
+            }
+        }
+
+        for (const auto &mode : present_modes) {
+            if (mode == VK_PRESENT_MODE_FIFO_KHR) {
+                m_logger->warn(
+                    "VSync is off, but neither MAILBOX nor IMMEDIATE available. "
+                    "Fallback to VK_PRESENT_MODE_FIFO_KHR");
+                return mode;
+            }
+        }
+
         fatal(true, "Unsupported present mode");
     }
 

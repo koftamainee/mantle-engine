@@ -158,6 +158,19 @@ namespace mantle {
             std::pmr::vector<ImageBarrier> barriers(
                 &frame_scheduler.frame_arena_resource());
 
+            for (auto &read : graph.m_image_reads) {
+                if (read.pass_index != pass_idx) {
+                    continue;
+                }
+                transient_resources.get_image(read.handle);
+            }
+            for (auto &write : graph.m_image_writes) {
+                if (write.pass_index != pass_idx) {
+                    continue;
+                }
+                transient_resources.get_image(write.handle);
+            }
+
             auto resolve_layout = [&](FGImageHandle rg_handle,
                                       ImageLayout required_layout,
                                       PipelineStage dst_stage,
@@ -208,6 +221,19 @@ namespace mantle {
 
             std::pmr::vector<BufferBarrier> buffer_barriers(
                 &frame_scheduler.frame_arena_resource());
+
+            for (auto &read : graph.m_buffer_reads) {
+                if (read.pass_index != pass_idx) {
+                    continue;
+                }
+                transient_resources.get_buffer(read.handle);
+            }
+            for (auto &write : graph.m_buffer_writes) {
+                if (write.pass_index != pass_idx) {
+                    continue;
+                }
+                transient_resources.get_buffer(write.handle);
+            }
 
             auto resolve_buffer = [&](FGBufferHandle rg_handle,
                                       PipelineStage dst_stage,
@@ -320,6 +346,16 @@ namespace mantle {
     ImageHandle Renderer::backbuffer() const {
         check(m_is_initialized);
         return m_impl->backbuffer;
+    }
+
+    std::string_view Renderer::gpu_name() const {
+        check(m_is_initialized);
+        return m_impl->backend.gpu_name();
+    }
+
+    u64 Renderer::vram_bytes() const {
+        check(m_is_initialized);
+        return m_impl->backend.vram_bytes();
     }
 
     GPUResourceManager &Renderer::resource_manager() {
