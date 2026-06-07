@@ -22,8 +22,8 @@ namespace mantle {
                                VkAllocationCallbacks *vk_callbacks,
                                VirtualHeap *heap,
                                ArenaAllocator *scratch_arena) {
-        check(!m_is_initialized);
-        check(device != VK_NULL_HANDLE);
+        MANTLE_CHECK(!m_is_initialized);
+        MANTLE_CHECK(device != VK_NULL_HANDLE);
 
         m_logger = spdlog::get("vulkan").get();
         m_device = device;
@@ -77,14 +77,14 @@ namespace mantle {
             create_info.pQueueFamilyIndices = indices_array.data();
         }
 
-        vk_verify(vkCreateSwapchainKHR(device, &create_info, m_alloc_callbacks,
+        MANTLE_VK_VERIFY(vkCreateSwapchainKHR(device, &create_info, m_alloc_callbacks,
                                        &m_swapchain));
 
-        vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
+        MANTLE_VK_VERIFY(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
                                           nullptr));
         ScopeArena scope(m_scratch_arena);
         std::pmr::vector<VkImage> images(image_count, &m_scratch_resource);
-        vk_verify(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
+        MANTLE_VK_VERIFY(vkGetSwapchainImagesKHR(device, m_swapchain, &image_count,
                                           images.data()));
 
         m_images.resize(image_count);
@@ -103,7 +103,7 @@ namespace mantle {
                 .subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1}};
 
 
-            vk_verify(vkCreateImageView(m_device, &view_info, m_alloc_callbacks,
+            MANTLE_VK_VERIFY(vkCreateImageView(m_device, &view_info, m_alloc_callbacks,
                                         &m_images[i].view));
         }
 
@@ -113,7 +113,7 @@ namespace mantle {
 
     void VulkanSwapchain::destroy() {
         if (m_is_initialized) {
-            check(m_device != VK_NULL_HANDLE);
+            MANTLE_CHECK(m_device != VK_NULL_HANDLE);
 
             for (auto [_, view] : m_images) {
                 vkDestroyImageView(m_device, view, m_alloc_callbacks);
@@ -130,23 +130,23 @@ namespace mantle {
 
     std::span<const VulkanSwapchain::Image>
     VulkanSwapchain::get_images() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         return m_images;
     }
 
     VkSwapchainKHR VulkanSwapchain::get_swapchain() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_swapchain;
     }
 
     VkExtent2D VulkanSwapchain::get_extent() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_extent;
     }
 
     VkSurfaceFormatKHR VulkanSwapchain::get_surface_format() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_surface_format;
     }
 
@@ -287,7 +287,7 @@ namespace mantle {
             }
         }
 
-        fatal(true, "Unsupported present mode");
+        MANTLE_FATAL(true, "Unsupported present mode");
     }
 
 } // namespace mantle

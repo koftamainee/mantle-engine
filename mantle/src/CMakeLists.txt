@@ -9,7 +9,7 @@ add_subdirectory(world)
 add_subdirectory(noise)
 add_subdirectory(ecs)
 
-mantle_executable(NAME mantle MAIN main.cpp DEPS engine)
+mantle_executable(NAME mantle MAIN main.cpp DEPS engine sol2)
 
 set(SHADERS_DIR "${CMAKE_SOURCE_DIR}/mantle/assets/shaders")
 

@@ -35,7 +35,7 @@ namespace mantle {
 
         for (const auto &barrier : barriers) {
             auto *image = barrier.image;
-            check(image != nullptr);
+            MANTLE_CHECK(image != nullptr);
             image->current_layout = barrier.to;
 
             vk_barriers.push_back({
@@ -127,7 +127,7 @@ namespace mantle {
 
         VkRenderingAttachmentInfo depth_attachment;
         if (info.depth != nullptr) {
-            check(info.depth->image != nullptr);
+            MANTLE_CHECK(info.depth->image != nullptr);
             depth_attachment = {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .imageView = info.depth->image->view,
@@ -218,14 +218,14 @@ namespace mantle {
     }
 
     void CommandRecorder::draw_indirect(const DrawIndirectInfo &info) const {
-        check(info.buffer != nullptr);
+        MANTLE_CHECK(info.buffer != nullptr);
         vkCmdDrawIndirect(m_cmd, info.buffer->buffer, info.offset,
                           info.draw_count, info.stride);
     }
 
     void CommandRecorder::draw_indexed_indirect(
         const DrawIndexedIndirectInfo &info) const {
-        check(info.buffer != nullptr);
+        MANTLE_CHECK(info.buffer != nullptr);
         vkCmdDrawIndexedIndirect(m_cmd, info.buffer->buffer, info.offset,
                                  info.draw_count, info.stride);
     }
@@ -255,8 +255,8 @@ namespace mantle {
             .size = info.size,
         };
 
-        check(info.src != nullptr);
-        check(info.dst != nullptr);
+        MANTLE_CHECK(info.src != nullptr);
+        MANTLE_CHECK(info.dst != nullptr);
 
         VkCopyBufferInfo2 copy_info = {
             .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
@@ -271,8 +271,8 @@ namespace mantle {
 
     void CommandRecorder::copy_buffer_to_image(
         const BufferImageCopyInfo &info) const {
-        check(info.src != nullptr);
-        check(info.dst != nullptr);
+        MANTLE_CHECK(info.src != nullptr);
+        MANTLE_CHECK(info.dst != nullptr);
         auto image = info.dst;
 
 
@@ -313,8 +313,8 @@ namespace mantle {
         auto *src = info.src;
         auto *dst = info.dst;
 
-        check(src != nullptr);
-        check(dst != nullptr);
+        MANTLE_CHECK(src != nullptr);
+        MANTLE_CHECK(dst != nullptr);
 
         u32 src_width = src->desc.width >> info.src_mip_level;
         u32 src_height = src->desc.height >> info.src_mip_level;
@@ -363,8 +363,8 @@ namespace mantle {
         auto *src = info.src;
         auto *dst = info.dst;
 
-        check(src != nullptr);
-        check(dst != nullptr);
+        MANTLE_CHECK(src != nullptr);
+        MANTLE_CHECK(dst != nullptr);
 
         VkImageBlit2 region = {
             .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
@@ -477,6 +477,6 @@ namespace mantle {
                 return;
             }
         }
-        fatal(true, "Invalid stage for push constant");
+        MANTLE_FATAL(true, "Invalid stage for push constant");
     }
 } // namespace mantle

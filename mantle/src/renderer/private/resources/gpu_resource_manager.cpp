@@ -18,7 +18,7 @@ namespace mantle {
             .pCode = spir_v.data(),
         };
         VkShaderModule shader_module = VK_NULL_HANDLE;
-        vk_verify(vkCreateShaderModule(
+        MANTLE_VK_VERIFY(vkCreateShaderModule(
             m_impl->backend->m_device.get_device(), &info,
             m_impl->backend->m_vk_allocator.vk_allocator(), &shader_module));
 
@@ -27,7 +27,7 @@ namespace mantle {
         u32 free_list_size = m_impl->shaders_free_list.size();
         if (!m_impl->shaders_free_list.empty()) {
             index = m_impl->shaders_free_list[free_list_size - 1];
-            check(index < m_impl->shaders.size());
+            MANTLE_CHECK(index < m_impl->shaders.size());
             m_impl->shaders_free_list.pop_back();
             generation = m_impl->shaders[index].generation;
             m_impl->shaders[index].resource = {
@@ -47,11 +47,11 @@ namespace mantle {
 
     void GPUResourceManager::destroy_shader(ShaderHandle handle,
                                             bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->shaders.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->shaders.size());
 
         auto &shader = m_impl->shaders[handle.index];
-        fatal(handle.generation != shader.generation, "Invalid shader handle");
+        MANTLE_FATAL(handle.generation != shader.generation, "Invalid shader handle");
 
         shader.generation++;
         m_impl->shaders_free_list.push_back(handle.index);
@@ -119,7 +119,7 @@ namespace mantle {
 
     GraphicsPipelineHandle GPUResourceManager::create_graphics_pipeline(
         const GraphicsPipelineDesc &desc) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         std::array<VkPipelineShaderStageCreateInfo, 5> stages{};
         u32 stage_count = 0;
@@ -127,7 +127,7 @@ namespace mantle {
 
         for (const auto &module : desc.shaders) {
             u32 stage_bit = static_cast<u32>(module.stage);
-            checkf(!(stage_mask & (1u << stage_bit)),
+            MANTLE_CHECKF(!(stage_mask & (1u << stage_bit)),
                    "Duplicate shader stage in graphics pipeline: each stage "
                    "must appear at most once");
             stage_mask |= (1u << stage_bit);
@@ -140,10 +140,10 @@ namespace mantle {
                 .pName = module.entry_point.data(),
             };
         }
-        checkf((stage_mask & (1u << static_cast<u32>(ShaderStage::Vertex))) !=
+        MANTLE_CHECKF((stage_mask & (1u << static_cast<u32>(ShaderStage::Vertex))) !=
                    0,
                "Graphics pipeline must have a vertex shader");
-        checkf((stage_mask & (1u << static_cast<u32>(ShaderStage::Fragment))) !=
+        MANTLE_CHECKF((stage_mask & (1u << static_cast<u32>(ShaderStage::Fragment))) !=
                    0,
                "Graphics pipeline must have a fragment shader");
 
@@ -305,7 +305,7 @@ namespace mantle {
         };
 
         std::array<VkPushConstantRange, 8> vk_push_constants{};
-        checkf(desc.push_constants.size() <= 8,
+        MANTLE_CHECKF(desc.push_constants.size() <= 8,
                "Invalid push constants ranges");
         for (usize i = 0; i < desc.push_constants.size(); i++) {
             vk_push_constants[i] = {
@@ -325,7 +325,7 @@ namespace mantle {
         };
 
         VkPipelineLayout layout = VK_NULL_HANDLE;
-        vk_verify(vkCreatePipelineLayout(
+        MANTLE_VK_VERIFY(vkCreatePipelineLayout(
             m_impl->backend->m_device.get_device(), &layout_info,
             m_impl->backend->m_vk_allocator.vk_allocator(), &layout));
 
@@ -360,7 +360,7 @@ namespace mantle {
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        vk_verify(vkCreateGraphicsPipelines(
+        MANTLE_VK_VERIFY(vkCreateGraphicsPipelines(
             m_impl->backend->m_device.get_device(), VK_NULL_HANDLE, 1,
             &pipeline_info, m_impl->backend->m_vk_allocator.vk_allocator(),
             &pipeline));
@@ -377,7 +377,7 @@ namespace mantle {
         u32 generation = 0;
         if (!m_impl->graphics_pipelines_free_list.empty()) {
             index = m_impl->graphics_pipelines_free_list.back();
-            check(index < m_impl->graphics_pipelines.size());
+            MANTLE_CHECK(index < m_impl->graphics_pipelines.size());
             m_impl->graphics_pipelines_free_list.pop_back();
             generation = m_impl->graphics_pipelines[index].generation;
             m_impl->graphics_pipelines[index].resource = {
@@ -402,10 +402,10 @@ namespace mantle {
 
     ComputePipelineHandle GPUResourceManager::create_compute_pipeline(
         const ComputePipelineDesc &desc) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
-        check(desc.push_constants.stage == ShaderStage::Compute);
-        check(desc.push_constants.offset == 0);
+        MANTLE_CHECK(desc.push_constants.stage == ShaderStage::Compute);
+        MANTLE_CHECK(desc.push_constants.offset == 0);
 
         VkPushConstantRange push_constant_range = {
             .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
@@ -423,7 +423,7 @@ namespace mantle {
         };
 
         VkPipelineLayout layout = VK_NULL_HANDLE;
-        vk_verify(vkCreatePipelineLayout(
+        MANTLE_VK_VERIFY(vkCreatePipelineLayout(
             m_impl->backend->m_device.get_device(), &layout_info,
             m_impl->backend->m_vk_allocator.vk_allocator(), &layout));
 
@@ -443,7 +443,7 @@ namespace mantle {
         };
 
         VkPipeline pipeline = VK_NULL_HANDLE;
-        vk_verify(vkCreateComputePipelines(
+        MANTLE_VK_VERIFY(vkCreateComputePipelines(
             m_impl->backend->m_device.get_device(), VK_NULL_HANDLE, 1,
             &pipeline_info, m_impl->backend->m_vk_allocator.vk_allocator(),
             &pipeline));
@@ -459,7 +459,7 @@ namespace mantle {
         u32 generation = 0;
         if (!m_impl->compute_pipelines_free_list.empty()) {
             index = m_impl->compute_pipelines_free_list.back();
-            check(index < m_impl->compute_pipelines.size());
+            MANTLE_CHECK(index < m_impl->compute_pipelines.size());
             m_impl->compute_pipelines_free_list.pop_back();
             generation = m_impl->compute_pipelines[index].generation;
             m_impl->compute_pipelines[index].resource = {
@@ -484,11 +484,11 @@ namespace mantle {
     void
     GPUResourceManager::destroy_graphics_pipeline(GraphicsPipelineHandle handle,
                                                   bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->graphics_pipelines.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->graphics_pipelines.size());
 
         auto &pipeline = m_impl->graphics_pipelines[handle.index];
-        fatal(handle.generation != pipeline.generation,
+        MANTLE_FATAL(handle.generation != pipeline.generation,
               "Invalid graphics pipeline handle");
 
         pipeline.generation++;
@@ -521,11 +521,11 @@ namespace mantle {
     void
     GPUResourceManager::destroy_compute_pipeline(ComputePipelineHandle handle,
                                                  bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->compute_pipelines.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->compute_pipelines.size());
 
         auto &pipeline = m_impl->compute_pipelines[handle.index];
-        fatal(handle.generation != pipeline.generation,
+        MANTLE_FATAL(handle.generation != pipeline.generation,
               "Invalid compute pipeline handle");
 
         pipeline.generation++;
@@ -556,12 +556,12 @@ namespace mantle {
 
     BufferHandle GPUResourceManager::create_buffer(const BufferDesc &desc,
                                                    bool map) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         VkBuffer buffer;
         VmaAllocation allocation;
         void *memory = nullptr;
 
-        checkf(!(map && desc.memory == MemoryType::Gpu),
+        MANTLE_CHECKF(!(map && desc.memory == MemoryType::Gpu),
                "Gpu only buffer can not be used for mapping");
 
 
@@ -580,7 +580,7 @@ namespace mantle {
         u32 free_list_size = m_impl->buffers_free_list.size();
         if (!m_impl->buffers_free_list.empty()) {
             index = m_impl->buffers_free_list[free_list_size - 1];
-            check(index < m_impl->buffers.size());
+            MANTLE_CHECK(index < m_impl->buffers.size());
             m_impl->buffers_free_list.pop_back();
             generation = m_impl->buffers[index].generation;
             m_impl->buffers[index].resource = {
@@ -608,12 +608,12 @@ namespace mantle {
     void GPUResourceManager::update_buffer(BufferHandle handle,
                                            const void *data, usize size,
                                            usize offset) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->buffers.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->buffers.size());
 
         auto &buffer = m_impl->buffers[handle.index];
-        fatal(handle.generation != buffer.generation, "Invalid buffer handle");
-        checkf(buffer.resource.mapped != nullptr,
+        MANTLE_FATAL(handle.generation != buffer.generation, "Invalid buffer handle");
+        MANTLE_CHECKF(buffer.resource.mapped != nullptr,
                "Attempting to write in device local memory buffer");
 
         memcpy(static_cast<u8 *>(buffer.resource.mapped) + offset, data, size);
@@ -621,12 +621,12 @@ namespace mantle {
 
     void GPUResourceManager::read_buffer(BufferHandle handle, void *data,
                                          usize size, usize offset) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->buffers.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->buffers.size());
 
         auto &buffer = m_impl->buffers[handle.index];
-        fatal(handle.generation != buffer.generation, "Invalid buffer handle");
-        checkf(buffer.resource.mapped != nullptr,
+        MANTLE_FATAL(handle.generation != buffer.generation, "Invalid buffer handle");
+        MANTLE_CHECKF(buffer.resource.mapped != nullptr,
                "Attempting to read from device local memory buffer");
 
         memcpy(data, static_cast<u8 *>(buffer.resource.mapped) + offset, size);
@@ -634,11 +634,11 @@ namespace mantle {
 
     void GPUResourceManager::destroy_buffer(BufferHandle handle,
                                             bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->buffers.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->buffers.size());
 
         auto &buffer = m_impl->buffers[handle.index];
-        fatal(handle.generation != buffer.generation, "Invalid buffer handle");
+        MANTLE_FATAL(handle.generation != buffer.generation, "Invalid buffer handle");
 
         buffer.generation++;
         m_impl->buffers_free_list.push_back(handle.index);
@@ -664,12 +664,12 @@ namespace mantle {
     }
 
     ImageHandle GPUResourceManager::create_image(const ImageDesc &desc) {
-        check(m_is_initialized);
-        check(desc.width > 0);
-        check(desc.height > 0);
-        check(desc.mip_levels > 0);
-        check(desc.array_layers > 0);
-        checkf(!(desc.depth > 1 && desc.array_layers > 1),
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(desc.width > 0);
+        MANTLE_CHECK(desc.height > 0);
+        MANTLE_CHECK(desc.mip_levels > 0);
+        MANTLE_CHECK(desc.array_layers > 0);
+        MANTLE_CHECKF(!(desc.depth > 1 && desc.array_layers > 1),
                "3D array textures are not supported");
 
         VkImage image;
@@ -728,7 +728,7 @@ namespace mantle {
 
         VkImageView view = VK_NULL_HANDLE;
         if (desc.create_view) {
-            vk_verify(vkCreateImageView(
+            MANTLE_VK_VERIFY(vkCreateImageView(
                 m_impl->backend->m_device.get_device(), &view_create_info,
                 m_impl->backend->m_vk_allocator.vk_allocator(), &view));
         }
@@ -737,7 +737,7 @@ namespace mantle {
         u32 free_list_size = m_impl->images_free_list.size();
         if (free_list_size > 0) {
             index = m_impl->images_free_list[free_list_size - 1];
-            check(index < m_impl->images.size());
+            MANTLE_CHECK(index < m_impl->images.size());
             m_impl->images_free_list.pop_back();
             generation = m_impl->images[index].generation;
             m_impl->images[index].resource = {
@@ -763,11 +763,11 @@ namespace mantle {
     }
 
     void GPUResourceManager::destroy_image(ImageHandle handle, bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->images.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->images.size());
 
         auto &image = m_impl->images[handle.index];
-        fatal(handle.generation != image.generation, "Invalid image handle");
+        MANTLE_FATAL(handle.generation != image.generation, "Invalid image handle");
 
         image.generation++;
         m_impl->images_free_list.push_back(handle.index);
@@ -802,7 +802,7 @@ namespace mantle {
     }
 
     SamplerHandle GPUResourceManager::create_sampler(const SamplerDesc &desc) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         VkSamplerCreateInfo sampler_create_info = {
             .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
@@ -824,7 +824,7 @@ namespace mantle {
         };
 
         VkSampler sampler;
-        vk_verify(vkCreateSampler(
+        MANTLE_VK_VERIFY(vkCreateSampler(
             m_impl->backend->m_device.get_device(), &sampler_create_info,
             m_impl->backend->m_vk_allocator.vk_allocator(), &sampler));
 
@@ -833,7 +833,7 @@ namespace mantle {
         u32 free_list_size = m_impl->samplers_free_list.size();
         if (free_list_size > 0) {
             index = m_impl->samplers_free_list[free_list_size - 1];
-            check(index < m_impl->samplers.size());
+            MANTLE_CHECK(index < m_impl->samplers.size());
             m_impl->samplers_free_list.pop_back();
             generation = m_impl->samplers[index].generation;
             m_impl->samplers[index].resource = {
@@ -855,11 +855,11 @@ namespace mantle {
 
     void GPUResourceManager::destroy_sampler(SamplerHandle handle,
                                              bool immediate) {
-        check(m_is_initialized);
-        check(handle.index < m_impl->samplers.size());
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(handle.index < m_impl->samplers.size());
 
         auto &sampler = m_impl->samplers[handle.index];
-        fatal(handle.generation != sampler.generation,
+        MANTLE_FATAL(handle.generation != sampler.generation,
               "Invalid sampler handle");
 
         sampler.generation++;
@@ -886,7 +886,7 @@ namespace mantle {
     }
     u32 GPUResourceManager::get_bindless_index(ImageHandle handle,
                                                BindlessImageType type) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &image = m_impl->get_image(handle);
         if (type == BindlessImageType::Sampled &&
             image.bindless_sample_index != UINT32_MAX) {
@@ -898,14 +898,14 @@ namespace mantle {
         }
 
         if (type == BindlessImageType::Sampled) {
-            checkf(image.desc.usage & ImageUsage::Sampled,
+            MANTLE_CHECKF(image.desc.usage & ImageUsage::Sampled,
                    "Image must have Sampled usage");
             image.bindless_sample_index =
                 m_impl->allocate_sampled_image_index(image);
             return image.bindless_sample_index;
         }
         if (type == BindlessImageType::Storage) {
-            checkf(image.desc.usage & ImageUsage::Storage,
+            MANTLE_CHECKF(image.desc.usage & ImageUsage::Storage,
                    "Image must have Storage usage");
             image.bindless_storage_index =
                 m_impl->allocate_storage_image_index(image);
@@ -918,7 +918,7 @@ namespace mantle {
 
     void GPUResourceManager::import_swapchain_images(
         std::pmr::vector<ImageHandle> &out_images) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         const auto &swapchain_images =
             m_impl->backend->m_swapchain.get_images();
@@ -999,7 +999,7 @@ namespace mantle {
             .pPoolSizes = pool_sizes,
         };
 
-        vk_verify(vkCreateDescriptorPool(vk_device, &pool_info, vk_callbacks,
+        MANTLE_VK_VERIFY(vkCreateDescriptorPool(vk_device, &pool_info, vk_callbacks,
                                          &m_impl->m_bindless_pool));
 
         VkDescriptorSetLayoutBinding bindings[] = {
@@ -1039,7 +1039,7 @@ namespace mantle {
             .pBindings = bindings,
         };
 
-        vk_verify(vkCreateDescriptorSetLayout(
+        MANTLE_VK_VERIFY(vkCreateDescriptorSetLayout(
             vk_device, &layout_info, vk_callbacks, &m_impl->m_bindless_layout));
 
         VkDescriptorSetAllocateInfo alloc_info = {
@@ -1049,7 +1049,7 @@ namespace mantle {
             .pSetLayouts = &m_impl->m_bindless_layout,
         };
 
-        vk_verify(vkAllocateDescriptorSets(vk_device, &alloc_info,
+        MANTLE_VK_VERIFY(vkAllocateDescriptorSets(vk_device, &alloc_info,
                                            &m_impl->m_bindless));
     }
 
@@ -1069,13 +1069,13 @@ namespace mantle {
     }
 
     void GPUResourceManager::init(VulkanBackend *backend) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("renderer").get();
         PersistentAllocator alloc;
         alloc.init(backend->m_heap);
         m_impl = alloc.emplace<Impl>();
-        check(m_impl != nullptr);
+        MANTLE_CHECK(m_impl != nullptr);
         m_impl->backend = backend;
         m_impl->resource = PersistentResource(m_impl->backend->m_heap);
 
@@ -1188,20 +1188,20 @@ namespace mantle {
 
 
     u32 GPUResourceManager::get_bindless_index(BufferHandle handle) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &buffer = m_impl->get_buffer(handle);
         if (buffer.bindless_index != UINT32_MAX) {
             return buffer.bindless_index;
         }
 
-        checkf(buffer.desc.usage & BufferUsage::Storage,
+        MANTLE_CHECKF(buffer.desc.usage & BufferUsage::Storage,
                "buffer must have storage usage");
         buffer.bindless_index = m_impl->allocate_buffer_index(buffer);
         return buffer.bindless_index;
     }
 
     u32 GPUResourceManager::get_bindless_index(SamplerHandle handle) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &sampler = m_impl->get_sampler(handle);
         if (sampler.bindless_index != UINT32_MAX) {
             return sampler.bindless_index;
@@ -1213,7 +1213,7 @@ namespace mantle {
 
     void GPUResourceManager::free_image_index(ImageHandle handle,
                                               BindlessImageType type) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &image = m_impl->get_image(handle);
         if (type == BindlessImageType::Sampled) {
             if (image.bindless_sample_index != UINT32_MAX) {
@@ -1227,7 +1227,7 @@ namespace mantle {
     }
 
     void GPUResourceManager::free_buffer_index(BufferHandle handle) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &buffer = m_impl->get_buffer(handle);
         if (buffer.bindless_index != UINT32_MAX) {
             m_impl->free_buffer_index(buffer.bindless_index);
@@ -1235,7 +1235,7 @@ namespace mantle {
     }
 
     void GPUResourceManager::free_sampler_index(SamplerHandle handle) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         auto &sampler = m_impl->get_sampler(handle);
         if (sampler.bindless_index != UINT32_MAX) {
             m_impl->free_sampler_index(sampler.bindless_index);
@@ -1243,10 +1243,10 @@ namespace mantle {
     }
 
     ImageResource &GPUResourceManager::Impl::get_image(ImageHandle handle) {
-        check(handle.index < images.size());
+        MANTLE_CHECK(handle.index < images.size());
         auto &image = images[handle.index];
 
-        fatal(image.generation != handle.generation,
+        MANTLE_FATAL(image.generation != handle.generation,
               "Attempting to get invalid buffer");
 
 
@@ -1254,10 +1254,10 @@ namespace mantle {
     }
 
     BufferResource &GPUResourceManager::Impl::get_buffer(BufferHandle handle) {
-        check(handle.index < buffers.size());
+        MANTLE_CHECK(handle.index < buffers.size());
         auto &buffer = buffers[handle.index];
 
-        fatal(buffer.generation != handle.generation,
+        MANTLE_FATAL(buffer.generation != handle.generation,
               "Attempting to get invalid buffer");
 
 
@@ -1265,10 +1265,10 @@ namespace mantle {
     }
     SamplerResource &
     GPUResourceManager::Impl::get_sampler(SamplerHandle handle) {
-        check(handle.index < samplers.size());
+        MANTLE_CHECK(handle.index < samplers.size());
         auto &sampler = samplers[handle.index];
 
-        fatal(sampler.generation != handle.generation,
+        MANTLE_FATAL(sampler.generation != handle.generation,
               "Attempting to get invalid sampler");
 
 
@@ -1276,10 +1276,10 @@ namespace mantle {
     }
 
     ShaderResource &GPUResourceManager::Impl::get_shader(ShaderHandle handle) {
-        check(handle.index < shaders.size());
+        MANTLE_CHECK(handle.index < shaders.size());
         auto &shader = shaders[handle.index];
         if (shader.generation != handle.generation) {
-            fatal(true, "Attempting to get invalid shader");
+            MANTLE_FATAL(true, "Attempting to get invalid shader");
         }
 
         return shader.resource;
@@ -1287,10 +1287,10 @@ namespace mantle {
 
     GraphicsPipelineResource &GPUResourceManager::Impl::get_graphics_pipeline(
         GraphicsPipelineHandle handle) {
-        check(handle.index < graphics_pipelines.size());
+        MANTLE_CHECK(handle.index < graphics_pipelines.size());
         auto &pipeline = graphics_pipelines[handle.index];
         if (pipeline.generation != handle.generation) {
-            fatal(true, "Attempting to get invalid graphics pipeline");
+            MANTLE_FATAL(true, "Attempting to get invalid graphics pipeline");
         }
 
         return pipeline.resource;
@@ -1298,10 +1298,10 @@ namespace mantle {
 
     ComputePipelineResource &GPUResourceManager::Impl::get_compute_pipeline(
         ComputePipelineHandle handle) {
-        check(handle.index < compute_pipelines.size());
+        MANTLE_CHECK(handle.index < compute_pipelines.size());
         auto &pipeline = compute_pipelines[handle.index];
 
-        fatal(pipeline.generation != handle.generation,
+        MANTLE_FATAL(pipeline.generation != handle.generation,
               "Attempting to get invalid compute pipeline");
 
         return pipeline.resource;
@@ -1318,7 +1318,7 @@ namespace mantle {
             index = storage_images_free_list_bindless.back();
             storage_images_free_list_bindless.pop_back();
         } else {
-            checkf(storage_images_count_bindless < max_storage_images,
+            MANTLE_CHECKF(storage_images_count_bindless < max_storage_images,
                    "Exceeded max storage image bindless count");
             index = storage_images_count_bindless++;
         }
@@ -1352,7 +1352,7 @@ namespace mantle {
             index = sampled_images_free_list_bindless.back();
             sampled_images_free_list_bindless.pop_back();
         } else {
-            checkf(sampled_images_count_bindless < max_sampled_images,
+            MANTLE_CHECKF(sampled_images_count_bindless < max_sampled_images,
                    "Exceeded max sampled image bindless count");
             index = sampled_images_count_bindless++;
         }
@@ -1386,7 +1386,7 @@ namespace mantle {
             index = buffers_free_list_bindless.back();
             buffers_free_list_bindless.pop_back();
         } else {
-            checkf(buffers_count_bindless < max_storage_buffers,
+            MANTLE_CHECKF(buffers_count_bindless < max_storage_buffers,
                    "Exceeded max storage buffers bindless count");
             index = buffers_count_bindless++;
         }
@@ -1418,7 +1418,7 @@ namespace mantle {
             index = samplers_free_list_bindless.back();
             samplers_free_list_bindless.pop_back();
         } else {
-            checkf(samplers_count_bindless < max_samplers,
+            MANTLE_CHECKF(samplers_count_bindless < max_samplers,
                    "Exceeded max samplers bindless count");
             index = samplers_count_bindless++;
         }

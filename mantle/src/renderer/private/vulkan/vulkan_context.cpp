@@ -64,7 +64,7 @@ namespace mantle {
 
     void VulkanContext::init(SDL_Window *window, ArenaAllocator *scratch_arena,
                              VkAllocationCallbacks *vk_callbacks) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("vulkan").get();
         m_alloc_callbacks = vk_callbacks;
@@ -139,7 +139,7 @@ namespace mantle {
         instance_create_info.ppEnabledLayerNames = ms_validation_layers.data();
 #endif
 
-        vk_verify(vkCreateInstance(&instance_create_info, m_alloc_callbacks,
+        MANTLE_VK_VERIFY(vkCreateInstance(&instance_create_info, m_alloc_callbacks,
                                    &m_instance));
         m_logger->info("Vulkan instance created");
     }
@@ -154,14 +154,14 @@ namespace mantle {
 
 #ifdef ENABLE_VALIDATION_LAYERS
     void VulkanContext::create_debug_messenger_ext() {
-        check(m_instance != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_instance != VK_NULL_HANDLE);
 
         const auto vk_create_debug_utils_messenger =
             reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
                 vkGetInstanceProcAddr(m_instance,
                                       "vkCreateDebugUtilsMessengerEXT"));
 
-        check(vk_create_debug_utils_messenger != nullptr);
+        MANTLE_CHECK(vk_create_debug_utils_messenger != nullptr);
 
         const VkDebugUtilsMessengerCreateInfoEXT create_info =
             make_debug_messenger_create_info_ext();
@@ -171,14 +171,14 @@ namespace mantle {
         check_validation_layers(resource);
 
 
-        vk_verify(vk_create_debug_utils_messenger(
+        MANTLE_VK_VERIFY(vk_create_debug_utils_messenger(
             m_instance, &create_info, m_alloc_callbacks, &m_debug_messenger));
         m_logger->info("Debug messenger created");
     }
 
     void VulkanContext::destroy_debug_messenger_ext() {
         if (m_debug_messenger != VK_NULL_HANDLE) {
-            check(m_instance != VK_NULL_HANDLE);
+            MANTLE_CHECK(m_instance != VK_NULL_HANDLE);
 
             const auto vk_destroy_debug_utils_messenger =
                 reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
@@ -197,9 +197,9 @@ namespace mantle {
 #endif
 
     void VulkanContext::create_surface(SDL_Window *window) {
-        check(m_instance != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_instance != VK_NULL_HANDLE);
 
-        fatal(!SDL_Vulkan_CreateSurface(window, m_instance,
+        MANTLE_FATAL(!SDL_Vulkan_CreateSurface(window, m_instance,
                                         m_alloc_callbacks, &m_surface),
               "Failed to create surface");
 
@@ -208,7 +208,7 @@ namespace mantle {
 
     void VulkanContext::destroy_surface() {
         if (m_surface != VK_NULL_HANDLE) {
-            check(m_instance != VK_NULL_HANDLE);
+            MANTLE_CHECK(m_instance != VK_NULL_HANDLE);
 
             vkDestroySurfaceKHR(m_instance, m_surface, m_alloc_callbacks);
             m_surface = VK_NULL_HANDLE;
@@ -223,16 +223,16 @@ namespace mantle {
         Uint32 sdl_extensions_count = 0;
         const char *const *sdl_extensions =
             SDL_Vulkan_GetInstanceExtensions(&sdl_extensions_count);
-        fatal(sdl_extensions == nullptr,
+        MANTLE_FATAL(sdl_extensions == nullptr,
               "Failed to get SDL Vulkan extensions");
 
         u32 vk_extensions_count = 0;
-        vk_verify(vkEnumerateInstanceExtensionProperties(
+        MANTLE_VK_VERIFY(vkEnumerateInstanceExtensionProperties(
             nullptr, &vk_extensions_count, nullptr));
 
         std::pmr::vector<VkExtensionProperties> vk_extensions(&resource);
         vk_extensions.resize(vk_extensions_count);
-        vk_verify(vkEnumerateInstanceExtensionProperties(
+        MANTLE_VK_VERIFY(vkEnumerateInstanceExtensionProperties(
             nullptr, &vk_extensions_count, vk_extensions.data()));
 
         for (Uint32 i = 0; i < sdl_extensions_count; i++) {
@@ -245,7 +245,7 @@ namespace mantle {
                     break;
                 }
             }
-            fatal(!found, "Required SDL Vulkan extensions are not supported");
+            MANTLE_FATAL(!found, "Required SDL Vulkan extensions are not supported");
         }
 
         std::pmr::vector<const char *> extensions(&resource);
@@ -290,12 +290,12 @@ namespace mantle {
     void
     VulkanContext::check_validation_layers(std::pmr::memory_resource &memory) {
         u32 vk_layer_properties_count = 0;
-        vk_verify(vkEnumerateInstanceLayerProperties(&vk_layer_properties_count,
+        MANTLE_VK_VERIFY(vkEnumerateInstanceLayerProperties(&vk_layer_properties_count,
                                                      nullptr));
 
         std::pmr::vector<VkLayerProperties> vk_layers(&memory);
         vk_layers.resize(vk_layer_properties_count);
-        vk_verify(vkEnumerateInstanceLayerProperties(&vk_layer_properties_count,
+        MANTLE_VK_VERIFY(vkEnumerateInstanceLayerProperties(&vk_layer_properties_count,
                                                      vk_layers.data()));
 
         for (auto const needed_layer : ms_validation_layers) {
@@ -308,7 +308,7 @@ namespace mantle {
                     break;
                 }
             }
-            fatal(!found, "Required VK_LAYERS are not supported");
+            MANTLE_FATAL(!found, "Required VK_LAYERS are not supported");
         }
     }
 

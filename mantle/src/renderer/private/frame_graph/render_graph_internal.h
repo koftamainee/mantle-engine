@@ -20,7 +20,7 @@ inline ImageLayout write_usage_to_layout(WriteUsage usage) {
     case WriteUsage::Present:
         return ImageLayout::Present;
     default:
-        fatal(true, "unknown WriteUsage");
+        MANTLE_FATAL(true, "unknown WriteUsage");
     }
 }
 
@@ -39,7 +39,7 @@ inline PipelineStage write_usage_to_stage(WriteUsage usage) {
     case WriteUsage::Present:
         return PipelineStage::Bottom;
     default:
-        fatal(true, "unknown WriteUsage");
+        MANTLE_FATAL(true, "unknown WriteUsage");
     }
 }
 
@@ -58,7 +58,7 @@ inline AccessType write_usage_to_access(WriteUsage usage) {
     case WriteUsage::Present:
         return AccessType::None;
     default:
-        fatal(true, "unknown WriteUsage");
+        MANTLE_FATAL(true, "unknown WriteUsage");
     }
 }
 
@@ -75,7 +75,7 @@ inline ImageLayout read_usage_to_layout(ReadUsage usage) {
     case ReadUsage::IndirectArg:
         return ImageLayout::ShaderReadOnly;
     default:
-        fatal(true, "unknown ReadUsage");
+        MANTLE_FATAL(true, "unknown ReadUsage");
     }
 }
 
@@ -92,7 +92,7 @@ inline PipelineStage read_usage_to_stage(ReadUsage usage) {
     case ReadUsage::IndirectArg:
         return PipelineStage::DrawIndirect;
     default:
-        fatal(true, "unknown ReadUsage");
+        MANTLE_FATAL(true, "unknown ReadUsage");
     }
 }
 
@@ -107,7 +107,7 @@ inline AccessType read_usage_to_access(ReadUsage usage) {
     case ReadUsage::TransferSrc:
         return AccessType::TransferRead;
     default:
-        fatal(true, "unknown ReadUsage");
+        MANTLE_FATAL(true, "unknown ReadUsage");
     }
 }
 
@@ -125,7 +125,7 @@ inline PipelineStage buffer_read_usage_to_stage(BufferReadUsage usage) {
     case BufferReadUsage::IndirectArg:
         return PipelineStage::DrawIndirect;
     default:
-        fatal(true, "unknown BufferReadUsage");
+        MANTLE_FATAL(true, "unknown BufferReadUsage");
     }
 }
 
@@ -144,7 +144,7 @@ inline AccessType buffer_read_usage_to_access(BufferReadUsage usage) {
     case BufferReadUsage::IndirectArg:
         return AccessType::IndirectCommandRead;
     default:
-        fatal(true, "unknown BufferReadUsage");
+        MANTLE_FATAL(true, "unknown BufferReadUsage");
     }
 }
 
@@ -155,7 +155,7 @@ inline PipelineStage buffer_write_usage_to_stage(BufferWriteUsage usage) {
     case BufferWriteUsage::TransferDst:
         return PipelineStage::Transfer;
     default:
-        fatal(true, "unknown BufferWriteUsage");
+        MANTLE_FATAL(true, "unknown BufferWriteUsage");
     }
 }
 
@@ -166,7 +166,7 @@ inline AccessType buffer_write_usage_to_access(BufferWriteUsage usage) {
     case BufferWriteUsage::TransferDst:
         return AccessType::TransferWrite;
     default:
-        fatal(true, "unknown BufferWriteUsage");
+        MANTLE_FATAL(true, "unknown BufferWriteUsage");
     }
 }
 

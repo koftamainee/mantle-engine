@@ -18,7 +18,7 @@ namespace mantle {
     ChunkMeshingSystem::~ChunkMeshingSystem() { destroy(); }
 
     void ChunkMeshingSystem::init() {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
         m_logger = spdlog::get("world").get();
         m_is_initialized = true;
         m_logger->info("Chunk meshing system initialized");
@@ -71,7 +71,7 @@ namespace mantle {
                                           ArenaAllocator &scratch,
                                           WorkerPool *pool,
                                           ChunkRenderingSystem &rendering) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         if (!storage.any_dirty())
             return;

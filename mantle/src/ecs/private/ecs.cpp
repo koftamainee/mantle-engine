@@ -15,7 +15,7 @@ namespace mantle {
     }
 
     void Ecs::init(Window &window, f32 camera_aspect) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
         m_logger = spdlog::get("ecs").get();
         m_is_initialized = true;
 
@@ -34,7 +34,7 @@ namespace mantle {
     }
 
     void Ecs::update(f32 delta_time) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         static_cast<void>(m_world.progress(delta_time)); // xd
     }
 

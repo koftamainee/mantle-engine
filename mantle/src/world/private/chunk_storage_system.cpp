@@ -8,9 +8,9 @@ namespace mantle {
     ChunkStorageSystem::~ChunkStorageSystem() { destroy(); }
 
     void ChunkStorageSystem::init(u32 capacity, VirtualHeap *heap) {
-        check(!m_is_initialized);
-        check(capacity > 0);
-        check(heap != nullptr);
+        MANTLE_CHECK(!m_is_initialized);
+        MANTLE_CHECK(capacity > 0);
+        MANTLE_CHECK(heap != nullptr);
 
         usize arena_size = capacity * sizeof(Slot) + kilobytes(64);
         m_arena.init(heap->take(arena_size));
@@ -44,8 +44,8 @@ namespace mantle {
     }
 
     u32 ChunkStorageSystem::add_chunk(glm::ivec3 position) {
-        check(m_is_initialized);
-        check(m_count < m_capacity);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(m_count < m_capacity);
 
         if (auto it = m_map.find(position); it != m_map.end()) {
             return it->second;
@@ -70,10 +70,10 @@ namespace mantle {
     }
 
     void ChunkStorageSystem::remove_chunk(glm::ivec3 position) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         auto it = m_map.find(position);
-        check(it != m_map.end());
+        MANTLE_CHECK(it != m_map.end());
 
         u32 index = it->second;
         m_slots[index].active = false;
@@ -84,57 +84,57 @@ namespace mantle {
     }
 
     bool ChunkStorageSystem::has_chunk(glm::ivec3 position) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_map.contains(position);
     }
 
     u32 ChunkStorageSystem::get_index(glm::ivec3 position) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_map.at(position);
     }
 
     Chunk &ChunkStorageSystem::get_chunk(u32 index) {
-        check(m_is_initialized);
-        check(index < m_capacity);
-        check(m_slots[index].active);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
+        MANTLE_CHECK(m_slots[index].active);
         return m_slots[index].chunk;
     }
 
     const Chunk &ChunkStorageSystem::get_chunk(u32 index) const {
-        check(m_is_initialized);
-        check(index < m_capacity);
-        check(m_slots[index].active);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
+        MANTLE_CHECK(m_slots[index].active);
         return m_slots[index].chunk;
     }
 
     Chunk &ChunkStorageSystem::get_chunk(glm::ivec3 position) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         u32 index = m_map.at(position);
         return m_slots[index].chunk;
     }
 
     const Chunk &ChunkStorageSystem::get_chunk(glm::ivec3 position) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         u32 index = m_map.at(position);
         return m_slots[index].chunk;
     }
 
     glm::ivec3 ChunkStorageSystem::get_position(u32 index) const {
-        check(m_is_initialized);
-        check(index < m_capacity);
-        check(m_slots[index].active);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
+        MANTLE_CHECK(m_slots[index].active);
         return m_slots[index].position;
     }
 
     bool ChunkStorageSystem::is_dirty(u32 index) const {
-        check(m_is_initialized);
-        check(index < m_capacity);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
         return m_slots[index].active && m_slots[index].dirty;
     }
 
     void ChunkStorageSystem::mark_dirty(u32 index) {
-        check(m_is_initialized);
-        check(index < m_capacity);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
         if (!m_slots[index].dirty) {
             m_slots[index].dirty = true;
             m_dirty_queue.push_back(index);
@@ -142,13 +142,13 @@ namespace mantle {
     }
 
     void ChunkStorageSystem::mark_clean(u32 index) {
-        check(m_is_initialized);
-        check(index < m_capacity);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(index < m_capacity);
         m_slots[index].dirty = false;
     }
 
     bool ChunkStorageSystem::any_dirty() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         for (u32 i = 0; i < m_capacity; i++) {
             if (m_slots[i].active && m_slots[i].dirty) return true;
         }
@@ -156,7 +156,7 @@ namespace mantle {
     }
 
     void ChunkStorageSystem::clear_dirty() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         for (u32 i : m_dirty_queue) {
             m_slots[i].dirty = false;
         }
@@ -164,7 +164,7 @@ namespace mantle {
     }
 
     const std::pmr::vector<u32> &ChunkStorageSystem::dirty_indices() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_dirty_queue;
     }
 

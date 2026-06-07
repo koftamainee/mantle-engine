@@ -11,7 +11,7 @@ namespace mantle {
         m_image_reads(&m_resource), m_image_writes(&m_resource),
         m_buffer_reads(&m_resource), m_buffer_writes(&m_resource),
         m_next_image_index(0), m_next_buffer_index(0) {
-        check(arena != nullptr);
+        MANTLE_CHECK(arena != nullptr);
     }
 
     FGImageHandle FrameGraph::import_image(ImageHandle image) {

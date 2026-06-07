@@ -33,7 +33,7 @@ namespace mantle {
             case ImageLayout::Present:
                 return PipelineStage::Bottom;
             default:
-                fatal(true, "unsupported ImageLayout");
+                MANTLE_FATAL(true, "unsupported ImageLayout");
             }
         }
 
@@ -55,7 +55,7 @@ namespace mantle {
             case ImageLayout::General:
                 return AccessType::ShaderWrite;
             default:
-                fatal(true, "unsupported ImageLayout");
+                MANTLE_FATAL(true, "unsupported ImageLayout");
             }
         }
     } // namespace
@@ -76,7 +76,7 @@ namespace mantle {
 
     void Renderer::init(const Window &window, bool vsync, VirtualHeap *heap,
                         ArenaAllocator *scratch_arena) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("renderer").get();
 
@@ -122,7 +122,7 @@ namespace mantle {
     }
 
     Renderer::Result Renderer::begin_frame() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         FrameResult result =
             m_impl->frame_scheduler.begin_frame(m_impl->current_frame);
@@ -142,7 +142,7 @@ namespace mantle {
     }
 
     void Renderer::execute(FrameGraph &graph) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         auto *cmd = m_impl->current_frame.cmd;
         auto &resource_manager = m_impl->resource_manager;
@@ -292,7 +292,7 @@ namespace mantle {
     }
 
     Renderer::Result Renderer::end_frame() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         auto &backbuffer_ref =
             m_impl->resource_manager.m_impl->get_image(m_impl->backbuffer);
@@ -322,7 +322,7 @@ namespace mantle {
     }
 
     void Renderer::resize_swapchain(u32 width, u32 height) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         m_impl->backend.wait_idle();
 
         m_impl->resource_manager.release_swapchain_images(
@@ -338,28 +338,28 @@ namespace mantle {
     }
 
     SwapchainInfo Renderer::get_swapchain_info() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         return m_impl->backend.get_swapchain_info();
     }
 
     ImageHandle Renderer::backbuffer() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_impl->backbuffer;
     }
 
     std::string_view Renderer::gpu_name() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_impl->backend.gpu_name();
     }
 
     u64 Renderer::vram_bytes() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_impl->backend.vram_bytes();
     }
 
     GPUResourceManager &Renderer::resource_manager() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_impl->resource_manager;
     }
 

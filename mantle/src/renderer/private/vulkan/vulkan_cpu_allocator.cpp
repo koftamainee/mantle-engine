@@ -4,7 +4,7 @@
 namespace mantle {
 
     void VulkanCPUAllocator::init(TlsfAllocator *tlsf) {
-        check(tlsf != nullptr);
+        MANTLE_CHECK(tlsf != nullptr);
 
         m_tlsf = tlsf;
         m_callbacks.pUserData = this;

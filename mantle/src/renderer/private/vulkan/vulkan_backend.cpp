@@ -13,7 +13,7 @@ namespace mantle {
 
     void VulkanBackend::init(const Window &window, bool vsync,
                              VirtualHeap *heap, ArenaAllocator *scratch_arena) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("vulkan").get();
         m_heap = heap;
@@ -59,12 +59,12 @@ namespace mantle {
     }
 
     void VulkanBackend::wait_idle() const {
-        check(m_is_initialized);
-        vk_verify(vkDeviceWaitIdle(m_device.get_device()));
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_VK_VERIFY(vkDeviceWaitIdle(m_device.get_device()));
     }
 
     void VulkanBackend::rebuild_swapchain(u32 width, u32 height) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         wait_idle();
 
@@ -81,7 +81,7 @@ namespace mantle {
     }
 
     SwapchainInfo VulkanBackend::get_swapchain_info() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         auto [width, height] = m_swapchain.get_extent();
         return {
@@ -103,7 +103,7 @@ namespace mantle {
 
     AcquiredImage
     VulkanBackend::acquire_next_image(VkSemaphore image_available) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         u32 image_index = 0;
         VkResult result = vkAcquireNextImageKHR(
@@ -116,7 +116,7 @@ namespace mantle {
         } else if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             swapchain_result = SwapchainResult::OutOfDate;
         } else {
-            vk_verify(result);
+            MANTLE_VK_VERIFY(result);
         }
 
         return {.result = swapchain_result, .image_index = image_index};
@@ -143,7 +143,7 @@ namespace mantle {
         } else if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             swapchain_result = SwapchainResult::OutOfDate;
         } else {
-            vk_verify(result);
+            MANTLE_VK_VERIFY(result);
         }
 
         return swapchain_result;

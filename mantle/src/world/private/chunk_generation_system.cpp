@@ -10,7 +10,7 @@ namespace mantle {
     ChunkGenerationSystem::~ChunkGenerationSystem() { destroy(); }
 
     void ChunkGenerationSystem::init(u32 seed) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
         m_logger = spdlog::get("world").get();
         m_cave_noise = {
             .noise_fn = simplex3,

@@ -7,7 +7,7 @@ namespace mantle {
 
     void WorkerPool::init(u32 num_workers, usize scratch_size,
                           VirtualHeap *heap) {
-        check(m_workers.empty());
+        MANTLE_CHECK(m_workers.empty());
 
         m_workers.resize(num_workers);
         for (u32 i = 0; i < num_workers; i++) {

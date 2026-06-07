@@ -1,7 +1,15 @@
 add_subdirectory(glm)
 
+add_subdirectory(LuaJIT)
 
-# flecs
+set(SOL2_BUILD_LUA OFF CACHE BOOL "" FORCE)
+set(SOL2_TESTS OFF CACHE BOOL "" FORCE)
+set(SOL2_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(SOL2_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+add_subdirectory(sol2)
+
+target_link_libraries(sol2 INTERFACE LuaJIT)
+
 set(FLECS_SHARED OFF CACHE BOOL "" FORCE)
 set(FLECS_STATIC ON CACHE BOOL "" FORCE)
 set(FLECS_TESTS OFF CACHE BOOL "" FORCE)
@@ -10,7 +18,6 @@ add_subdirectory(flecs)
 add_library(flecs ALIAS flecs_static)
 
 
-# SDL3
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON CACHE BOOL "" FORCE)
 set(SDL_TESTS OFF CACHE BOOL "" FORCE)

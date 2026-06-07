@@ -31,7 +31,7 @@ namespace mantle {
     void VulkanDevice::init(VkInstance instance, VkSurfaceKHR surface,
                             VkAllocationCallbacks *vk_callbacks,
                             VirtualHeap *heap, ArenaAllocator *scratch_arena) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("vulkan").get();
         m_alloc_callbacks = vk_callbacks;
@@ -55,7 +55,7 @@ namespace mantle {
         vkGetPhysicalDeviceQueueFamilyProperties(m_physical_device,
                                                  &queue_family_count, nullptr);
 
-        fatal(queue_family_count == 0, "Failed to get family count");
+        MANTLE_FATAL(queue_family_count == 0, "Failed to get family count");
 
         m_queue_family_properties.resize(queue_family_count);
         vkGetPhysicalDeviceQueueFamilyProperties(
@@ -119,13 +119,13 @@ namespace mantle {
     void VulkanDevice::destroy() {
         if (m_is_initialized) {
             if (m_command_pool != VK_NULL_HANDLE) {
-                check(m_device != VK_NULL_HANDLE);
+                MANTLE_CHECK(m_device != VK_NULL_HANDLE);
                 vkDestroyCommandPool(m_device, m_command_pool,
                                      m_alloc_callbacks);
                 m_command_pool = VK_NULL_HANDLE;
             }
             if (m_transfer_command_pool != VK_NULL_HANDLE) {
-                check(m_device != VK_NULL_HANDLE);
+                MANTLE_CHECK(m_device != VK_NULL_HANDLE);
                 vkDestroyCommandPool(m_device, m_transfer_command_pool,
                                      m_alloc_callbacks);
                 m_transfer_command_pool = VK_NULL_HANDLE;
@@ -146,43 +146,43 @@ namespace mantle {
     }
 
     VkDevice VulkanDevice::get_device() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_device;
     }
 
     VkPhysicalDevice VulkanDevice::get_physical_device() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_physical_device;
     }
 
     SwapchainSupportDetails VulkanDevice::get_swapchain_support_details(
         VkSurfaceKHR surface, std::pmr::memory_resource *pmr) const {
-        check(m_is_initialized);
-        check(surface != VK_NULL_HANDLE);
-        check(m_physical_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(surface != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_physical_device != VK_NULL_HANDLE);
 
         SwapchainSupportDetails details;
 
         details.formats = std::pmr::vector<VkSurfaceFormatKHR>(pmr);
         details.present_modes = std::pmr::vector<VkPresentModeKHR>(pmr);
 
-        vk_verify(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(
             m_physical_device, surface, &details.capabilities));
 
         u32 format_count = 0;
-        vk_verify(vkGetPhysicalDeviceSurfaceFormatsKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfaceFormatsKHR(
             m_physical_device, surface, &format_count, nullptr));
 
         details.formats.resize(format_count);
-        vk_verify(vkGetPhysicalDeviceSurfaceFormatsKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfaceFormatsKHR(
             m_physical_device, surface, &format_count, details.formats.data()));
 
         u32 present_mode_count = 0;
-        vk_verify(vkGetPhysicalDeviceSurfacePresentModesKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfacePresentModesKHR(
             m_physical_device, surface, &present_mode_count, nullptr));
 
         details.present_modes.resize(present_mode_count);
-        vk_verify(vkGetPhysicalDeviceSurfacePresentModesKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfacePresentModesKHR(
             m_physical_device, surface, &present_mode_count,
             details.present_modes.data()));
 
@@ -224,13 +224,13 @@ namespace mantle {
             }
         }
 
-        fatal(true, "Could not find a matching queue family index");
+        MANTLE_FATAL(true, "Could not find a matching queue family index");
     }
 
     std::optional<u32>
     VulkanDevice::get_memory_type(u32 type_bits,
                                   VkMemoryPropertyFlags properties) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         for (usize i = 0; i < m_memory_properties.memoryTypeCount; i++) {
             if ((type_bits & 1u) == 1u) {
                 const auto &memory_type = m_memory_properties.memoryTypes[i];
@@ -258,7 +258,7 @@ namespace mantle {
                                        VkQueue queue, VkDeviceSize size,
                                        VkDeviceSize src_offset,
                                        VkDeviceSize dst_offset) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         VkCommandBuffer cmd = create_command_buffer(
             VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_transfer_command_pool, true);
 
@@ -278,15 +278,15 @@ namespace mantle {
 
     VkCommandPool VulkanDevice::create_command_pool(
         u32 queue_family_index, VkCommandPoolCreateFlags create_flags) const {
-        check(m_is_initialized);
-        check(m_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(m_device != VK_NULL_HANDLE);
 
         VkCommandPoolCreateInfo cmd_pool_create_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = create_flags,
             .queueFamilyIndex = queue_family_index};
         VkCommandPool pool;
-        vk_verify(vkCreateCommandPool(m_device, &cmd_pool_create_info,
+        MANTLE_VK_VERIFY(vkCreateCommandPool(m_device, &cmd_pool_create_info,
                                       m_alloc_callbacks, &pool));
         return pool;
     }
@@ -294,8 +294,8 @@ namespace mantle {
     VkCommandBuffer
     VulkanDevice::create_command_buffer(VkCommandBufferLevel level,
                                         VkCommandPool pool, bool begin) const {
-        check(m_is_initialized);
-        check(m_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(m_device != VK_NULL_HANDLE);
         VkCommandBufferAllocateInfo command_buffer_allocate_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
             .commandPool = pool,
@@ -303,14 +303,14 @@ namespace mantle {
             .commandBufferCount = 1,
         };
         VkCommandBuffer cmd_buffer;
-        vk_verify(vkAllocateCommandBuffers(
+        MANTLE_VK_VERIFY(vkAllocateCommandBuffers(
             m_device, &command_buffer_allocate_info, &cmd_buffer));
 
         if (begin) {
             VkCommandBufferBeginInfo begin_info = {
                 .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             };
-            vk_verify(vkBeginCommandBuffer(cmd_buffer, &begin_info));
+            MANTLE_VK_VERIFY(vkBeginCommandBuffer(cmd_buffer, &begin_info));
         }
 
         return cmd_buffer;
@@ -319,21 +319,21 @@ namespace mantle {
     VkCommandBuffer
     VulkanDevice::create_command_buffer(VkCommandBufferLevel level,
                                         bool begin) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return create_command_buffer(level, m_command_pool, begin);
     }
 
     void VulkanDevice::flush_command_buffer(VkCommandBuffer command_buffer,
                                             VkQueue queue, VkCommandPool pool,
                                             bool free) const {
-        check(m_is_initialized);
-        check(m_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(m_device != VK_NULL_HANDLE);
 
         if (command_buffer == VK_NULL_HANDLE) {
             return;
         }
 
-        vk_verify(vkEndCommandBuffer(command_buffer));
+        MANTLE_VK_VERIFY(vkEndCommandBuffer(command_buffer));
         VkSubmitInfo submit_info = {.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
                                     .commandBufferCount = 1,
                                     .pCommandBuffers = &command_buffer};
@@ -343,11 +343,11 @@ namespace mantle {
         };
         VkFence fence;
 
-        vk_verify(vkCreateFence(m_device, &fence_create_info, m_alloc_callbacks,
+        MANTLE_VK_VERIFY(vkCreateFence(m_device, &fence_create_info, m_alloc_callbacks,
                                 &fence));
-        vk_verify(vkQueueSubmit(queue, 1, &submit_info, fence));
+        MANTLE_VK_VERIFY(vkQueueSubmit(queue, 1, &submit_info, fence));
 
-        vk_verify(vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX));
+        MANTLE_VK_VERIFY(vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX));
         vkDestroyFence(m_device, fence, m_alloc_callbacks);
 
         if (free) {
@@ -357,7 +357,7 @@ namespace mantle {
 
     void VulkanDevice::flush_command_buffer(VkCommandBuffer command_buffer,
                                             VkQueue queue, bool free) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         flush_command_buffer(command_buffer, queue, m_command_pool, free);
     }
@@ -371,7 +371,7 @@ namespace mantle {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT};
 
-        vk_verify(vkBeginCommandBuffer(cmd, &begin_info));
+        MANTLE_VK_VERIFY(vkBeginCommandBuffer(cmd, &begin_info));
 
         return cmd;
     }
@@ -393,13 +393,13 @@ namespace mantle {
 
 
     bool VulkanDevice::extension_supported(std::string_view extension) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return std::ranges::contains(m_supported_extensions, extension);
     }
 
     VkFormat VulkanDevice::get_supported_depth_format(
         bool check_sampling_support) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         constexpr std::array<VkFormat, 5> depth_formats = {
             VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D32_SFLOAT,
             VK_FORMAT_D16_UNORM_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT,
@@ -423,41 +423,41 @@ namespace mantle {
             }
         }
 
-        fatal(true, "Could not find a matching depth format");
+        MANTLE_FATAL(true, "Could not find a matching depth format");
     }
 
     VkQueue VulkanDevice::get_graphics_queue() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_graphics_queue;
     }
 
     VkQueue VulkanDevice::get_present_queue() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_present_queue;
     }
 
     VkQueue VulkanDevice::get_transfer_queue() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_transfer_queue;
     }
 
     QueueFamilyIndices VulkanDevice::get_queue_families() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_queue_indices;
     }
 
     void VulkanDevice::create_physical_device(VkInstance instance,
                                                VkSurfaceKHR surface) {
-        check(instance != VK_NULL_HANDLE);
+        MANTLE_CHECK(instance != VK_NULL_HANDLE);
 
         u32 device_count = 0;
-        vk_verify(vkEnumeratePhysicalDevices(instance, &device_count, nullptr));
-        fatal(device_count == 0, "Failed to enumerate physical devices");
+        MANTLE_VK_VERIFY(vkEnumeratePhysicalDevices(instance, &device_count, nullptr));
+        MANTLE_FATAL(device_count == 0, "Failed to enumerate physical devices");
 
         ScopeArena scope(m_scratch_arena);
         std::pmr::vector<VkPhysicalDevice> devices(device_count,
                                                    &m_scratch_resource);
-        vk_verify(vkEnumeratePhysicalDevices(instance, &device_count,
+        MANTLE_VK_VERIFY(vkEnumeratePhysicalDevices(instance, &device_count,
                                              devices.data()));
 
         m_logger->info("Available GPUs ({}):", device_count);
@@ -479,7 +479,7 @@ namespace mantle {
             }
         }
 
-        fatal(m_physical_device == VK_NULL_HANDLE,
+        MANTLE_FATAL(m_physical_device == VK_NULL_HANDLE,
               "Supported physical Device not found");
 
         vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
@@ -493,8 +493,8 @@ namespace mantle {
     }
 
     void VulkanDevice::create_logical_device(VkInstance instance) {
-        check(instance != VK_NULL_HANDLE);
-        check(m_physical_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(instance != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_physical_device != VK_NULL_HANDLE);
 
         std::unordered_set unique_queue_families = {
             m_queue_indices.graphics_family,
@@ -566,7 +566,7 @@ namespace mantle {
             .ppEnabledExtensionNames = ms_device_extensions.data(),
         };
 
-        vk_verify(vkCreateDevice(m_physical_device, &device_create_info,
+        MANTLE_VK_VERIFY(vkCreateDevice(m_physical_device, &device_create_info,
                                  m_alloc_callbacks, &m_device));
 
 
@@ -645,13 +645,13 @@ namespace mantle {
         }
 
         u32 format_count = 0;
-        vk_verify(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, surface,
                                                        &format_count, nullptr));
         if (format_count == 0)
             return false;
 
         u32 present_mode_count = 0;
-        vk_verify(vkGetPhysicalDeviceSurfacePresentModesKHR(
+        MANTLE_VK_VERIFY(vkGetPhysicalDeviceSurfacePresentModesKHR(
             physical_device, surface, &present_mode_count, nullptr));
         if (present_mode_count == 0)
             return false;
@@ -670,13 +670,13 @@ namespace mantle {
     bool VulkanDevice::is_physical_device_supports_required_extensions(
         VkPhysicalDevice physical_device) {
         u32 extensions_count = 0;
-        vk_verify(vkEnumerateDeviceExtensionProperties(
+        MANTLE_VK_VERIFY(vkEnumerateDeviceExtensionProperties(
             physical_device, nullptr, &extensions_count, nullptr));
 
         ScopeArena scope(m_scratch_arena);
         std::pmr::vector<VkExtensionProperties> extensions(extensions_count,
                                                            &m_scratch_resource);
-        vk_verify(vkEnumerateDeviceExtensionProperties(
+        MANTLE_VK_VERIFY(vkEnumerateDeviceExtensionProperties(
             physical_device, nullptr, &extensions_count, extensions.data()));
 
         for (const char *required : ms_device_extensions) {
@@ -701,8 +701,8 @@ namespace mantle {
     QueueFamilyIndices
     VulkanDevice::find_queue_families(VkPhysicalDevice physical_device,
                                       VkSurfaceKHR surface) {
-        check(physical_device != VK_NULL_HANDLE);
-        check(surface != VK_NULL_HANDLE);
+        MANTLE_CHECK(physical_device != VK_NULL_HANDLE);
+        MANTLE_CHECK(surface != VK_NULL_HANDLE);
 
         QueueFamilyIndices indices;
 

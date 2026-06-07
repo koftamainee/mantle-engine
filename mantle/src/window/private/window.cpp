@@ -9,11 +9,11 @@ namespace mantle {
     Window::~Window() { destroy(); }
 
     void Window::init(const Properties &properties, VirtualHeap *heap) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("window").get();
 
-        fatal(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD),
+        MANTLE_FATAL(!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD),
               "Failed to initialize SDL");
         m_logger->info("SDL initialized");
 
@@ -42,7 +42,7 @@ namespace mantle {
             SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE |
             (properties.fullscreen ? SDL_WINDOW_FULLSCREEN : 0));
 
-        fatal(!m_native_window, "Failed to create SDL window");
+        MANTLE_FATAL(!m_native_window, "Failed to create SDL window");
         m_fullscreen = properties.fullscreen;
 
         SDL_SetWindowRelativeMouseMode(m_native_window, true);
@@ -78,7 +78,7 @@ namespace mantle {
     }
 
     void Window::update() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         m_pressed_keys_prev = m_pressed_keys;
         m_pressed_mb_prev = m_pressed_mb;
@@ -223,73 +223,73 @@ namespace mantle {
     }
 
     bool Window::should_close() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_should_close;
     }
 
     bool Window::is_key_pressed(Key key) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_pressed_keys[std::to_underlying(key)];
     }
 
     bool Window::is_key_just_pressed(Key key) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         usize i = std::to_underlying(key);
         return m_pressed_keys[i] && !m_pressed_keys_prev[i];
     }
 
     bool Window::is_key_just_released(Key key) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         usize i = std::to_underlying(key);
         return !m_pressed_keys[i] && m_pressed_keys_prev[i];
     }
 
     bool Window::is_mouse_button_pressed(MouseButton button) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_pressed_mb[std::to_underlying(button)];
     }
 
     bool Window::is_mouse_button_just_pressed(MouseButton button) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         usize i = std::to_underlying(button);
         return m_pressed_mb[i] && !m_pressed_mb_prev[i];
     }
 
     bool Window::is_mouse_button_just_released(MouseButton button) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         usize i = std::to_underlying(button);
         return !m_pressed_mb[i] && m_pressed_mb_prev[i];
     }
 
     Window::MousePosition Window::get_mouse_position() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         float x, y;
         SDL_GetMouseState(&x, &y);
         return {x, y};
     }
 
     bool Window::is_keyboard_active() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_keyboard_active;
     }
 
     bool Window::is_mouse_active() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_mouse_active;
     }
 
     bool Window::is_controller_active() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_controller_active;
     }
 
     bool Window::is_controller_connected() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_controller != nullptr;
     }
 
     bool Window::is_controller_button_pressed(ControllerButton button) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         if (!m_controller) {
             return false;
         }
@@ -297,7 +297,7 @@ namespace mantle {
     }
 
     f32 Window::get_controller_axis(ControllerAxis axis) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         if (!m_controller) {
             return 0.0f;
         }
@@ -306,7 +306,7 @@ namespace mantle {
 
     void Window::set_controller_rumble(u16 low_frequency, u16 high_frequency,
                                         u32 duration_ms) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         if (!m_controller) {
             return;
         }
@@ -317,7 +317,7 @@ namespace mantle {
     }
 
     void Window::stop_controller_rumble() {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         if (!m_controller) {
             return;
         }
@@ -329,7 +329,7 @@ namespace mantle {
     u32 Window::get_height() const { return get_size().height; }
 
     Window::Properties::Size Window::get_size() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         int width = 0;
         int height = 0;
         SDL_GetWindowSize(m_native_window, &width, &height);
@@ -337,29 +337,29 @@ namespace mantle {
     }
 
     Window::Properties::Size Window::get_framebuffer_size() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         int width, height;
         SDL_GetWindowSizeInPixels(m_native_window, &width, &height);
         return {static_cast<u32>(width), static_cast<u32>(height)};
     }
 
     SDL_Window *Window::get_native_window() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_native_window;
     }
 
     bool Window::is_fullscreen() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_fullscreen;
     }
 
     f32 Window::get_refresh_rate() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_refresh_rate;
     }
 
     u64 Window::get_time_ns() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return SDL_GetTicksNS();
     }
 

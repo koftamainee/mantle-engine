@@ -8,12 +8,12 @@ namespace mantle {
     TlsfAllocator::~TlsfAllocator() { destroy(); }
 
     void TlsfAllocator::init(MemoryBlock block) {
-        check(!m_is_initialized);
-        check(block.ptr != nullptr);
-        check(block.size > 0);
+        MANTLE_CHECK(!m_is_initialized);
+        MANTLE_CHECK(block.ptr != nullptr);
+        MANTLE_CHECK(block.size > 0);
 
         m_tlsf = tlsf_create_with_pool(block.ptr, block.size);
-        fatal(m_tlsf == nullptr, "Out of memory");
+        MANTLE_FATAL(m_tlsf == nullptr, "Out of memory");
         m_is_initialized = true;
     }
 
@@ -26,36 +26,36 @@ namespace mantle {
     }
 
     void *TlsfAllocator::alloc(usize size) {
-        check(m_is_initialized);
-        check(size > 0);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(size > 0);
 
         void *ptr = tlsf_malloc(m_tlsf, size);
-        fatal(ptr == nullptr, "Out of memory");
+        MANTLE_FATAL(ptr == nullptr, "Out of memory");
         return ptr;
     }
 
     void *TlsfAllocator::alloc_aligned(usize size, usize align) {
-        check(m_is_initialized);
-        check(size > 0);
-        check(align > 0);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(size > 0);
+        MANTLE_CHECK(align > 0);
 
         void *ptr = tlsf_memalign(m_tlsf, align, size);
-        fatal(ptr == nullptr, "Out of memory");
+        MANTLE_FATAL(ptr == nullptr, "Out of memory");
         return ptr;
     }
 
     void *TlsfAllocator::realloc(void *ptr, usize size) {
-        check(m_is_initialized);
-        check(size > 0);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(size > 0);
 
         void *result = tlsf_realloc(m_tlsf, ptr, size);
-        fatal(result == nullptr, "Out of memory");
+        MANTLE_FATAL(result == nullptr, "Out of memory");
         return result;
     }
 
     void TlsfAllocator::free(void *ptr) {
-        check(m_is_initialized);
-        check(ptr != nullptr);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(ptr != nullptr);
 
         tlsf_free(m_tlsf, ptr);
     }

@@ -23,9 +23,9 @@ namespace mantle {
     }
 
     ImageHandle TransientResources::get_image(FGImageHandle handle) {
-        check(m_images != nullptr);
-        check(handle.is_valid());
-        check(handle.index < m_images->size());
+        MANTLE_CHECK(m_images != nullptr);
+        MANTLE_CHECK(handle.is_valid());
+        MANTLE_CHECK(handle.index < m_images->size());
 
         auto &entry = (*m_images)[handle.index];
 
@@ -52,9 +52,9 @@ namespace mantle {
     }
 
     BufferHandle TransientResources::get_buffer(FGBufferHandle handle) {
-        check(m_buffers != nullptr);
-        check(handle.is_valid());
-        check(handle.index < m_buffers->size());
+        MANTLE_CHECK(m_buffers != nullptr);
+        MANTLE_CHECK(handle.is_valid());
+        MANTLE_CHECK(handle.index < m_buffers->size());
 
         auto &entry = (*m_buffers)[handle.index];
 

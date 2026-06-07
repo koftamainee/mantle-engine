@@ -31,7 +31,7 @@ namespace mantle {
         template <typename T>
         T &add(T value) {
             u32 tid = TypeId<T>::id();
-            checkf(!m_entries.contains(tid),
+            MANTLE_CHECKF(!m_entries.contains(tid),
                    "Blackboard::add(): type already added. "
                    "Keep the T& from add() to modify instead of adding again.");
             auto *ptr = m_entries.get_allocator()
@@ -46,7 +46,7 @@ namespace mantle {
             requires std::is_default_constructible_v<T>
         T &add() {
             u32 tid = TypeId<T>::id();
-            checkf(!m_entries.contains(tid),
+            MANTLE_CHECKF(!m_entries.contains(tid),
                    "Blackboard::add(): type already added. "
                    "Keep the T& from add() to modify instead of adding again.");
             auto *ptr = m_entries.get_allocator()
@@ -61,7 +61,7 @@ namespace mantle {
         const T &get() const {
             u32 tid = TypeId<T>::id();
             auto it = m_entries.find(tid);
-            checkf(it != m_entries.end(),
+            MANTLE_CHECKF(it != m_entries.end(),
                    "Blackboard::get(): type not found. "
                    "Call add<T>() before get<T>(). "
                    "Check that the producing module's add_passes() "

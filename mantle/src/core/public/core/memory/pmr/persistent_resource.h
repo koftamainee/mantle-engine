@@ -15,7 +15,7 @@ namespace mantle {
 
     private:
         void *do_allocate(usize size, usize align) override {
-            check(m_heap != nullptr);
+            MANTLE_CHECK(m_heap != nullptr);
             MemoryBlock block = m_heap->take(size);
             return block.ptr;
         }

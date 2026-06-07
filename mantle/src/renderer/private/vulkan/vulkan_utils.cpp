@@ -36,7 +36,7 @@ namespace mantle {
         case VK_FORMAT_UNDEFINED:
             return ImageFormat::Undefined;
         default:
-            fatal(true, "unsupported VkFormat");
+            MANTLE_FATAL(true, "unsupported VkFormat");
         }
     }
 
@@ -65,7 +65,7 @@ namespace mantle {
         case ImageFormat::Undefined:
             return VK_FORMAT_UNDEFINED;
         default:
-            fatal(true, "unsupported ImageFormat");
+            MANTLE_FATAL(true, "unsupported ImageFormat");
         }
     }
 
@@ -105,7 +105,7 @@ namespace mantle {
         case ImageFormat::D32S8:
             return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
         case ImageFormat::Undefined:
-            fatal(true, "Invalid image format");
+            MANTLE_FATAL(true, "Invalid image format");
         default:
             return VK_IMAGE_ASPECT_COLOR_BIT;
         }
@@ -147,7 +147,7 @@ namespace mantle {
         case MemoryType::CpuToGpu:
             return VMA_MEMORY_USAGE_CPU_TO_GPU;
         default:
-            fatal(true, "unsupported MemoryType");
+            MANTLE_FATAL(true, "unsupported MemoryType");
         }
     }
 
@@ -158,7 +158,7 @@ namespace mantle {
         case Filter::Linear:
             return VK_FILTER_LINEAR;
         default:
-            fatal(true, "unsupported Filter");
+            MANTLE_FATAL(true, "unsupported Filter");
         }
     }
 
@@ -169,7 +169,7 @@ namespace mantle {
         case Filter::Linear:
             return VK_SAMPLER_MIPMAP_MODE_LINEAR;
         default:
-            fatal(true, "unsupported Filter");
+            MANTLE_FATAL(true, "unsupported Filter");
         }
     }
 
@@ -182,7 +182,7 @@ namespace mantle {
         case AddressMode::ClampToBorder:
             return VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER;
         default:
-            fatal(true, "unsupported AddressMode");
+            MANTLE_FATAL(true, "unsupported AddressMode");
         }
     }
 
@@ -195,7 +195,7 @@ namespace mantle {
         case AttachmentLoad::DontCare:
             return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
         default:
-            fatal(true, "unsupported AttachmentLoad");
+            MANTLE_FATAL(true, "unsupported AttachmentLoad");
         }
     }
 
@@ -206,7 +206,7 @@ namespace mantle {
         case AttachmentStore::DontCare:
             return VK_ATTACHMENT_STORE_OP_DONT_CARE;
         default:
-            fatal(true, "unsupported AttachmentStore");
+            MANTLE_FATAL(true, "unsupported AttachmentStore");
         }
     }
     VkImageLayout to_vk(ImageLayout layout) {
@@ -228,7 +228,7 @@ namespace mantle {
         case ImageLayout::Present:
             return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
         default:
-            fatal(true, "unsupported ImageLayout");
+            MANTLE_FATAL(true, "unsupported ImageLayout");
         }
     }
 
@@ -286,7 +286,7 @@ namespace mantle {
         case SampleCount::x8:
             return VK_SAMPLE_COUNT_8_BIT;
         }
-        fatal(true, "Unknown sample count");
+        MANTLE_FATAL(true, "Unknown sample count");
     }
 
     VkShaderStageFlags to_vk(ShaderStage stage) {
@@ -302,7 +302,7 @@ namespace mantle {
         case ShaderStage::Compute:
             return VK_SHADER_STAGE_COMPUTE_BIT;
         default:
-            fatal(true, "Unknown shader stage");
+            MANTLE_FATAL(true, "Unknown shader stage");
         }
     }
 
@@ -323,7 +323,7 @@ namespace mantle {
         case VertexFormat::Uint4:
             return VK_FORMAT_R32G32B32A32_UINT;
         default:
-            fatal(true, "Unknown vertex format");
+            MANTLE_FATAL(true, "Unknown vertex format");
         }
     }
 
@@ -342,7 +342,7 @@ namespace mantle {
         case PrimitiveTopology::TriangleFan:
             return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
         default:
-            fatal(true, "Unknown primitive topology");
+            MANTLE_FATAL(true, "Unknown primitive topology");
         }
     }
 
@@ -355,7 +355,7 @@ namespace mantle {
         case PolygonMode::Point:
             return VK_POLYGON_MODE_POINT;
         default:
-            fatal(true, "Unknown polygon mode");
+            MANTLE_FATAL(true, "Unknown polygon mode");
         }
     }
 
@@ -370,7 +370,7 @@ namespace mantle {
         case CullMode::FrontAndBack:
             return VK_CULL_MODE_FRONT_AND_BACK;
         default:
-            fatal(true, "Unknown cull mode");
+            MANTLE_FATAL(true, "Unknown cull mode");
         }
     }
 
@@ -381,7 +381,7 @@ namespace mantle {
         case FrontFace::Clockwise:
             return VK_FRONT_FACE_CLOCKWISE;
         default:
-            fatal(true, "Unknown front face");
+            MANTLE_FATAL(true, "Unknown front face");
         }
     }
 
@@ -404,7 +404,7 @@ namespace mantle {
         case CompareOp::Always:
             return VK_COMPARE_OP_ALWAYS;
         default:
-            fatal(true, "Unknown compare op");
+            MANTLE_FATAL(true, "Unknown compare op");
         }
     }
 
@@ -427,7 +427,7 @@ namespace mantle {
         case StencilOp::DecrementAndWrap:
             return VK_STENCIL_OP_DECREMENT_AND_WRAP;
         default:
-            fatal(true, "Unknown stencil op");
+            MANTLE_FATAL(true, "Unknown stencil op");
         }
     }
 
@@ -472,7 +472,7 @@ namespace mantle {
         case BlendFactor::OneMinusSrc1Alpha:
             return VK_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA;
         default:
-            fatal(true, "Unknown blend factor");
+            MANTLE_FATAL(true, "Unknown blend factor");
         }
     }
 
@@ -489,7 +489,7 @@ namespace mantle {
         case BlendOp::Max:
             return VK_BLEND_OP_MAX;
         default:
-            fatal(true, "Unknown blend op");
+            MANTLE_FATAL(true, "Unknown blend op");
         }
     }
 
@@ -528,7 +528,7 @@ namespace mantle {
         case LogicOp::Set:
             return VK_LOGIC_OP_SET;
         default:
-            fatal(true, "Unknown logic op");
+            MANTLE_FATAL(true, "Unknown logic op");
         }
     }
 
@@ -593,7 +593,7 @@ namespace mantle {
         case AccessType::IndirectCommandRead:
             return VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT;
         default:
-            fatal(true, "unsupported AccessType");
+            MANTLE_FATAL(true, "unsupported AccessType");
         }
     }
 

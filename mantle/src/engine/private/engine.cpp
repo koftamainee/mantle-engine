@@ -45,7 +45,7 @@ namespace mantle {
     Engine::~Engine() { destroy(); }
 
     void Engine::init() {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("engine").get();
 

@@ -13,7 +13,7 @@ namespace mantle {
 
       private:
         void *do_allocate(usize size, usize align) override {
-            check(m_arena != nullptr);
+            MANTLE_CHECK(m_arena != nullptr);
             return m_arena->push(size, align);
         }
 

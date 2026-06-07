@@ -8,12 +8,12 @@ namespace mantle {
     VirtualHeap::~VirtualHeap() { destroy(); }
 
     void VirtualHeap::init(OSMemory &os, usize reserve_size) {
-        check(!m_is_initialized);
-        check(reserve_size > 0);
+        MANTLE_CHECK(!m_is_initialized);
+        MANTLE_CHECK(reserve_size > 0);
 
         m_os = &os;
         m_base = m_os->reserve(reserve_size);
-        check(m_base != nullptr);
+        MANTLE_CHECK(m_base != nullptr);
 
         m_reserved = reserve_size;
         m_used = 0;
@@ -35,13 +35,13 @@ namespace mantle {
     }
 
     MemoryBlock VirtualHeap::take(usize size) {
-        check(m_is_initialized);
-        check(size > 0);
+        MANTLE_CHECK(m_is_initialized);
+        MANTLE_CHECK(size > 0);
 
         constexpr usize alignment = alignof(std::max_align_t);
         usize aligned_used = (m_used + alignment - 1) & ~(alignment - 1);
 
-        fatal(aligned_used + size > m_reserved, "Out of memory");
+        MANTLE_FATAL(aligned_used + size > m_reserved, "Out of memory");
 
         void *ptr = static_cast<u8 *>(m_base) + aligned_used;
 
@@ -59,17 +59,17 @@ namespace mantle {
     }
 
     usize VirtualHeap::reserved() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_reserved;
     }
 
     usize VirtualHeap::used() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_used;
     }
 
     usize VirtualHeap::committed() const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         return m_committed;
     }
 

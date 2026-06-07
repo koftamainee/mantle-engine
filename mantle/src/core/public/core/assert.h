@@ -79,12 +79,12 @@ namespace mantle {
 
 #else
 
-#define check(expr) ((void)0)
-#define checkf(expr, fmt, ...) ((void)0)
+#define MANTLE_CHECK(expr) ((void)0)
+#define MANTLE_CHECKF(expr, fmt, ...) ((void)0)
 
 #endif
 
-#define fatal(expr, fmt, ...)                                                  \
+#define MANTLE_FATAL(expr, fmt, ...)                                                  \
     do {                                                                       \
         if (MANTLE_UNLIKELY(expr)) {                                           \
             ::mantle::debug_fatal_failed(__FILE__, __LINE__, fmt,              \
@@ -116,8 +116,8 @@ namespace mantle {
 
 #else
 
-#define ensure(expr) (!!(expr))
-#define ensuref(expr, fmt, ...) (!!(expr))
+#define MANTLE_ENSURE(expr) (!!(expr))
+#define MANTLE_ENSUREF(expr, fmt, ...) (!!(expr))
 
 #endif
 

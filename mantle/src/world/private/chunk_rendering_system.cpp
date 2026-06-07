@@ -26,7 +26,7 @@ namespace mantle {
     void ChunkRenderingSystem::init(Renderer &renderer,
                                     ArenaAllocator &scratch_arena,
                                     u32 max_chunks) {
-        check(!m_is_initialized);
+        MANTLE_CHECK(!m_is_initialized);
 
         m_logger = spdlog::get("world").get();
         m_renderer = &renderer;
@@ -127,7 +127,7 @@ namespace mantle {
 
     void ChunkRenderingSystem::add_passes(FrameGraph &graph,
                                           const Blackboard &blackboard) const {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
 
         auto backbuffer = blackboard.get<BbBackbuffer>().handle;
         const auto &camera_data = blackboard.get<BbCameraData>();

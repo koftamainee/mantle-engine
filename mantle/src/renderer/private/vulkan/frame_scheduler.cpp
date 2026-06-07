@@ -13,9 +13,9 @@ namespace mantle {
     void FrameScheduler::init(VulkanBackend *backend,
                               GPUResourceManager *resource_manager,
                               u32 frames_in_flight, VirtualHeap *heap) {
-        check(!m_is_initialized);
-        check(backend != nullptr);
-        check(frames_in_flight > 0);
+        MANTLE_CHECK(!m_is_initialized);
+        MANTLE_CHECK(backend != nullptr);
+        MANTLE_CHECK(frames_in_flight > 0);
 
         m_logger = spdlog::get("vulkan").get();
         m_frame_arena.init(heap->take(megabytes(1)));
@@ -32,7 +32,7 @@ namespace mantle {
 
         m_command_pool = m_backend->m_device.create_command_pool(
             m_backend->m_device.get_queue_families().graphics_family);
-        check(m_command_pool != VK_NULL_HANDLE);
+        MANTLE_CHECK(m_command_pool != VK_NULL_HANDLE);
 
         VkSemaphoreCreateInfo semaphore_info = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -54,9 +54,9 @@ namespace mantle {
             VkCommandBuffer cmd = device.create_command_buffer(
                 VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_command_pool);
 
-            vk_verify(
+            MANTLE_VK_VERIFY(
                 vkCreateFence(vk_device, &fence_info, vk_callbacks, &fence));
-            vk_verify(vkCreateSemaphore(vk_device, &semaphore_info,
+            MANTLE_VK_VERIFY(vkCreateSemaphore(vk_device, &semaphore_info,
                                         vk_callbacks, &image_available));
 
             m_frames[i] = {
@@ -68,7 +68,7 @@ namespace mantle {
 
         for (usize i = 0; i < m_swapchain_image_count; i++) {
             VkSemaphore render_finished;
-            vk_verify(vkCreateSemaphore(vk_device, &semaphore_info,
+            MANTLE_VK_VERIFY(vkCreateSemaphore(vk_device, &semaphore_info,
                                         vk_callbacks, &render_finished));
             m_render_finished[i] = render_finished;
         }
@@ -105,14 +105,14 @@ namespace mantle {
     }
 
     FrameResult FrameScheduler::begin_frame(FrameContext &out_ctx) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         FrameData &frame = m_frames[m_current_frame];
         VulkanDevice &device = m_backend->m_device;
         VkDevice vk_device = device.get_device();
 
         m_frame_arena.reset();
 
-        vk_verify(
+        MANTLE_VK_VERIFY(
             vkWaitForFences(vk_device, 1, &frame.fence, VK_TRUE, UINT64_MAX));
 
         AcquiredImage acquired = m_backend->acquire_next_image(
@@ -122,13 +122,13 @@ namespace mantle {
             return FrameResult::NeedsResize;
         }
 
-        vk_verify(vkResetFences(vk_device, 1, &frame.fence));
+        MANTLE_VK_VERIFY(vkResetFences(vk_device, 1, &frame.fence));
 
         VkCommandBufferBeginInfo begin_info = {
             .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
             .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
         };
-        vk_verify(vkBeginCommandBuffer(frame.cmd, &begin_info));
+        MANTLE_VK_VERIFY(vkBeginCommandBuffer(frame.cmd, &begin_info));
 
         m_recorder.set_command_buffer(frame.cmd);
 
@@ -142,7 +142,7 @@ namespace mantle {
     }
 
     FrameResult FrameScheduler::end_frame(const FrameContext &ctx) {
-        check(m_is_initialized);
+        MANTLE_CHECK(m_is_initialized);
         FrameData &frame = m_frames[ctx.frame_index];
 
         VkPipelineStageFlags wait_stage =
@@ -158,9 +158,9 @@ namespace mantle {
             .pSignalSemaphores = &m_render_finished[ctx.image_index],
         };
 
-        vk_verify(vkEndCommandBuffer(frame.cmd));
+        MANTLE_VK_VERIFY(vkEndCommandBuffer(frame.cmd));
 
-        vk_verify(vkQueueSubmit(m_backend->m_device.get_graphics_queue(), 1,
+        MANTLE_VK_VERIFY(vkQueueSubmit(m_backend->m_device.get_graphics_queue(), 1,
                                 &submit_info, frame.fence));
 
         SwapchainResult result =
@@ -177,7 +177,7 @@ namespace mantle {
     }
 
     void FrameScheduler::on_swapchain_rebuilt(u32 new_image_count) const {
-        fatal(m_frames_in_flight !=
+        MANTLE_FATAL(m_frames_in_flight !=
                   std::min(m_frames_in_flight, new_image_count),
               "Image count in swapchain changed. Should be unreachable");
     }
