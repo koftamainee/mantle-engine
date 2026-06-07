@@ -217,26 +217,32 @@ namespace mantle {
     VkExtent2D
     VulkanSwapchain::pick_extent(const VkSurfaceCapabilitiesKHR &capabilities,
                                  u32 width, u32 height) const {
+        VkExtent2D extent;
+
         if (capabilities.currentExtent.width != UINT32_MAX) {
-            m_logger->info("Swapchain extent: {}x{} (fixed)",
-                           capabilities.currentExtent.width,
-                           capabilities.currentExtent.height);
-            return capabilities.currentExtent;
+            extent = capabilities.currentExtent;
+            m_logger->info("Swapchain extent: {}x{} (fixed)", extent.width, extent.height);
+        } else {
+            extent = {
+                std::clamp<u32>(width, capabilities.minImageExtent.width,
+                                capabilities.maxImageExtent.width),
+                std::clamp<u32>(height, capabilities.minImageExtent.height,
+                                capabilities.maxImageExtent.height),
+            };
+            m_logger->info("Swapchain extent: {}x{} (clamped [{}-{}]x[{}-{}])",
+                           extent.width, extent.height,
+                           capabilities.minImageExtent.width,
+                           capabilities.maxImageExtent.width,
+                           capabilities.minImageExtent.height,
+                           capabilities.maxImageExtent.height);
         }
 
-        VkExtent2D extent = {
-            std::clamp<u32>(width, capabilities.minImageExtent.width,
-                            capabilities.maxImageExtent.width),
-            std::clamp<u32>(height, capabilities.minImageExtent.height,
-                            capabilities.maxImageExtent.height),
-        };
+        if (extent.width == 0 || extent.height == 0) {
+            extent.width = std::max(extent.width, std::max(width, 1u));
+            extent.height = std::max(extent.height, std::max(height, 1u));
+            m_logger->warn("Swapchain extent was 0, clamped to {}x{}", extent.width, extent.height);
+        }
 
-        m_logger->info("Swapchain extent: {}x{} (clamped [{}-{}]x[{}-{}])",
-                       extent.width, extent.height,
-                       capabilities.minImageExtent.width,
-                       capabilities.maxImageExtent.width,
-                       capabilities.minImageExtent.height,
-                       capabilities.maxImageExtent.height);
         return extent;
     }
 

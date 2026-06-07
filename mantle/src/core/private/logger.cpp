@@ -33,7 +33,9 @@ namespace mantle {
 
         auto raw_stdout = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
         raw_stdout->set_pattern("%v");
-        std::vector<spdlog::sink_ptr> raw_sinks = {raw_stdout, file_sink};
+        auto raw_file = std::make_shared<spdlog::sinks::basic_file_sink_mt>("mantle.log", true);
+        raw_file->set_pattern("%v");
+        std::vector<spdlog::sink_ptr> raw_sinks = {raw_stdout, raw_file};
         auto raw = std::make_shared<spdlog::logger>("raw", raw_sinks.begin(), raw_sinks.end());
         spdlog::register_logger(raw);
 
