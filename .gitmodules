@@ -22,3 +22,6 @@
 [submodule "mantle/third_party/JoltPhysics"]
 	path = mantle/third_party/JoltPhysics
 	url = https://github.com/jrouwe/JoltPhysics.git
+[submodule "mantle/third_party/sol2"]
+	path = mantle/third_party/sol2
+	url = https://github.com/ThePhD/sol2.git
