@@ -1,1 +1,1 @@
-mantle_module(NAME ecs DEPS core flecs window)
+mantle_module(NAME ecs DEPS core flecs window glm)
