@@ -50,7 +50,8 @@ namespace mantle {
         m_logger = spdlog::get("engine").get();
 
         if constexpr (std::string_view(MANTLE_GIT_HASH).ends_with("-dirty")) {
-            m_logger->warn("Working tree is dirty. Build may not be reproducible");
+            m_logger->warn(
+                "Working tree is dirty. Build may not be reproducible");
         }
 
         m_os_memory.init();
@@ -177,10 +178,10 @@ namespace mantle {
         raw_logger()->info(art);
         raw_logger()->info("{}", build_string());
         raw_logger()->info("Built at: " MANTLE_BUILD_DATE " UTC");
-        log_system_info(raw_logger(), m_renderer.gpu_name(), m_renderer.vram_bytes(),
-                        m_window.get_width(), m_window.get_height(),
-                        false, m_window.get_refresh_rate(),
-                        m_window.is_fullscreen());
+        log_system_info(raw_logger(), m_renderer.gpu_name(),
+                        m_renderer.vram_bytes(), m_window.get_width(),
+                        m_window.get_height(), false,
+                        m_window.get_refresh_rate(), m_window.is_fullscreen());
         raw_logger()->info(
             "================================================================"
             "================");
@@ -248,88 +249,74 @@ namespace mantle {
 
         bool is_sprinting = false;
 
-        if (m_window.is_controller_active()) {
-            constexpr f32 stick_deadzone = 0.15f;
-            constexpr f32 trigger_deadzone = 0.1f;
+        constexpr f32 stick_deadzone = 0.15f;
+        constexpr f32 trigger_deadzone = 0.1f;
 
-            f32 rx =
-                m_window.get_controller_axis(Window::ControllerAxis::RightX);
-            f32 ry =
-                m_window.get_controller_axis(Window::ControllerAxis::RightY);
-            if (std::abs(rx) > stick_deadzone ||
-                std::abs(ry) > stick_deadzone) {
-                m_camera.rotate(rx * m_controller_look_sensitivity * delta_time,
-                                -ry * m_controller_look_sensitivity *
-                                    delta_time);
-            }
-
-            f32 lx =
-                m_window.get_controller_axis(Window::ControllerAxis::LeftX);
-            f32 ly =
-                m_window.get_controller_axis(Window::ControllerAxis::LeftY);
-            if (std::abs(lx) > stick_deadzone) {
-                m_camera.position +=
-                    m_camera.right * lx * m_camera_speed * delta_time;
-            }
-            if (std::abs(ly) > stick_deadzone) {
-                m_camera.position -=
-                    m_camera.front * ly * m_camera_speed * delta_time;
-            }
-
-            f32 lt = m_window.get_controller_axis(
-                Window::ControllerAxis::LeftTrigger);
-            f32 rt = m_window.get_controller_axis(
-                Window::ControllerAxis::RightTrigger);
-            if (lt > trigger_deadzone) {
-                m_camera.position -=
-                    Camera::world_up * lt * m_camera_speed * delta_time;
-            }
-            if (rt > trigger_deadzone) {
-                m_camera.position +=
-                    Camera::world_up * rt * m_camera_speed * delta_time;
-            }
-
-            if (m_window.is_controller_button_pressed(
-                    Window::ControllerButton::B)) {
-                is_sprinting = true;
-                m_window.set_controller_rumble(0x6000, 0x1000, UINT32_MAX);
-            } else {
-                m_window.stop_controller_rumble();
-            }
-        } else {
-            Window::MouseDelta md = m_window.get_mouse_delta();
-            md.x *= m_mouse_sensitivity;
-            md.y *= m_mouse_sensitivity;
-
-            m_camera.rotate(md.x, md.y);
-
-            if (m_window.is_key_pressed(Window::Key::W)) {
-                m_camera.position +=
-                    m_camera.front * m_camera_speed * delta_time;
-            }
-            if (m_window.is_key_pressed(Window::Key::S)) {
-                m_camera.position -=
-                    m_camera.front * m_camera_speed * delta_time;
-            }
-            if (m_window.is_key_pressed(Window::Key::A)) {
-                m_camera.position -=
-                    m_camera.right * m_camera_speed * delta_time;
-            }
-            if (m_window.is_key_pressed(Window::Key::D)) {
-                m_camera.position +=
-                    m_camera.right * m_camera_speed * delta_time;
-            }
-            if (m_window.is_key_pressed(Window::Key::LShift)) {
-                m_camera.position -=
-                    Camera::world_up * m_camera_speed * delta_time;
-            }
-            if (m_window.is_key_pressed(Window::Key::Space)) {
-                m_camera.position +=
-                    Camera::world_up * m_camera_speed * delta_time;
-            }
-
-            is_sprinting = m_window.is_key_pressed(Window::Key::LControl);
+        f32 rx = m_window.get_controller_axis(Window::ControllerAxis::RightX);
+        f32 ry = m_window.get_controller_axis(Window::ControllerAxis::RightY);
+        if (std::abs(rx) > stick_deadzone || std::abs(ry) > stick_deadzone) {
+            m_camera.rotate(rx * m_controller_look_sensitivity * delta_time,
+                            -ry * m_controller_look_sensitivity * delta_time);
         }
+
+        f32 lx = m_window.get_controller_axis(Window::ControllerAxis::LeftX);
+        f32 ly = m_window.get_controller_axis(Window::ControllerAxis::LeftY);
+        if (std::abs(lx) > stick_deadzone) {
+            m_camera.position +=
+                m_camera.right * lx * m_camera_speed * delta_time;
+        }
+        if (std::abs(ly) > stick_deadzone) {
+            m_camera.position -=
+                m_camera.front * ly * m_camera_speed * delta_time;
+        }
+
+        f32 lt =
+            m_window.get_controller_axis(Window::ControllerAxis::LeftTrigger);
+        f32 rt =
+            m_window.get_controller_axis(Window::ControllerAxis::RightTrigger);
+        if (lt > trigger_deadzone) {
+            m_camera.position -=
+                Camera::world_up * lt * m_camera_speed * delta_time;
+        }
+        if (rt > trigger_deadzone) {
+            m_camera.position +=
+                Camera::world_up * rt * m_camera_speed * delta_time;
+        }
+
+        if (m_window.is_controller_button_pressed(
+                Window::ControllerButton::B)) {
+            is_sprinting = true;
+            m_window.set_controller_rumble(0x6000, 0x1000, UINT32_MAX);
+        } else {
+            m_window.stop_controller_rumble();
+        }
+
+        Window::MouseDelta md = m_window.get_mouse_delta();
+        md.x *= m_mouse_sensitivity;
+        md.y *= m_mouse_sensitivity;
+
+        m_camera.rotate(md.x, md.y);
+
+        if (m_window.is_key_pressed(Window::Key::W)) {
+            m_camera.position += m_camera.front * m_camera_speed * delta_time;
+        }
+        if (m_window.is_key_pressed(Window::Key::S)) {
+            m_camera.position -= m_camera.front * m_camera_speed * delta_time;
+        }
+        if (m_window.is_key_pressed(Window::Key::A)) {
+            m_camera.position -= m_camera.right * m_camera_speed * delta_time;
+        }
+        if (m_window.is_key_pressed(Window::Key::D)) {
+            m_camera.position += m_camera.right * m_camera_speed * delta_time;
+        }
+        if (m_window.is_key_pressed(Window::Key::LShift)) {
+            m_camera.position -= Camera::world_up * m_camera_speed * delta_time;
+        }
+        if (m_window.is_key_pressed(Window::Key::Space)) {
+            m_camera.position += Camera::world_up * m_camera_speed * delta_time;
+        }
+
+        is_sprinting = m_window.is_key_pressed(Window::Key::LControl);
 
         m_camera_speed =
             is_sprinting ? m_base_camera_speed * 2 : m_base_camera_speed;
