@@ -11,7 +11,6 @@ function(mantle_test)
             ${TST_DEPS}
     )
 
-    # Put test binaries in tests/ instead of target/
     set_target_properties(${TST_NAME} PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests")
     foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
@@ -28,3 +27,7 @@ mantle_test(NAME frustum DEPS math)
 
 mantle_test(NAME bgm DEPS world core)
 target_include_directories(bgm PRIVATE "${CMAKE_SOURCE_DIR}/mantle/src/world/private")
+
+mantle_test(NAME arena DEPS core)
+mantle_test(NAME virtual_heap DEPS core)
+mantle_test(NAME camera_test DEPS camera math)

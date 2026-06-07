@@ -10,7 +10,7 @@ namespace mantle {
          * Y+ is up
          * Z- is forward
          *
-         * Default camera yaw is -90 deg, so it's looking towards Z-
+         * Default yaw is 0, so the camera looks towards Z-
          */
         f32 fov = 75.0f;
         f32 aspect = 16.0f / 9.0f;
@@ -21,7 +21,7 @@ namespace mantle {
         glm::vec3 front = glm::vec3(0.0f, 0.0f, -1.0f);
         glm::vec3 right = glm::vec3(1.0f, 0.0f, 0.0f);
 
-        f32 yaw = -90.0f;
+        f32 yaw = 0.0f;
         f32 pitch = 0.0f;
 
         static constexpr glm::vec3 world_up = {0.0f, 1.0f, 0.0f};

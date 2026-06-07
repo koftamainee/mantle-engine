@@ -24,9 +24,9 @@ namespace mantle {
 
         pitch = std::clamp(pitch, -89.0f, 89.0f);
 
-        front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.x = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
         front.y = sin(glm::radians(pitch));
-        front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+        front.z = -cos(glm::radians(yaw)) * cos(glm::radians(pitch));
 
         front = glm::normalize(front);
         right = glm::normalize(glm::cross(front, Camera::world_up));
