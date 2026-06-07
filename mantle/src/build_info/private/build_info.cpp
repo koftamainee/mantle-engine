@@ -29,21 +29,6 @@ namespace mantle {
     const char *build_string() {
         return "Mantle v" MANTLE_VERSION " (" MANTLE_GIT_HASH ") | "
             MANTLE_BUILD_TYPE " | " MANTLE_COMPILER " | "
-#if __cplusplus >= 202400L
-            "C++26"
-#elif __cplusplus >= 202302L
-            "C++23"
-#elif __cplusplus >= 202002L
-            "C++20"
-#elif __cplusplus >= 201703L
-            "C++17"
-#elif __cplusplus >= 201402L
-            "C++14"
-#elif __cplusplus >= 201103L
-            "C++11"
-#else
-            "C++98"
-#endif
-            ;
+            "C++23";
     }
 }

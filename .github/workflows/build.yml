@@ -67,7 +67,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             gcc g++ ninja-build \
             libwayland-dev wayland-protocols libxkbcommon-dev \
-            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev \
+            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
             mesa-common-dev libgl-dev
 
       - name: Cache Vulkan SDK
