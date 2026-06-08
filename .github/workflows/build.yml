@@ -222,13 +222,13 @@ jobs:
         shell: bash
         run: ${{ matrix.configure }}
 
-      - name: Build
-        run: |
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            cmake --build build --config RelWithDebInfo
-          else
-            cmake --build build
-          fi
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        run: cmake --build build --config RelWithDebInfo
+
+      - name: Build (Linux)
+        if: runner.os != 'Windows'
+        run: cmake --build build
 
       - name: Test
         run: ${{ matrix.ctest }}
