@@ -255,3 +255,51 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
           if-no-files-found: error
+
+
+  notify:
+    needs: [format, build]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve status
+        id: status
+        run: |
+          FORMAT="${{ needs.format.result }}"
+          BUILD="${{ needs.build.result }}"
+
+          if [[ "$FORMAT" != "failure" && "$FORMAT" != "cancelled" \
+             && "$BUILD"  != "failure" && "$BUILD"  != "cancelled" ]]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+
+          FAILED=""
+          [[ "$FORMAT" == "failure"   ]] && FAILED="format"
+          [[ "$BUILD"  == "failure"   ]] && FAILED="${FAILED:+$FAILED, }build"
+          [[ "$FORMAT" == "cancelled" || "$BUILD" == "cancelled" ]] \
+            && FAILED="${FAILED:+$FAILED, }(cancelled)"
+          echo "failed_jobs=${FAILED:-none}" >> $GITHUB_OUTPUT
+          echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Notify
+        uses: ./.github/actions/notify
+        with:
+          success:          ${{ steps.status.outputs.success }}
+          workflow:         CI
+          run_number:       ${{ github.run_number }}
+          run_id:           ${{ github.run_id }}
+          run_url:          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ref_name:         ${{ github.ref_name }}
+          sha:              ${{ steps.status.outputs.sha }}
+          failed_jobs:      ${{ steps.status.outputs.failed_jobs }}
+          artifact_linux:   mantle-relwithdebinfo-linux-x64
+          artifact_windows: mantle-relwithdebinfo-windows-x64
+          artifact_devinfo: mantle-devinfo
+          telegram_token:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          telegram_chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          github_token:     ${{ secrets.GITHUB_TOKEN }}
+          repository:       ${{ github.repository }}

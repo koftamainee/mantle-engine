@@ -2,7 +2,7 @@ name: Daily Release
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # 6:00 MSK = 3:00 UTC
+    - cron: '0 1 * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +12,6 @@ env:
   VULKAN_VER: 1.4.304.0
 
 jobs:
-  # ────────────────── INFO ──────────────────
   info:
     runs-on: ubuntu-latest
     outputs:
@@ -40,7 +39,7 @@ jobs:
           fi
           echo "has_changes=$([ "$COUNT" -gt 0 ] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
 
-  # ────────────────── BUILD ──────────────────
+
   build:
     needs: info
     if: needs.info.outputs.has_changes == 'true'
@@ -55,13 +54,11 @@ jobs:
               -DCMAKE_C_COMPILER=gcc
               -DCMAKE_CXX_COMPILER=g++
             build: cmake --build build
-            binary: mantle
             artifact: mantle-linux-x64
 
           - os: windows-latest
             configure: cmake -B build -G "Visual Studio 17 2022" -A x64
             build: cmake --build build --config Release
-            binary: mantle.exe
             artifact: mantle-windows-x64
 
     runs-on: ${{ matrix.os }}
@@ -70,7 +67,6 @@ jobs:
         with:
           submodules: recursive
 
-      # ── Linux deps ──
       - name: Install system deps (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -81,7 +77,6 @@ jobs:
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
             mesa-common-dev libgl-dev
 
-      # ── Vulkan SDK (cached) ──
       - name: Cache Vulkan SDK
         id: cache-vulkan
         uses: actions/cache@v4
@@ -129,12 +124,10 @@ jobs:
         run: |
           $installer = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
           $sdkPath = "C:\VulkanSDK\${{ env.VULKAN_VER }}"
-
           if (Test-Path "$sdkPath\Include\vulkan\vulkan.h") {
             Write-Host "Vulkan SDK already installed at $sdkPath"
           } else {
             Write-Host "Installing Vulkan SDK (this may take 3-5 min)..."
-            # Qt Installer Framework flags (required for SDK >= 1.2.189.1)
             $args = @(
               "--accept-licenses",
               "--default-answer",
@@ -158,14 +151,12 @@ jobs:
           echo "VULKAN_SDK=C:\VulkanSDK\${{ env.VULKAN_VER }}" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "C:\VulkanSDK\${{ env.VULKAN_VER }}\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      # ── Build ──
       - name: Configure
         run: ${{ matrix.configure }}
 
       - name: Build
         run: ${{ matrix.build }}
 
-      # ── Package game (all of target/) ──
       - name: Stage game package (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -198,7 +189,7 @@ jobs:
           path: ${{ matrix.artifact }}
           if-no-files-found: error
 
-  # ────────────────── PATCH NOTES ──────────────────
+
   notes:
     needs: info
     if: needs.info.outputs.has_changes == 'true'
@@ -213,7 +204,6 @@ jobs:
         run: |
           PREV="${{ needs.info.outputs.previous_tag }}"
 
-          NOTES=""
           if [ -n "$PREV" ]; then
             JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" --arg previous "$PREV" \
               '{tag_name: $tag, previous_tag_name: $previous}')
@@ -249,7 +239,7 @@ jobs:
           name: release-body
           path: /tmp/release_body.md
 
-  # ────────────────── CREATE RELEASE ──────────────────
+
   release:
     needs: [info, build, notes]
     runs-on: ubuntu-latest
@@ -293,3 +283,52 @@ jobs:
           fail_on_unmatched_files: false
           draft: false
           prerelease: false
+
+
+  notify:
+    needs: [info, build, notes, release]
+    if: always() && needs.info.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve status
+        id: status
+        run: |
+          BUILD="${{ needs.build.result }}"
+          NOTES="${{ needs.notes.result }}"
+          RELEASE="${{ needs.release.result }}"
+
+          if [[ "$BUILD"   != "failure" && "$BUILD"   != "cancelled" \
+             && "$NOTES"   != "failure" \
+             && "$RELEASE" != "failure" && "$RELEASE" != "cancelled" ]]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+
+          FAILED=""
+          [[ "$BUILD"   == "failure" ]] && FAILED="build"
+          [[ "$NOTES"   == "failure" ]] && FAILED="${FAILED:+$FAILED, }notes"
+          [[ "$RELEASE" == "failure" ]] && FAILED="${FAILED:+$FAILED, }release"
+          echo "failed_jobs=${FAILED:-none}" >> $GITHUB_OUTPUT
+          echo "sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Notify
+        uses: ./.github/actions/notify
+        with:
+          success:          ${{ steps.status.outputs.success }}
+          workflow:         "Daily Release (${{ needs.info.outputs.tag }})"
+          run_number:       ${{ github.run_number }}
+          run_id:           ${{ github.run_id }}
+          run_url:          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ref_name:         ${{ github.ref_name }}
+          sha:              ${{ steps.status.outputs.sha }}
+          failed_jobs:      ${{ steps.status.outputs.failed_jobs }}
+          artifact_linux:   mantle-linux-x64
+          artifact_windows: mantle-windows-x64
+          artifact_devinfo: mantle-devinfo
+          telegram_token:   ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          telegram_chat_id: ${{ secrets.TELEGRAM_CHAT_ID }}
+          github_token:     ${{ secrets.GITHUB_TOKEN }}
+          repository:       ${{ github.repository }}

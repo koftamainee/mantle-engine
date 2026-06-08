@@ -1,0 +1,158 @@
+name: Telegram Notify
+description: Send build notifications to Telegram
+
+inputs:
+  success:
+    required: true
+  workflow:
+    required: true
+  run_number:
+    required: true
+  run_id:
+    required: true
+  run_url:
+    required: true
+  ref_name:
+    required: true
+  sha:
+    required: true
+  failed_jobs:
+    required: false
+    default: ''
+  artifact_linux:
+    required: false
+    default: ''
+  artifact_windows:
+    required: false
+    default: ''
+  artifact_devinfo:
+    required: false
+    default: ''
+  telegram_token:
+    required: true
+  telegram_chat_id:
+    required: true
+  github_token:
+    required: true
+  repository:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Download linux artifact
+      if: inputs.success == 'true' && inputs.artifact_linux != ''
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_linux }}
+        path: _artifacts/linux/
+
+    - name: Download windows artifact
+      if: inputs.success == 'true' && inputs.artifact_windows != ''
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_windows }}
+        path: _artifacts/windows/
+
+    - name: Download devinfo artifact
+      if: inputs.success == 'true' && inputs.artifact_devinfo != ''
+      continue-on-error: true
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_devinfo }}
+        path: _artifacts/devinfo/
+
+    - name: Pack artifacts
+      id: pack
+      if: inputs.success == 'true'
+      shell: bash
+      run: |
+        linux_zip=""
+        windows_zip=""
+        devinfo_file=""
+
+        if [ -d "_artifacts/linux" ] && [ "$(ls -A _artifacts/linux 2>/dev/null)" ]; then
+          (cd _artifacts/linux && zip -r "../../${{ inputs.artifact_linux }}.zip" .)
+          linux_zip="${{ inputs.artifact_linux }}.zip"
+        fi
+
+        if [ -d "_artifacts/windows" ] && [ "$(ls -A _artifacts/windows 2>/dev/null)" ]; then
+          (cd _artifacts/windows && zip -r "../../${{ inputs.artifact_windows }}.zip" .)
+          windows_zip="${{ inputs.artifact_windows }}.zip"
+        fi
+
+        if [ -d "_artifacts/devinfo" ] && [ "$(ls -A _artifacts/devinfo 2>/dev/null)" ]; then
+          devinfo_file=$(find _artifacts/devinfo -type f | head -1)
+        fi
+
+        echo "linux_zip=$linux_zip"     >> $GITHUB_OUTPUT
+        echo "windows_zip=$windows_zip" >> $GITHUB_OUTPUT
+        echo "devinfo_file=$devinfo_file" >> $GITHUB_OUTPUT
+
+    - name: Send success message
+      if: inputs.success == 'true'
+      uses: appleboy/telegram-action@v1.0.0
+      with:
+        to: ${{ inputs.telegram_chat_id }}
+        token: ${{ inputs.telegram_token }}
+        message: |
+          ${{ inputs.workflow }} build #${{ inputs.run_number }} passed
+          Branch: ${{ inputs.ref_name }}
+          Commit: ${{ inputs.sha }}
+          ${{ inputs.run_url }}
+
+    - name: Send linux artifact
+      if: inputs.success == 'true' && steps.pack.outputs.linux_zip != ''
+      uses: appleboy/telegram-action@v1.0.0
+      with:
+        to: ${{ inputs.telegram_chat_id }}
+        token: ${{ inputs.telegram_token }}
+        document: ${{ steps.pack.outputs.linux_zip }}
+
+    - name: Send windows artifact
+      if: inputs.success == 'true' && steps.pack.outputs.windows_zip != ''
+      uses: appleboy/telegram-action@v1.0.0
+      with:
+        to: ${{ inputs.telegram_chat_id }}
+        token: ${{ inputs.telegram_token }}
+        document: ${{ steps.pack.outputs.windows_zip }}
+
+    - name: Send devinfo artifact
+      if: inputs.success == 'true' && steps.pack.outputs.devinfo_file != ''
+      uses: appleboy/telegram-action@v1.0.0
+      with:
+        to: ${{ inputs.telegram_chat_id }}
+        token: ${{ inputs.telegram_token }}
+        document: ${{ steps.pack.outputs.devinfo_file }}
+
+    - name: Download run logs
+      if: inputs.success == 'false'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github_token }}
+      run: |
+        curl -sL \
+          -H "Authorization: Bearer ${GH_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/repos/${{ inputs.repository }}/actions/runs/${{ inputs.run_id }}/logs" \
+          -o run_logs.zip
+        if ! unzip -t run_logs.zip &>/dev/null; then
+          echo "Logs unavailable" > run_logs.txt
+          zip run_logs.zip run_logs.txt
+        fi
+
+    - name: Send failure notification
+      if: inputs.success == 'false'
+      uses: appleboy/telegram-action@v1.0.0
+      with:
+        to: ${{ inputs.telegram_chat_id }}
+        token: ${{ inputs.telegram_token }}
+        message: |
+          ${{ inputs.workflow }} build #${{ inputs.run_number }} failed
+          Branch: ${{ inputs.ref_name }}
+          Commit: ${{ inputs.sha }}
+          Failed jobs: ${{ inputs.failed_jobs }}
+          ${{ inputs.run_url }}
+        document: run_logs.zip
