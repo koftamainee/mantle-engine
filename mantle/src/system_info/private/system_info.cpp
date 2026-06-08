@@ -10,13 +10,6 @@
 
 #include <spdlog/spdlog.h>
 
-
-#ifdef _WIN32
-#pragma message("_M_X64 = " _CRT_STRINGIZE(_M_X64))
-#pragma message("_M_IX86 = " _CRT_STRINGIZE(_M_IX86))
-#define _M_X64 100 // fuck you
-#endif
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <intrin.h>

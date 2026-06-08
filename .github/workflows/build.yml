@@ -125,7 +125,7 @@ jobs:
               -DCMAKE_GENERATOR_PLATFORM=x64
               -DCMAKE_BUILD_TYPE=RelWithDebInfo
               -DMANTLE_ENABLE_FORMAT=OFF
-            ctest: ctest --test-dir build --output-on-failure
+            ctest: ctest --test-dir build --output-on-failure -C RelWithDebInfo
             artifact: mantle-relwithdebinfo-windows-x64
 
     steps:
@@ -223,7 +223,12 @@ jobs:
         run: ${{ matrix.configure }}
 
       - name: Build
-        run: cmake --build build
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cmake --build build --config RelWithDebInfo
+          else
+            cmake --build build
+          fi
 
       - name: Test
         run: ${{ matrix.ctest }}
