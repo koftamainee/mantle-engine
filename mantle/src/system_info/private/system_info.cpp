@@ -12,9 +12,12 @@
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
+// clang-format formats headers so windows h will be last and not include some macro
+// clang-format off
+#include <windows.h>
 #include <intrin.h>
 #include <sysinfoapi.h>
-#include <windows.h>
+// clang-format on
 #elif __linux__
 #include <cpuid.h>
 #include <fstream>
