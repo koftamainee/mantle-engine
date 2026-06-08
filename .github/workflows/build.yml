@@ -111,20 +111,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            configure: >
-              cmake -B build -G Ninja
-              -DCMAKE_BUILD_TYPE=RelWithDebInfo
-              -DCMAKE_C_COMPILER=gcc
-              -DCMAKE_CXX_COMPILER=g++
-              -DMANTLE_ENABLE_FORMAT=OFF
+            configure: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DMANTLE_ENABLE_FORMAT=OFF
             ctest: ctest --test-dir build --output-on-failure
             artifact: mantle-relwithdebinfo-linux-x64
           - os: windows-latest
-            configure: >
-              cmake -B build -G "Visual Studio 17 2022" -A x64 
-              -DCMAKE_GENERATOR_PLATFORM=x64
-              -DCMAKE_BUILD_TYPE=RelWithDebInfo
-              -DMANTLE_ENABLE_FORMAT=OFF
+            configure: cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DMANTLE_ENABLE_FORMAT=OFF
             ctest: ctest --test-dir build --output-on-failure -C RelWithDebInfo
             artifact: mantle-relwithdebinfo-windows-x64
 
@@ -219,7 +210,6 @@ jobs:
           echo "C:\VulkanSDK\${{ env.VULKAN_VER }}\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
       - name: Configure
-        shell: bash
         run: ${{ matrix.configure }}
 
       - name: Build (Windows)

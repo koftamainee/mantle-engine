@@ -1,0 +1,15 @@
+if(DEFINED CMAKE_C_COMPILER AND DEFINED CMAKE_CXX_COMPILER)
+    return()
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows" OR WIN32)
+    if(NOT CMAKE_GENERATOR MATCHES "Visual Studio")
+        set(CMAKE_C_COMPILER   cl  CACHE STRING "C compiler"   FORCE)
+        set(CMAKE_CXX_COMPILER cl  CACHE STRING "C++ compiler" FORCE)
+    endif()
+else()
+    set(CMAKE_C_COMPILER   gcc CACHE STRING "C compiler"   FORCE)
+    set(CMAKE_CXX_COMPILER g++ CACHE STRING "C++ compiler" FORCE)
+endif()
+
+message(STATUS "[compiler] C=${CMAKE_C_COMPILER}  CXX=${CMAKE_CXX_COMPILER}")
