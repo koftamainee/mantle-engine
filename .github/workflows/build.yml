@@ -14,25 +14,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check_format:
-    runs-on: ubuntu-latest
-    outputs:
-      skip_format: ${{ steps.check.outputs.skip_format }}
-    steps:
-      - name: Check commit message
-        id: check
-        run: |
-          if [[ "${{ github.event.head_commit.message }}" == *"[skip-ci-format]"* ]]; then
-            echo "skip_format=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip_format=false" >> $GITHUB_OUTPUT
-          fi
-
   format:
-    needs: check_format
-    if: needs.check_format.outputs.skip_format == 'false'
     runs-on: ubuntu-latest
     outputs:
+      skipped: ${{ steps.check.outputs.skipped }}
       committed: ${{ steps.commit.outputs.committed }}
     steps:
       - uses: actions/checkout@v4
@@ -70,7 +55,17 @@ jobs:
           echo "${SDK}/bin" >> "${GITHUB_PATH}"
           echo "LD_LIBRARY_PATH=${SDK}/lib:${LD_LIBRARY_PATH}" >> "${GITHUB_ENV}"
 
+      - name: Check if format should be skipped
+        id: check
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == *"[skip-ci-format]"* ]]; then
+            echo "skipped=true" >> $GITHUB_OUTPUT
+          else
+            echo "skipped=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Configure for format
+        if: steps.check.outputs.skipped == 'false'
         run: |
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -79,10 +74,12 @@ jobs:
             -DMANTLE_ENABLE_FORMAT=ON
 
       - name: Run format
+        if: steps.check.outputs.skipped == 'false'
         run: cmake --build build --target mantle-format
 
       - name: Commit formatting changes
         id: commit
+        if: steps.check.outputs.skipped == 'false'
         shell: bash
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -97,10 +94,10 @@ jobs:
           fi
 
   build:
-    needs: [check_format, format]
+    needs: format
     if: |
-      (needs.check_format.outputs.skip_format == 'true') ||
-      (needs.check_format.outputs.skip_format == 'false' && needs.format.outputs.committed == 'false')
+      (needs.format.outputs.skipped == 'true') ||
+      (needs.format.outputs.skipped == 'false' && needs.format.outputs.committed == 'false')
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
