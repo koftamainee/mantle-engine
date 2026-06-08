@@ -7,8 +7,6 @@
 int main() {
     mantle::init_logger();
 
-    MANTLE_FATAL(true, "test fatal");
-
     mantle::Engine engine;
     engine.init();
     engine.run();

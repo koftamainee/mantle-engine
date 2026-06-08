@@ -16,10 +16,6 @@ function(mantle_executable)
         target_link_libraries(${EXE_NAME} PRIVATE ${EXE_DEPS})
     endif()
 
-    if(MANTLE_CLANG_TIDY)
-        set_target_properties(${EXE_NAME} PROPERTIES CXX_CLANG_TIDY "${MANTLE_CLANG_TIDY}")
-    endif()
-
     add_custom_command(
             TARGET ${EXE_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND}

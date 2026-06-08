@@ -2,7 +2,6 @@
 
 #include "command_recorder.h"
 
-#include <spdlog/fmt/bundled/os.h>
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_utils.h>
 
@@ -406,8 +405,11 @@ namespace mantle {
     void CommandRecorder::clear_color_image(const ImageResource &image, f32 r, f32 g, f32 b,
                                             f32 a) const {
         VkClearColorValue       clear = {.float32 = {r, g, b, a}};
-        VkImageSubresourceRange range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, VK_REMAINING_MIP_LEVELS, 0,
-                                         VK_REMAINING_ARRAY_LAYERS};
+        VkImageSubresourceRange range = {.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                                         .baseMipLevel = 0,
+                                         .levelCount = VK_REMAINING_MIP_LEVELS,
+                                         .baseArrayLayer = 0,
+                                         .layerCount = VK_REMAINING_ARRAY_LAYERS};
         vkCmdClearColorImage(m_cmd, image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear, 1,
                              &range);
     }

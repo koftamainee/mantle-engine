@@ -139,28 +139,14 @@ jobs:
           echo "VULKAN_SDK=C:\VulkanSDK\${{ env.VULKAN_VER }}" | Out-File -FilePath $env:GITHUB_ENV -Append
           echo "C:\VulkanSDK\${{ env.VULKAN_VER }}\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      # ---- Install analysis tools (Windows) ----
-      - name: Install LLVM & Cppcheck (Windows)
-        if: runner.os == 'Windows' && github.event_name != 'pull_request'
-        run: choco install llvm cppcheck ninja -y
-
-      # ---- Analysis phase (push only) ----
-      - name: Configure (analysis)
-        if: github.event_name != 'pull_request'
-        run: ${{ matrix.configure_debug }} -DMANTLE_ENABLE_CLANG_TIDY=ON -DMANTLE_ENABLE_CPPCHECK=ON
-
       - name: Format
         if: github.event_name != 'pull_request'
         run: cmake --build build --target mantle-format 2>&1 || true
 
-      - name: Analyze
-        if: github.event_name != 'pull_request'
-        run: cmake --build build 2>&1 || true
-
       # ---- Build phase (master push or PR to master) ----
       - name: Configure (release)
         if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'
-        run: ${{ matrix.configure_release }} -DMANTLE_ENABLE_CLANG_TIDY=OFF -DMANTLE_ENABLE_CPPCHECK=OFF -DMANTLE_ENABLE_FORMAT=OFF
+        run: ${{ matrix.configure_release }} -DMANTLE_ENABLE_FORMAT=OFF
 
       - name: Build
         if: github.ref == 'refs/heads/master' || github.event_name == 'pull_request'

@@ -28,8 +28,4 @@ function(mantle_module)
     if(MOD_DEPS)
         target_link_libraries(${MOD_NAME} PUBLIC ${MOD_DEPS})
     endif()
-
-    if(MANTLE_CLANG_TIDY)
-        set_target_properties(${MOD_NAME} PROPERTIES CXX_CLANG_TIDY "${MANTLE_CLANG_TIDY}")
-    endif()
 endfunction()

@@ -52,8 +52,8 @@ jobs:
             configure: >
               cmake -B build -G Ninja
               -DCMAKE_BUILD_TYPE=Release
-              -DCMAKE_C_COMPILER=clang
-              -DCMAKE_CXX_COMPILER=clang++
+              -DCMAKE_C_COMPILER=gcc
+              -DCMAKE_CXX_COMPILER=g++
             build: cmake --build build
             binary: mantle
             artifact: mantle-linux-x64
@@ -76,7 +76,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            clang ninja-build \
+            ninja-build \
             libwayland-dev wayland-protocols libxkbcommon-dev \
             libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
             mesa-common-dev libgl-dev

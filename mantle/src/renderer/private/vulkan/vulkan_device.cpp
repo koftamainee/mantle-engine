@@ -283,7 +283,7 @@ namespace mantle {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = create_flags,
             .queueFamilyIndex = queue_family_index};
-        VkCommandPool pool;
+        VkCommandPool pool = VK_NULL_HANDLE;
         MANTLE_VK_VERIFY(vkCreateCommandPool(m_device, &cmd_pool_create_info,
                                       m_alloc_callbacks, &pool));
         return pool;
@@ -300,7 +300,7 @@ namespace mantle {
             .level = level,
             .commandBufferCount = 1,
         };
-        VkCommandBuffer cmd_buffer;
+        VkCommandBuffer cmd_buffer = nullptr;
         MANTLE_VK_VERIFY(vkAllocateCommandBuffers(
             m_device, &command_buffer_allocate_info, &cmd_buffer));
 
@@ -339,7 +339,7 @@ namespace mantle {
         VkFenceCreateInfo fence_create_info = {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         };
-        VkFence fence;
+        VkFence fence = nullptr;
 
         MANTLE_VK_VERIFY(vkCreateFence(m_device, &fence_create_info, m_alloc_callbacks,
                                 &fence));

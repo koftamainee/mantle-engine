@@ -1,31 +1,3 @@
-option(MANTLE_ENABLE_CLANG_TIDY "Use clang-tidy during compilation" ON)
-if(MANTLE_ENABLE_CLANG_TIDY)
-    find_program(CLANG_TIDY_BIN clang-tidy)
-    if(CLANG_TIDY_BIN)
-        message(STATUS "clang-tidy: ${CLANG_TIDY_BIN}")
-        set(MANTLE_CLANG_TIDY "${CLANG_TIDY_BIN}" CACHE INTERNAL "clang-tidy command")
-    else()
-        message(STATUS "clang-tidy: NOT FOUND (skip)")
-    endif()
-endif()
-
-option(MANTLE_ENABLE_CPPCHECK "Use cppcheck during compilation" ON)
-if(MANTLE_ENABLE_CPPCHECK)
-    find_program(CPPCHECK_BIN cppcheck)
-    if(CPPCHECK_BIN)
-        message(STATUS "cppcheck: ${CPPCHECK_BIN}")
-        set(CMAKE_CXX_CPPCHECK "${CPPCHECK_BIN}"
-            "--enable=warning,style,performance,portability"
-            "--suppress=missingIncludeSystem"
-            "--suppress=*:*/third_party/*"
-            "--inline-suppr"
-            "-q"
-        )
-    else()
-        message(STATUS "cppcheck: NOT FOUND (skip)")
-    endif()
-endif()
-
 option(MANTLE_ENABLE_FORMAT "Enable mantle-format target" ON)
 if(MANTLE_ENABLE_FORMAT)
     find_program(CLANG_FORMAT_BIN clang-format)

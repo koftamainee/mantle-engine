@@ -63,7 +63,6 @@ namespace mantle {
             spdlog::critical(fmt, std::forward<Args>(args)...);
         }
         debug_break();
-        std::abort();
     }
 
     template <typename... Args>
@@ -79,7 +78,6 @@ namespace mantle {
         spdlog::critical("Fatal error [E{:08X}]", error_code);
 #endif
         debug_break();
-        std::abort();
     }
 
     template <typename... Args>

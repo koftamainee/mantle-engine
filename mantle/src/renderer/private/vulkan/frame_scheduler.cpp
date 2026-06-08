@@ -47,8 +47,8 @@ namespace mantle {
 
 
         for (usize i = 0; i < m_frames_in_flight; i++) {
-            VkFence         fence;
-            VkSemaphore     image_available;
+            VkFence         fence = VK_NULL_HANDLE;
+            VkSemaphore     image_available = VK_NULL_HANDLE;
             VkCommandBuffer cmd =
                 device.create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, m_command_pool);
 
@@ -64,7 +64,7 @@ namespace mantle {
         }
 
         for (usize i = 0; i < m_swapchain_image_count; i++) {
-            VkSemaphore render_finished;
+            VkSemaphore render_finished = nullptr;
             MANTLE_VK_VERIFY(
                 vkCreateSemaphore(vk_device, &semaphore_info, vk_callbacks, &render_finished));
             m_render_finished[i] = render_finished;
