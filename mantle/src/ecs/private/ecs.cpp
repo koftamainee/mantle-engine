@@ -6,10 +6,13 @@
 #include "camera/components.h"
 #include "core/assert.h"
 #include "input/input.h"
+#include "physics/character_controller.h"
+#include "physics/physics_system.h"
+#include "player/player.h"
 #include "rumbling/rumbling.h"
 
 namespace mantle {
-    void Ecs::init(Window &window, f32 camera_aspect) {
+    void Ecs::init(Window &window, f32 camera_aspect, CharacterController &character) {
         MANTLE_CHECK(!m_is_initialized);
         m_logger = spdlog::get("ecs").get();
         m_is_initialized = true;
@@ -17,6 +20,7 @@ namespace mantle {
         bootstrap_input(m_world, window);
         bootstrap_rumbling(m_world, window);
         bootstrap_camera(m_world, camera_aspect);
+        bootstrap_player(m_world, character);
 
         m_logger->info("Ecs is initialized");
     }

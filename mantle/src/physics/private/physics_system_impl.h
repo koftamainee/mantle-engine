@@ -14,6 +14,7 @@
 #include "physics/physics_system.h"
 #include "layers.h"
 #include "broad_phase_layers.h"
+#include "core/memory/memory_units.h"
 
 namespace mantle {
 
@@ -22,6 +23,7 @@ namespace mantle {
         spdlog::logger                    *logger = nullptr;
 
         ArenaTempAllocator temp_allocator {};
+        // JPH::TempAllocatorImpl temp_allocator {megabytes(32)};
 
         JPH::JobSystemThreadPool job_system {};
 

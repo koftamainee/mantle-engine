@@ -11,13 +11,14 @@
 #include "core/types.h"
 
 namespace mantle {
+    class CharacterController;
     class Window;
 
     class Ecs final {
       public:
         MANTLE_DEFAULT_INIT(Ecs);
 
-        void init(Window &window, f32 camera_aspect);
+        void init(Window &window, f32 camera_aspect, CharacterController &character);
         void destroy();
         void update(f32 delta_time);
 

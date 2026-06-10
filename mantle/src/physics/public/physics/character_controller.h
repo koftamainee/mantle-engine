@@ -11,7 +11,7 @@ namespace mantle {
     class PhysicsSystem;
 
     class CharacterController final {
-    public:
+      public:
         MANTLE_DEFAULT_INIT(CharacterController);
 
         void init(PhysicsSystem &physics, glm::vec3 start_pos);
@@ -21,7 +21,9 @@ namespace mantle {
         glm::vec3 get_position() const;
         bool      is_grounded() const;
 
-    private:
+        glm::vec3 gravity = {0, -9.81f, 0};
+
+      private:
         bool m_is_initialized = false;
 
         struct Impl;

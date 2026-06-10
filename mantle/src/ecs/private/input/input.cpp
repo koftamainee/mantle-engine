@@ -67,6 +67,11 @@ namespace mantle {
                 controller_active = true;
             }
 
+            if (window.is_controller_button_pressed(Window::ControllerButton::A)) {
+                player_input.jump = true;
+                controller_active = true;
+            }
+
             Window::MouseDelta md = window.get_mouse_delta();
             player_input.look_dx += md.x * mouse_sensitivity;
             player_input.look_dy += md.y * mouse_sensitivity;
@@ -85,12 +90,10 @@ namespace mantle {
                 if (window.is_key_pressed(Window::Key::D)) {
                     player_input.move_strafe += 1.0f;
                 }
-                if (window.is_key_pressed(Window::Key::LShift)) {
-                    player_input.move_up -= 1.0f;
+                if (window.is_key_just_pressed(Window::Key::Space)) {
+                    player_input.jump = true;
                 }
-                if (window.is_key_pressed(Window::Key::Space)) {
-                    player_input.move_up += 1.0f;
-                }
+
 
                 player_input.sprint =
                     player_input.sprint || window.is_key_pressed(Window::Key::LControl);

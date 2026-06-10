@@ -13,5 +13,6 @@ namespace mantle {
         f32  move_strafe = 0.0f;
         f32  move_up = 0.0f;
         bool sprint = false;
+        bool jump = false;
     };
 } // namespace mantle

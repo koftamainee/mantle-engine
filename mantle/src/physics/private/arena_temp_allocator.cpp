@@ -23,7 +23,7 @@ namespace mantle {
 
     void ArenaTempAllocator::Free(void *inAddress, JPH::uint inSize) {
         MANTLE_CHECK(m_is_initialized);
-        // m_allocator.free(inAddress); // i think we dont need this but i dont sure
+        m_allocator.free(inAddress);
     }
 
     void ArenaTempAllocator::Reset() {

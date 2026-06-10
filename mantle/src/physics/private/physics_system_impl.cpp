@@ -45,7 +45,10 @@ namespace mantle {
         void *jolt_alloc(size_t size) { return s_allocator->alloc(size); }
         void  jolt_free(void *ptr) { s_allocator->free(ptr); }
         void *jolt_realloc(void *ptr, size_t old_size, size_t new_size) {
-            return s_allocator->realloc(ptr, new_size);
+            auto *new_ptr = jolt_alloc(new_size);
+            memcpy(new_ptr, ptr, std::min(old_size, new_size));
+            jolt_free(ptr);
+            return new_ptr;
         }
         void *jolt_aligned_alloc(size_t size, size_t align) {
             return s_allocator->alloc(size, align);
@@ -58,7 +61,7 @@ namespace mantle {
         JPH::Trace = jolt_trace;
         JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = jolt_assert_failed);
 
-        auto [tlsf_block, temp_block] = mem.split<megabytes(10), megabytes(10)>();
+        auto [tlsf_block, temp_block] = mem.split<megabytes(64), megabytes(32)>();
 
         allocator.init(tlsf_block, "physics system general allocator");
         s_allocator = &allocator;

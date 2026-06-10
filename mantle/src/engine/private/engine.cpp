@@ -74,11 +74,11 @@ namespace mantle {
         m_worker_pool.init(8, megabytes(4), worker_pool_block);
 
         m_physics_system.init(physics_block);
-        m_ecs.init(m_window, camera_aspect);
+        m_physics_system.add_static_box({0, -0.5f, 0}, {10, 0.5f, 10});
+        m_character.init(m_physics_system, {0.0f, 5.0f, 0.0f});
+        m_ecs.init(m_window, camera_aspect, m_character);
 
         m_renderer.init(m_window, false, renderer_block);
-
-        m_last_time = 0;
 
         {
             const MemoryBlock chunk_rendering_block = m_heap.take(megabytes(4));
@@ -143,7 +143,7 @@ namespace mantle {
                         }
                     }
                 }
-            }
+        }
             f32 light_elapsed = static_cast<f32>(m_window.get_time_ns() - light_start) / 1e6f;
             m_logger->info("Light propagation: {:.2f} ms", light_elapsed);
 
@@ -180,6 +180,8 @@ namespace mantle {
         raw_logger()->info("================================================================"
                            "================");
         raw_logger()->info("");
+
+        m_last_time = m_window.get_time_ns();
     }
 
     void Engine::run() {
@@ -233,6 +235,7 @@ namespace mantle {
             m_renderer.destroy();
 
             m_ecs.destroy();
+            m_character.destroy();
             m_physics_system.destroy();
 
             m_worker_pool.destroy();

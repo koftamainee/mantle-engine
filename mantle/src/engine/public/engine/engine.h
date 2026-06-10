@@ -7,6 +7,7 @@
 #include "core/memory/tlsf_allocator.h"
 #include "core/memory/virtual_heap.h"
 #include "ecs/ecs.h"
+#include "physics/character_controller.h"
 #include "physics/physics_system.h"
 #include "renderer/renderer.h"
 #include "window/window.h"
@@ -45,6 +46,7 @@ namespace mantle {
 
         // Core Systems
         PhysicsSystem m_physics_system {};
+        CharacterController m_character {};
         Ecs           m_ecs {};
 
         // Graphics
