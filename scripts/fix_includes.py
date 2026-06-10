@@ -96,11 +96,14 @@ def normalize_path(path_str: str) -> str:
 
 
 def format_includes(inc_tuples, own_stem):
-    """Format a list of (path_str, is_angle_original, raw_line) into sorted groups."""
+    """Format a list of (path_str, is_angle_original, raw_line) into sorted groups.
+
+    Groups are emitted in order: own, std, third_party, project.
+    A blank line is placed between std and third_party if both are present.
+    """
     grouped = {"own": [], "std": [], "third_party": [], "project": []}
 
     for path_str, is_angle, _ in inc_tuples:
-
         norm = normalize_path(path_str)
         if own_stem is not None and Path(norm).stem == own_stem:
             grouped["own"].append((norm, False, path_str))
@@ -113,20 +116,32 @@ def format_includes(inc_tuples, own_stem):
     out = []
     prev = False
 
+    # Own (matching the current file's stem)
     if grouped["own"]:
         for norm, angle, orig in sorted(grouped["own"]):
             q = "<" if angle else '"'
             out.append(f'#include {q}{orig}{">" if angle else '"'}')
         prev = True
 
-    if grouped["std"] or grouped["third_party"]:
+    # Standard library includes
+    if grouped["std"]:
         if prev:
             out.append("")
-        for norm, angle, orig in sorted(grouped["std"] + grouped["third_party"]):
+        for norm, angle, orig in sorted(grouped["std"]):
             q = "<" if angle else '"'
             out.append(f'#include {q}{orig}{">" if angle else '"'}')
         prev = True
 
+    # Third-party includes (blank line before if std was present)
+    if grouped["third_party"]:
+        if prev:
+            out.append("")
+        for norm, angle, orig in sorted(grouped["third_party"]):
+            q = "<" if angle else '"'
+            out.append(f'#include {q}{orig}{">" if angle else '"'}')
+        prev = True
+
+    # Project includes (everything else)
     if grouped["project"]:
         if prev:
             out.append("")

@@ -50,7 +50,7 @@ namespace mantle {
             m_object_to_broad_phase[Layers::MOVING] = BroadPhaseLayers::MOVING;
         }
 
-        uint GetNumBroadPhaseLayers() const override { return BroadPhaseLayers::NUM_LAYERS; }
+        JPH::uint GetNumBroadPhaseLayers() const override { return BroadPhaseLayers::NUM_LAYERS; }
 
         JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override {
             JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
