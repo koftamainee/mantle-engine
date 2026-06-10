@@ -9,6 +9,7 @@
 #include <Jolt/Core/IssueReporting.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/RegisterTypes.h>
+#include <array>
 #include <cstdarg>
 
 #include "core/memory/memory_units.h"
