@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "../public/arena_temp_allocator.h"
+#include "arena_temp_allocator.h"
 
 namespace mantle {
     void ArenaTempAllocator::init(MemoryBlock mem, std::string_view debug_name) {
