@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Mantle. All rights reserved.
+
 #pragma once
 
 // fix-includes off
@@ -14,7 +16,7 @@ namespace mantle {
     } // namespace Layers
 
     class ObjectLayerPairFilterImpl final : public JPH::ObjectLayerPairFilter {
-    public:
+      public:
         bool ShouldCollide(JPH::ObjectLayer inObject1, JPH::ObjectLayer inObject2) const override;
     };
-}
+} // namespace mantle

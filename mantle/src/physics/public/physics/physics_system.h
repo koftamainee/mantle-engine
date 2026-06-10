@@ -2,11 +2,11 @@
 
 #pragma once
 
+#include <glm/glm.hpp>
 #include <spdlog/logger.h>
 
 #include "core/macros.h"
 #include "core/memory/memory_block.h"
-#include "glm/glm.hpp"
 
 namespace mantle {
 

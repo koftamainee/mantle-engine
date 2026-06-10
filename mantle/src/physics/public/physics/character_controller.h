@@ -3,6 +3,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include "core/macros.h"
 #include "core/types.h"
 

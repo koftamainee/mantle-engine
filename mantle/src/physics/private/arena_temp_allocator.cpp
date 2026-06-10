@@ -26,7 +26,5 @@ namespace mantle {
         m_allocator.free(inAddress);
     }
 
-    void ArenaTempAllocator::Reset() {
-        m_allocator.reset();
-    }
+    void ArenaTempAllocator::Reset() { m_allocator.reset(); }
 } // namespace mantle

@@ -143,7 +143,7 @@ namespace mantle {
                         }
                     }
                 }
-        }
+            }
             f32 light_elapsed = static_cast<f32>(m_window.get_time_ns() - light_start) / 1e6f;
             m_logger->info("Light propagation: {:.2f} ms", light_elapsed);
 

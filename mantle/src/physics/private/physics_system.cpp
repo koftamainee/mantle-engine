@@ -8,11 +8,12 @@
 #include <Jolt/Jolt.h>
 // fix-includes on
 
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+
 #include "core/assert.h"
 #include "core/memory/memory_units.h"
 #include "physics_system_impl.h"
-#include "Jolt/Physics/Body/BodyCreationSettings.h"
-#include "Jolt/Physics/Collision/Shape/BoxShape.h"
 
 namespace mantle {
     void PhysicsSystem::init(MemoryBlock block) {

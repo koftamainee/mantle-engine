@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Mantle. All rights reserved.
+
 #include "broad_phase_layers.h"
 
 namespace mantle {
@@ -15,8 +17,7 @@ namespace mantle {
     }
 
 #if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-    const char *
-    BPLayerInterfaceImpl::GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const {
+    const char *BPLayerInterfaceImpl::GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const {
         switch ((JPH::BroadPhaseLayer::Type)inLayer) {
             case (JPH::BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:
                 return "NON_MOVING";

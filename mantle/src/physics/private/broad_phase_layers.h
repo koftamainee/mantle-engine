@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Mantle. All rights reserved.
+
 #pragma once
 
 // fix-includes off
@@ -34,8 +36,7 @@ namespace mantle {
 
     class ObjectVsBroadPhaseLayerFilterImpl final : public JPH::ObjectVsBroadPhaseLayerFilter {
       public:
-        bool ShouldCollide(JPH::ObjectLayer     inLayer1,
-                           JPH::BroadPhaseLayer inLayer2) const override;
+        bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override;
     };
 
 } // namespace mantle

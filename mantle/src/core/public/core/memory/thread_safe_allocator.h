@@ -89,7 +89,9 @@ namespace mantle {
             return new (mem) T(std::forward<Args>(args)...);
         }
 
-        void reset() requires CResetableAllocator<Inner> {
+        void reset()
+            requires CResetableAllocator<Inner>
+        {
             m_inner.reset();
         }
 

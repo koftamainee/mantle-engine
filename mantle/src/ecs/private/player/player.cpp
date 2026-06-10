@@ -10,10 +10,10 @@
 
 namespace mantle {
     namespace {
-        constexpr f32 kMoveSpeed  = 5.0f;
+        constexpr f32 kMoveSpeed = 5.0f;
         constexpr f32 kSprintMult = 2.0f;
-        constexpr f32 kJumpSpeed  = 6.0f;
-        constexpr f32 kGravity    = -20.0f;
+        constexpr f32 kJumpSpeed = 6.0f;
+        constexpr f32 kGravity = -20.0f;
 
         constexpr f32 kEyeHeight = 1.6f;
 
@@ -22,19 +22,19 @@ namespace mantle {
 
     void bootstrap_player(const flecs::world &world, CharacterController &character) {
         world.system<>("Player").kind(flecs::OnUpdate).run([&character](const flecs::iter &it) {
-            auto        w      = it.world();
-            const auto &input  = w.get<InputState>();
+            auto        w = it.world();
+            const auto &input = w.get<InputState>();
             auto       &camera = w.ensure<Camera>();
 
             glm::vec3 forward = camera.front;
-            forward.y         = 0.0f;
+            forward.y = 0.0f;
 
             if (glm::length(forward) > 0.0f) {
                 forward = glm::normalize(forward);
             }
 
             glm::vec3 right = camera.right;
-            right.y         = 0.0f;
+            right.y = 0.0f;
 
             if (glm::length(right) > 0.0f) {
                 right = glm::normalize(right);
@@ -56,9 +56,7 @@ namespace mantle {
 
             character.move(velocity, it.delta_time());
 
-            camera.position =
-                character.get_position() +
-                glm::vec3(0.0f, kEyeHeight, 0.0f);
+            camera.position = character.get_position() + glm::vec3(0.0f, kEyeHeight, 0.0f);
         });
     }
 

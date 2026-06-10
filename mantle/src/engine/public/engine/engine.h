@@ -45,9 +45,9 @@ namespace mantle {
         WorkerPool m_worker_pool;
 
         // Core Systems
-        PhysicsSystem m_physics_system {};
+        PhysicsSystem       m_physics_system {};
         CharacterController m_character {};
-        Ecs           m_ecs {};
+        Ecs                 m_ecs {};
 
         // Graphics
         Renderer m_renderer {};

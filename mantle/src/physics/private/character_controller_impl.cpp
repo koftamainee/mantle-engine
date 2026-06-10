@@ -1,15 +1,16 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
+
 #include "character_controller_impl.h"
 
 // fix-includes off
 #include <Jolt/Jolt.h>
 // fix-includes on
 
-#include "physics_system_impl.h"
-#include "Jolt/Physics/Collision/Shape/CapsuleShape.h"
-#include "Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h"
 #include <Jolt/Physics/Character/CharacterVirtual.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/RotatedTranslatedShape.h>
 
+#include "physics_system_impl.h"
 
 namespace mantle {
 
