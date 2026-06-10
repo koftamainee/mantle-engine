@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include <glm/vec3.hpp>
 #include <unordered_map>
 #include <vector>
+
+#include <glm/vec3.hpp>
 
 #include "chunk.h"
 #include "core/macros.h"

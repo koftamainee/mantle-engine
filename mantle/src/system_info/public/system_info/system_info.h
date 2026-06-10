@@ -3,8 +3,9 @@
 #pragma once
 
 #include <cstdint>
-#include <spdlog/logger.h>
 #include <string_view>
+
+#include <spdlog/logger.h>
 
 #include "core/types.h"
 

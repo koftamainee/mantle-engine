@@ -5,6 +5,7 @@
 #include "glm/gtc/noise.hpp"
 
 #include <concepts>
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 

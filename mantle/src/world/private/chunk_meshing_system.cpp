@@ -3,8 +3,9 @@
 #include "world/chunk_meshing_system.h"
 
 #include <cstring>
-#include <spdlog/spdlog.h>
 #include <vector>
+
+#include <spdlog/spdlog.h>
 
 #include "bgm.h"
 #include "chunk_helpers.h"

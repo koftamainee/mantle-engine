@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include <SDL3/SDL_vulkan.h>
 #include <array>
 #include <vector>
+
+#include <SDL3/SDL_vulkan.h>
 #include <vulkan/vulkan.h>
 
 #include "core/memory/arena_allocator.h"

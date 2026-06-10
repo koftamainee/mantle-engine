@@ -6,11 +6,12 @@
 #include <Jolt/Jolt.h>
 // fix-includes on
 
+#include <array>
+#include <cstdarg>
+
 #include <Jolt/Core/IssueReporting.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/RegisterTypes.h>
-#include <array>
-#include <cstdarg>
 
 #include "core/memory/memory_units.h"
 #include "core/memory/thread_safe_allocator.h"

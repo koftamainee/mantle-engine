@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+
 #include <vulkan/vulkan_core.h>
 
 #include "command_recorder.h"

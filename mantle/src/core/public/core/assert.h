@@ -5,8 +5,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <source_location>
-#include <spdlog/spdlog.h>
 #include <utility>
+
+#include <spdlog/spdlog.h>
 
 #include "macros.h"
 #include "types.h"

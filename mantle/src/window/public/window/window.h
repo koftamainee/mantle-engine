@@ -2,12 +2,13 @@
 
 #pragma once
 
-#include <SDL3/SDL.h>
 #include <array>
 #include <bitset>
 #include <functional>
 #include <span>
 #include <string>
+
+#include <SDL3/SDL.h>
 
 #include "core/macros.h"
 #include "core/memory/memory_block.h"

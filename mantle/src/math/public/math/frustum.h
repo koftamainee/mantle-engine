@@ -3,6 +3,7 @@
 #pragma once
 
 #include <array>
+
 #include <glm/glm.hpp>
 
 #include "aabb.h"

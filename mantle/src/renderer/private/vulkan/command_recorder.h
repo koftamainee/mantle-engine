@@ -3,6 +3,7 @@
 #pragma once
 
 #include <span>
+
 #include <vulkan/vulkan.h>
 
 #include "core/memory/arena_allocator.h"

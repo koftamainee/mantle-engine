@@ -2,8 +2,9 @@
 
 #include "sdl_allocator.h"
 
-#include <SDL3/SDL_stdinc.h>
 #include <new>
+
+#include <SDL3/SDL_stdinc.h>
 
 #include "core/assert.h"
 

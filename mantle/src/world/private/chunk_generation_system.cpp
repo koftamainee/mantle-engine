@@ -3,6 +3,7 @@
 #include "world/chunk_generation_system.h"
 
 #include <cmath>
+
 #include <spdlog/spdlog.h>
 
 #include "core/assert.h"

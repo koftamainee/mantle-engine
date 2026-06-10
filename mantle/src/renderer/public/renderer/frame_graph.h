@@ -2,9 +2,10 @@
 
 #pragma once
 
-#include <renderer/types.h>
 #include <string_view>
 #include <vector>
+
+#include <renderer/types.h>
 
 #include "core/memory/arena_allocator.h"
 #include "core/memory/pmr/arena_resource.h"
