@@ -17,7 +17,7 @@ namespace mantle {
       private:
         void *do_allocate(usize size, usize align) override {
             MANTLE_CHECK(m_allocator != nullptr);
-            return m_allocator->alloc_aligned(size, align);
+            return m_allocator->alloc(size, align);
         }
 
         void do_deallocate(void *memory, usize size, usize align) override {

@@ -26,7 +26,7 @@ namespace mantle {
             return nullptr;
         }
         auto *self = static_cast<VulkanCPUAllocator *>(user);
-        return self->m_tlsf->alloc_aligned(size, align);
+        return self->m_tlsf->alloc(size, align);
     }
 
     void *VKAPI_CALL VulkanCPUAllocator::vk_realloc(void *user, void *original, usize size,
@@ -42,7 +42,7 @@ namespace mantle {
         auto *self = static_cast<VulkanCPUAllocator *>(user);
 
         if (original == nullptr) {
-            return self->m_tlsf->alloc_aligned(size, align);
+            return self->m_tlsf->alloc(size, align);
         }
 
         return self->m_tlsf->realloc(original, size);

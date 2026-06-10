@@ -2,6 +2,9 @@
 
 #pragma once
 
+#include "core/assert.h"
+
+
 #include <cstring>
 #include <type_traits>
 #include <utility>
@@ -9,6 +12,8 @@
 #include "core/macros.h"
 #include "core/memory/memory_block.h"
 #include "core/types.h"
+
+#include <string_view>
 
 namespace mantle {
 
@@ -20,7 +25,7 @@ namespace mantle {
         MANTLE_NO_COPY(ArenaAllocator);
         ArenaAllocator(ArenaAllocator &&) = default;
 
-        void init(MemoryBlock block);
+        void init(MemoryBlock block, std::string_view debug_name = {});
         void destroy();
 
         [[nodiscard]] void *alloc(usize size, usize align = alignof(std::max_align_t)) {
@@ -32,6 +37,7 @@ namespace mantle {
         [[nodiscard]] T *alloc(usize count = 1) {
             return push<T>(count);
         }
+
         template <typename T>
         [[nodiscard]] T *push(usize count = 1) {
             static_assert(std::is_trivially_constructible_v<T>);
@@ -54,6 +60,12 @@ namespace mantle {
         [[nodiscard]] T *emplace(Args &&...args) {
             void *mem = push(sizeof(T), alignof(T));
             return new (mem) T(std::forward<Args>(args)...);
+        }
+
+        void  free(void *) { MANTLE_CHECKF(false, "Called free in arena allocator"); }
+
+        void *realloc(void *ptr, usize size) {
+            MANTLE_CHECKF(false, "Called realloc in arena allocator");
         }
 
         struct Marker {

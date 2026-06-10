@@ -10,6 +10,7 @@
 #include "build_info/build_info.h"
 #include "core/assert.h"
 #include "core/logger.h"
+#include "core/memory/thread_safe_allocator.h"
 #include "core/memory/memory_units.h"
 #include "renderer/blackboard_types.h"
 #include "system_info/system_info.h"
@@ -83,6 +84,14 @@ namespace mantle {
             const MemoryBlock chunk_rendering_block = m_heap.take(megabytes(4));
             const MemoryBlock meshing_block = m_heap.take(megabytes(100));
             const MemoryBlock chunk_storage_block = m_heap.take(megabytes(16));
+
+            ThreadSafeAllocator<ArenaAllocator> test_arena;
+            test_arena.init(meshing_block, "test arena");
+            int *arr = test_arena.emplace<int>(10);
+
+
+            arr[2] = 5;
+            m_logger->info("arr[2]: {}", arr[2]);
 
             constexpr u32 max_chunks = 150;
             constexpr i32 R = 2;

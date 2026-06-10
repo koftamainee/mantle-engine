@@ -8,7 +8,7 @@ namespace mantle {
 
     ArenaAllocator::~ArenaAllocator() { destroy(); }
 
-    void ArenaAllocator::init(MemoryBlock block) {
+    void ArenaAllocator::init(MemoryBlock block, std::string_view debug_name) {
         MANTLE_CHECK(!m_is_initialized);
         MANTLE_CHECK(block.ptr != nullptr);
         MANTLE_CHECK(block.size > 0);

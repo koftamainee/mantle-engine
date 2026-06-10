@@ -4,7 +4,6 @@
 
 #include <cstring>
 #include <string_view>
-#include <type_traits>
 #include <utility>
 
 #include "core/macros.h"
@@ -24,26 +23,28 @@ namespace mantle {
         void init(MemoryBlock block, std::string_view debug_name = {});
         void destroy();
 
-        [[nodiscard]] void *alloc(usize size);
-        [[nodiscard]] void *alloc_aligned(usize size, usize align);
+        [[nodiscard]] void *alloc(
+            usize size,
+            usize align = alignof(std::max_align_t)
+        );
         [[nodiscard]] void *realloc(void *ptr, usize size);
         void                free(void *ptr);
 
         template <typename T>
         [[nodiscard]] T *alloc(usize count = 1) {
-            return static_cast<T *>(alloc_aligned(sizeof(T) * count, alignof(T)));
+            return static_cast<T *>(alloc(sizeof(T) * count, alignof(T)));
         }
 
         template <typename T>
         [[nodiscard]] T *alloc_zeroed(usize count = 1) {
-            T *ptr = static_cast<T *>(alloc_aligned(sizeof(T) * count, alignof(T)));
+            T *ptr = static_cast<T *>(alloc(sizeof(T) * count, alignof(T)));
             std::memset(ptr, 0, sizeof(T) * count);
             return ptr;
         }
 
         template <typename T, typename... Args>
         [[nodiscard]] T *emplace(Args &&...args) {
-            void *mem = alloc_aligned(sizeof(T), alignof(T));
+            void *mem = alloc(sizeof(T), alignof(T));
             return new (mem) T(std::forward<Args>(args)...);
         }
 
