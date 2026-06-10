@@ -41,6 +41,13 @@ namespace mantle {
         return ptr;
     }
 
+    void ArenaAllocator::free(void *ptr) {
+        usize new_offset = static_cast<char *>(ptr) - static_cast<char *>(m_base);
+        MANTLE_CHECK(new_offset < m_size);
+
+        m_offset = new_offset;
+    }
+
     ArenaAllocator::Marker ArenaAllocator::save() const {
         MANTLE_CHECK(m_is_initialized);
         return {m_offset};

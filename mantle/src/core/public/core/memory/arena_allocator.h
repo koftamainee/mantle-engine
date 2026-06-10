@@ -59,7 +59,8 @@ namespace mantle {
             return new (mem) T(std::forward<Args>(args)...);
         }
 
-        void free(void *) { MANTLE_CHECKF(false, "Called free in arena allocator"); }
+        // NOTE: use this with care. free calls should be in LIFO order for this to not UB
+        void free(void *ptr);
 
         void *realloc(void *ptr, usize size) {
             MANTLE_CHECKF(false, "Called realloc in arena allocator");

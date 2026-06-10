@@ -4,6 +4,13 @@
 Scans unguarded include blocks (no #if/#ifdef/#else/#elif/#endif between
 the includes). Preprocessor-guarded includes are left untouched.
 
+You can temporarily disable processing for specific sections:
+
+    // fix-includes off
+    #include "this/will/not/be/sorted.h"
+    #include <will/not/be/sorted.hpp>
+    // fix-includes on
+
 Usage:
     python3 scripts/fix_includes.py --fix      # rewrite files in-place
     python3 scripts/fix_includes.py --check    # exit 1 if any file needs fixing
@@ -42,7 +49,7 @@ STD_HEADERS = {
 THIRD_PARTY_PREFIXES = [
     "spdlog", "glm", "flecs", "SDL", "SDL3",
     "imgui", "tlsf", "vma", "vulkan", "Vulkan",
-    "lua", "LuaJIT", "sol",
+    "lua", "LuaJIT", "sol", "Jolt",
 ]
 
 INCLUDE_RE = re.compile(r'#include\s+([<"])([^>"]+)([>"])')
@@ -140,9 +147,28 @@ def process_file(file_path: Path, fix: bool) -> bool:
     result: list[str] = []
 
     i = 0
+    skip_includes = False
+
     while i < n:
         line = lines[i]
         stripped = line.strip()
+
+        # Check for special markers that toggle include processing
+        if "fix-includes off" in line:
+            skip_includes = True
+            result.append(line)
+            i += 1
+            continue
+        if "fix-includes on" in line:
+            skip_includes = False
+            result.append(line)
+            i += 1
+            continue
+
+        if skip_includes:
+            result.append(line)
+            i += 1
+            continue
 
         m = INCLUDE_RE.match(stripped)
         if not m:
@@ -155,9 +181,35 @@ def process_file(file_path: Path, fix: bool) -> bool:
         last_inc = i
 
         j = i + 1
+        block_interrupted = False
         while j < n:
             l = lines[j]
             s = l.strip()
+
+            if "fix-includes off" in l or "fix-includes on" in l:
+                if incs:
+                    old_text = "\n".join(inc[2] for inc in incs)
+                    formatted = format_includes(incs, own_stem)
+                    new_text = "\n".join(formatted)
+
+                    if old_text.strip() != new_text.strip():
+                        changed = True
+
+                    if result and result[-1] != "":
+                        result.append("")
+                    result.extend(formatted)
+
+                    gap_end = j
+                    while gap_end > last_inc + 1 and not lines[gap_end - 1].strip():
+                        gap_end -= 1
+                    gap_count = j - gap_end
+                    if gap_count > 0 and result[-1] != "":
+                        result.append("")
+
+                i = j
+                block_interrupted = True
+                break
+
             m2 = INCLUDE_RE.match(s)
             if m2:
                 incs.append((m2.group(2), m2.group(3) == ">", l))
@@ -170,6 +222,10 @@ def process_file(file_path: Path, fix: bool) -> bool:
                 break
             else:
                 break
+
+        if block_interrupted:
+            # The outer loop will re-enter with i pointing to the marker line
+            continue
 
         if incs is None:
             for k in range(start, j):

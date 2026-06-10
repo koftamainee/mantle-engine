@@ -23,7 +23,6 @@ namespace mantle {
                 block.ptr = nullptr;
                 block.size = 0;
             }
-            return result;
 
             auto *base = static_cast<char *>(ptr);
             usize offset = 0;

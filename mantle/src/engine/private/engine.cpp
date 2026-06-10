@@ -51,14 +51,14 @@ namespace mantle {
             m_logger->warn("Working tree is dirty. Build may not be reproducible");
         }
 
-        constexpr usize heap_total = megabytes(256);
+        constexpr usize heap_total = megabytes(512);
         m_os_memory.init();
         m_heap.init(m_os_memory, heap_total);
 
         const MemoryBlock window_block = m_heap.take(kilobytes(256));
         const MemoryBlock renderer_block = m_heap.take(megabytes(80));
         const MemoryBlock worker_pool_block = m_heap.take(megabytes(32));
-        const MemoryBlock physics_block = m_heap.take(megabytes(1));
+        const MemoryBlock physics_block = m_heap.take(megabytes(100));
 
         m_window.init({}, window_block);
 
