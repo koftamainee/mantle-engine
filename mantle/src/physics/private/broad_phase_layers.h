@@ -1,12 +1,13 @@
 #pragma once
 
-// fix-include off
+// fix-includes off
 #include <Jolt/Jolt.h>
-// fix-include on
+// fix-includes on
 
-#include "layers.h"
-#include "Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h"
+#include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
+
 #include "core/types.h"
+#include "layers.h"
 
 namespace mantle {
     namespace BroadPhaseLayers {
