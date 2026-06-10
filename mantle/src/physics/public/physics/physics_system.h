@@ -21,9 +21,9 @@ namespace mantle {
         void destroy();
 
       private:
-        bool          m_is_initialized = false;
+        bool                               m_is_initialized = false;
         ThreadSafeAllocator<TlsfAllocator> m_allocator {};
-        spdlog::logger *m_logger = nullptr;
+        spdlog::logger                    *m_logger = nullptr;
     };
 
 } // namespace mantle

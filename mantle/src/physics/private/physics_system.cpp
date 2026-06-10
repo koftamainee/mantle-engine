@@ -4,9 +4,9 @@
 
 #include <cstdarg>
 
+#include "Jolt/Core/Factory.h"
 #include "Jolt/Jolt.h"
 #include "Jolt/RegisterTypes.h"
-#include "Jolt/Core/Factory.h"
 #include "core/assert.h"
 
 namespace mantle {
@@ -27,14 +27,13 @@ namespace mantle {
             }
         }
 
-        JPH_IF_ENABLE_ASSERTS(
-        bool jolt_assert_failed(const char *expr, const char *msg, const char *file, uint line) {
+        JPH_IF_ENABLE_ASSERTS(bool jolt_assert_failed(const char *expr, const char *msg,
+                                                      const char *file, uint line) {
             if (s_logger) {
                 s_logger->critical("Jolt assert: {}:{}: {} ({})", file, line, msg ? msg : "", expr);
             }
             return true;
-        }
-        )
+        })
 
         void *jolt_alloc(size_t size) { return s_allocator->alloc(size); }
         void  jolt_free(void *ptr) { s_allocator->free(ptr); }

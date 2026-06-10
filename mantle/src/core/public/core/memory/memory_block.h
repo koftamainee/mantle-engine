@@ -41,8 +41,8 @@ namespace mantle {
             static_assert(total > 0);
 
             std::array<MemoryBlock, count> result {};
-            std::array<usize, count> percentages {Percentages...};
-            std::array<usize, count> sizes {};
+            std::array<usize, count>       percentages {Percentages...};
+            std::array<usize, count>       sizes {};
 
             MANTLE_CHECK(ptr != nullptr);
             MANTLE_CHECK(size > 0);
