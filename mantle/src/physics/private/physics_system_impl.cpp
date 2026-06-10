@@ -61,7 +61,6 @@ namespace mantle {
         allocator.init(tlsf_block, "physics system general allocator");
         s_allocator = &allocator;
 
-        // JPH::RegisterDefaultAllocator();
 
         JPH::Allocate = jolt_alloc;
         JPH::Reallocate = jolt_realloc;
