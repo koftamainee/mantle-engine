@@ -13,9 +13,9 @@
 #include <array>
 #include <cstdarg>
 
-#include "core/memory/memory_units.h"
-#include "core/memory/thread_safe_allocator.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/core/memory/thread_safe_allocator.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 
 namespace mantle {
     namespace {

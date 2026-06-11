@@ -2,7 +2,7 @@
 
 #include "vulkan_cpu_allocator.h"
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
 

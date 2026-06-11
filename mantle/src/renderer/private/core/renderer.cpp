@@ -1,18 +1,18 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "renderer/renderer.h"
+#include "mantle/renderer/renderer.h"
 
 #include <spdlog/spdlog.h>
 #include <vulkan/command_recorder.h>
 #include <vulkan/frame_scheduler.h>
 #include <vulkan/vulkan_backend.h>
 
-#include "core/memory/memory_units.h"
-#include "core/memory/pmr/tlsf_resource.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/core/memory/pmr/tlsf_resource.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 #include "frame_graph/frame_graph_pass_context_internal.h"
 #include "frame_graph/render_graph_internal.h"
-#include "renderer/frame_graph.h"
+#include "mantle/renderer/frame_graph.h"
 #include "resources/gpu_resource_manager_internal.h"
 #include "resources/transient_resources.h"
 #include "types.h"

@@ -5,7 +5,7 @@
 #include <vulkan/vulkan_core.h>
 #include <vulkan/vulkan_utils.h>
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 #include "resources/gpu_resource_manager_internal.h"
 
 namespace mantle {

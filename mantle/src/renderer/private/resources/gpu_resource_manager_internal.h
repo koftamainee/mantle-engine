@@ -4,9 +4,9 @@
 
 #include <vulkan/vulkan.h>
 
-#include "core/memory/pmr/tlsf_resource.h"
+#include "mantle/core/memory/pmr/tlsf_resource.h"
 #include "deletion_queue.h"
-#include "renderer/gpu_resource_manager.h"
+#include "mantle/renderer/gpu_resource_manager.h"
 #include "resources.h"
 #include "types.h"
 #include "vulkan_gpu_allocator.h"

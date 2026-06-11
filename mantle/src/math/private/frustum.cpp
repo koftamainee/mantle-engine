@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "math/frustum.h"
+#include "mantle/math/frustum.h"
 
 #include <utility>
 

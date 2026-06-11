@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "math/aabb.h"
+#include "mantle/math/aabb.h"
 
 #include <gtest/gtest.h>
 

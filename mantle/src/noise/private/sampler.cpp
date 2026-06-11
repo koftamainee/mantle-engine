@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "noise/sampler.h"
+#include "mantle/noise/sampler.h"
 
 namespace mantle::detail {
     glm::vec2 seed_offset(u32 seed) {

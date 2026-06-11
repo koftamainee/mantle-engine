@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 
 #include <tlsf.h>
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
 
@@ -48,7 +48,9 @@ namespace mantle {
 
     void TlsfAllocator::free(void *ptr) {
         MANTLE_CHECK(m_is_initialized);
-        MANTLE_CHECK(ptr != nullptr);
+        if (!ptr) {
+            return;
+        }
 
         tlsf_free(m_tlsf, ptr);
     }

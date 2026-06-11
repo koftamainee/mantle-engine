@@ -2,9 +2,9 @@
 
 #include "transient_resources.h"
 
-#include "core/assert.h"
-#include "renderer/frame_graph.h"
-#include "renderer/gpu_resource_manager.h"
+#include "mantle/core/assert.h"
+#include "mantle/renderer/frame_graph.h"
+#include "mantle/renderer/gpu_resource_manager.h"
 
 namespace mantle {
     void TransientResources::init(TlsfResource       *persistent_resource,

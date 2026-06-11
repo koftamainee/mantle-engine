@@ -1,50 +1,37 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "engine/engine.h"
+#include "mantle/engine/engine.h"
 
 #include <algorithm>
 #include <cfloat>
-#include <random>
 #include <string_view>
 
-#include "build_info/build_info.h"
-#include "core/assert.h"
-#include "core/logger.h"
-#include "core/memory/memory_units.h"
-#include "core/memory/thread_safe_allocator.h"
-#include "renderer/blackboard_types.h"
-#include "system_info/system_info.h"
-#include "window/window.h"
-#include "world/light_propagation.h"
+#include "mantle/build_info/build_info.h"
+#include "mantle/camera/math.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/logger.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/input/input.h"
+#include "mantle/renderer/blackboard_types.h"
+#include "mantle/system_info/system_info.h"
+#include "mantle/window/window.h"
+
+#include "simple_renderer.h"
+#include "mantle/ecs/components.h"
 
 namespace mantle {
-    namespace {
-        void get_neighbors(ChunkStorageSystem &storage, glm::ivec3 pos, Chunk *out[6]) {
-            static const glm::ivec3 offsets[6] = {
-                {-1, 0, 0}, {1, 0, 0}, {0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1},
-            };
-            for (u32 i = 0; i < 6; i++) {
-                glm::ivec3 nb_pos = pos + offsets[i];
-                out[i] = storage.has_chunk(nb_pos) ? &storage.get_chunk(nb_pos) : nullptr;
-            }
-        }
+    Engine *Engine::s_instance = nullptr;
 
-        struct GenTask {
-            const ChunkGenerationSystem *gen;
-            Chunk                       *chunk;
-            glm::ivec3                   pos;
-        };
+    Engine *Engine::instance() {
+        return s_instance;
+    }
 
-        void gen_work(ArenaAllocator &, void *data) {
-            auto *d = static_cast<GenTask *>(data);
-            d->gen->generate(*d->chunk, d->pos);
-        }
-
-    } // namespace
-
-    void Engine::init() {
+    void Engine::init(const EngineConfig &cfg) {
         MANTLE_CHECK(!m_is_initialized);
 
+        register_loggers();
+
+        s_instance = this;
         m_logger = spdlog::get("engine").get();
 
         if constexpr (std::string_view(MANTLE_GIT_HASH).ends_with("-dirty")) {
@@ -55,105 +42,46 @@ namespace mantle {
         m_os_memory.init();
         m_heap.init(m_os_memory, heap_total);
 
+        const MemoryBlock engine_block = m_heap.take(kilobytes(64));
+        m_persistent_allocator.init(engine_block);
+        m_heap_resource = TlsfResource(&m_persistent_allocator);
+
+        const MemoryBlock input_block = m_heap.take(kilobytes(256));
+        Input::init(input_block);
+
         const MemoryBlock window_block = m_heap.take(kilobytes(256));
         const MemoryBlock renderer_block = m_heap.take(megabytes(80));
         const MemoryBlock worker_pool_block = m_heap.take(megabytes(32));
         const MemoryBlock physics_block = m_heap.take(megabytes(100));
+        const MemoryBlock sr_block = m_heap.take(megabytes(4));
 
-        m_window.init({}, window_block);
-
-        f32 camera_aspect =
-            static_cast<f32>(m_window.get_width()) / static_cast<f32>(m_window.get_height());
+        m_window.init(cfg.window, window_block);
 
         m_window.set_resize_callback([this](u32 w, u32 h) {
             m_logger->info("Swapchain recreation triggered by window resize: {}x{}", w, h);
             m_renderer.resize_swapchain(w, h);
-            m_ecs.set_camera_aspect(static_cast<f32>(w) / static_cast<f32>(h));
+            m_ecs.foreach<Camera>([w, h](Camera &cam) {
+                cam.aspect = static_cast<f32>(w) / static_cast<f32>(h);
+            });
         });
 
         m_worker_pool.init(8, megabytes(4), worker_pool_block);
 
         m_physics_system.init(physics_block);
-        m_physics_system.add_static_box({0, -0.5f, 0}, {10, 0.5f, 10});
+        m_physics_system.add_static_box({0, 0.0f, 0}, {10, 0.5f, 10});
         m_character.init(m_physics_system, {0.0f, 5.0f, 0.0f});
-        m_ecs.init(m_window, camera_aspect, m_character);
+
+        m_ecs.init();
 
         m_renderer.init(m_window, false, renderer_block);
 
-        {
-            const MemoryBlock chunk_rendering_block = m_heap.take(megabytes(4));
-            const MemoryBlock meshing_block = m_heap.take(megabytes(100));
-            const MemoryBlock chunk_storage_block = m_heap.take(megabytes(16));
+        m_simple_renderer = m_persistent_allocator.emplace<SimpleRenderer>();
+        m_simple_renderer->init(m_renderer, sr_block);
 
-            constexpr u32 max_chunks = 150;
-            constexpr i32 R = 2;
-            constexpr u32 num_chunks = (R * 2 + 1) * (R * 2 + 1) * (R * 2 + 1);
-
-            m_chunk_generation_system.init(std::random_device {}() % 1000);
-            m_chunk_storage_system.init(max_chunks, chunk_storage_block);
-            m_chunk_rendering_system.init(m_renderer, chunk_rendering_block, max_chunks);
-            m_chunk_meshing_system.init(meshing_block);
-
-            m_logger->info("Generating chunks. This might take a while...");
-
-            u64 gen_start = m_window.get_time_ns();
-            {
-                std::vector<GenTask> tasks;
-                tasks.reserve(num_chunks);
-                for (i32 x = -R; x <= R; x++) {
-                    for (i32 y = -R; y <= R; y++) {
-                        for (i32 z = -R; z <= R; z++) {
-                            glm::ivec3 pos(x, y, z);
-                            u32        idx = m_chunk_storage_system.add_chunk(pos);
-                            tasks.push_back({&m_chunk_generation_system,
-                                             &m_chunk_storage_system.get_chunk(idx), pos});
-                            m_worker_pool.submit(gen_work, &tasks.back());
-                        }
-                    }
-                }
-                m_worker_pool.wait();
-            }
-            f32 gen_elapsed = static_cast<f32>(m_window.get_time_ns() - gen_start) / 1e6f;
-            m_logger->info("Generation: {} chunks, {:.2f} ms total, {:.4f} ms avg", num_chunks,
-                           gen_elapsed, gen_elapsed / num_chunks);
-
-            u64 light_start = m_window.get_time_ns();
-            {
-                for (i32 x = -R; x <= R; x++) {
-                    for (i32 y = -R; y <= R; y++) {
-                        for (i32 z = -R; z <= R; z++) {
-                            glm::ivec3 pos(x, y, z);
-                            u32        idx = m_chunk_storage_system.get_index(pos);
-                            init_chunk_light(m_chunk_storage_system.get_chunk(idx));
-                        }
-                    }
-                }
-
-                for (u8 level = 8; level > 0; level--) {
-                    for (i32 x = -R; x <= R; x++) {
-                        for (i32 y = -R; y <= R; y++) {
-                            for (i32 z = -R; z <= R; z++) {
-                                glm::ivec3 pos(x, y, z);
-                                u32        idx = m_chunk_storage_system.get_index(pos);
-                                Chunk     *neighbors[6];
-                                get_neighbors(m_chunk_storage_system, pos, neighbors);
-                                propagate_chunk_light_level(m_chunk_storage_system.get_chunk(idx),
-                                                            neighbors, level);
-                            }
-                        }
-                    }
-                }
-            }
-            f32 light_elapsed = static_cast<f32>(m_window.get_time_ns() - light_start) / 1e6f;
-            m_logger->info("Light propagation: {:.2f} ms", light_elapsed);
-
-            u64 mesh_start = m_window.get_time_ns();
-            m_chunk_meshing_system.upload_dirty(m_renderer, m_chunk_storage_system, &m_worker_pool,
-                                                m_chunk_rendering_system);
-            f32 mesh_elapsed = static_cast<f32>(m_window.get_time_ns() - mesh_start) / 1e6f;
-            m_logger->info("Meshing: {} chunks, {:.2f} ms total, {:.4f} ms avg", num_chunks,
-                           mesh_elapsed, mesh_elapsed / num_chunks);
-        }
+        m_ecs.create_entity("Floor").add<MeshComponent>(0u);
+        m_ecs.create_entity("Capsule")
+            .set<Transform>({.position = {0.0f, 5.0f + 0.8f, 0.0f}})
+            .add<MeshComponent>(1u);
 
         m_is_initialized = true;
         m_logger->info("Engine initialized. Starting the game");
@@ -185,6 +113,8 @@ namespace mantle {
     }
 
     void Engine::run() {
+        MANTLE_CHECK(m_is_initialized);
+
         m_fps_timer = static_cast<f32>(m_window.get_time_ns());
         while (!m_window.should_close()) {
             u64 current_time = m_window.get_time_ns();
@@ -225,12 +155,23 @@ namespace mantle {
             render();
         }
     }
+
     void Engine::destroy() {
         if (m_is_initialized) {
-            m_chunk_meshing_system.destroy();
-            m_chunk_rendering_system.destroy();
-            m_chunk_storage_system.destroy();
-            m_chunk_generation_system.destroy();
+            m_ecs.foreach<ScriptComponent>([this](ScriptComponent &sc) {
+                if (sc.callbacks && sc.callbacks->on_destroy) {
+                    sc.callbacks->on_destroy(*this);
+                }
+            });
+
+            m_simple_renderer->destroy(m_renderer);
+            m_simple_renderer->~SimpleRenderer();
+            m_persistent_allocator.free(m_simple_renderer);
+            m_simple_renderer = nullptr;
+
+            m_persistent_allocator.destroy();
+
+            Input::shutdown();
 
             m_renderer.destroy();
 
@@ -243,14 +184,24 @@ namespace mantle {
             m_window.destroy();
 
             m_is_initialized = false;
+            s_instance = nullptr;
             m_logger->info("Engine destroyed");
+            raw_logger()->info("see you soon~\n");
         }
     }
 
-    void Engine::update(f32 delta_time) {
+    void Engine::update(f32 dt) {
         m_window.update();
-        m_ecs.update(delta_time);
-        m_physics_system.update(delta_time);
+
+        Input::begin_frame(m_window);
+
+        process_awake_phase(dt);
+        process_script_phase(ScriptPhase::PhysicsUpdate, dt);
+
+        m_physics_system.update(dt);
+
+        process_script_phase(ScriptPhase::Update, dt);
+        process_script_phase(ScriptPhase::LateUpdate, dt);
     }
 
     void Engine::render() {
@@ -264,20 +215,32 @@ namespace mantle {
             return;
         }
 
-
-        m_chunk_meshing_system.upload_dirty(m_renderer, m_chunk_storage_system, &m_worker_pool,
-                                            m_chunk_rendering_system);
-
         FrameGraph    graph(&m_renderer.frame_arena());
         FGImageHandle backbuffer = graph.import_image(m_renderer.backbuffer());
         auto [width, height] = m_window.get_framebuffer_size();
 
+        glm::mat4 view_proj(1.0f);
+        m_ecs.foreach<Camera, const Transform>(
+            [&view_proj](Camera &cam, const Transform &t) {
+                glm::vec3 dir;
+                float yawRad = glm::radians(t.rotation.y);
+                float pitchRad = glm::radians(t.rotation.x);
+                dir.x = std::cos(pitchRad) * std::sin(yawRad);
+                dir.y = std::sin(pitchRad);
+                dir.z = -std::cos(pitchRad) * std::cos(yawRad);
+                glm::vec3 target = t.position + dir;
+                glm::mat4 view = glm::lookAt(t.position, target, glm::vec3(0, 1, 0));
+                glm::mat4 proj = glm::perspective(glm::radians(cam.fov), cam.aspect, cam.near, cam.far);
+                proj[1][1] *= -1.0f;
+                view_proj = proj * view;
+            });
+
         auto &bb = graph.blackboard();
         bb.add(BbBackbuffer {backbuffer});
-        bb.add(BbCameraData {m_ecs.camera_view_proj()});
+        bb.add(BbCameraData {view_proj});
         bb.add(BbFramebufferSize {width, height});
 
-        m_chunk_rendering_system.add_passes(graph, bb);
+        m_simple_renderer->add_passes(graph, bb, m_ecs);
 
         m_renderer.execute(graph);
         u64 t2 = m_window.get_time_ns();
@@ -295,5 +258,77 @@ namespace mantle {
         m_fps_begin_accum += static_cast<f32>(t1 - t0) / 1e6f;
         m_fps_exec_accum += static_cast<f32>(t2 - t1) / 1e6f;
         m_fps_end_accum += static_cast<f32>(t3 - t2) / 1e6f;
+    }
+
+    void Engine::process_awake_phase(f32 dt) {
+        (void)dt;
+        m_ecs.foreach<ScriptComponent>(
+            [this](const ScriptComponent &sc) {
+                if (!sc.ready_called && sc.callbacks) {
+                    if (sc.callbacks->on_awake) {
+                        sc.callbacks->on_awake(*this);
+                    }
+                }
+            });
+    }
+
+    void Engine::process_script_phase(ScriptPhase phase, f32 dt) {
+        m_ecs.foreach<ScriptComponent>(
+            [this, phase, dt](ScriptComponent &sc) {
+                if (!sc.callbacks) {
+                    return;
+                }
+                switch (phase) {
+                    case ScriptPhase::PhysicsUpdate:
+                        if (sc.callbacks->on_physics_update) {
+                            sc.callbacks->on_physics_update(*this, dt);
+                        }
+                        break;
+                    case ScriptPhase::Update:
+                        if (!sc.ready_called) {
+                            if (sc.callbacks->on_start) {
+                                sc.callbacks->on_start(*this);
+                            }
+                            sc.ready_called = true;
+                        }
+                        if (sc.callbacks->on_update) {
+                            sc.callbacks->on_update(*this, dt);
+                        }
+                        break;
+                    case ScriptPhase::LateUpdate:
+                        if (sc.callbacks->on_late_update) {
+                            sc.callbacks->on_late_update(*this, dt);
+                        }
+                        break;
+                }
+            });
+    }
+
+    void Engine::register_script(const ScriptCallbacks *callbacks) {
+        m_scripts.push_back(callbacks);
+    }
+
+    Ecs &Engine::ecs() {
+        return m_ecs;
+    }
+
+    const Ecs &Engine::ecs() const {
+        return m_ecs;
+    }
+
+    Window &Engine::window() {
+        return m_window;
+    }
+
+    const Window &Engine::window() const {
+        return m_window;
+    }
+
+    CharacterController &Engine::character() {
+        return m_character;
+    }
+
+    const CharacterController &Engine::character() const {
+        return m_character;
     }
 } // namespace mantle

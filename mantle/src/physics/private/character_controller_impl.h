@@ -8,8 +8,8 @@
 #include <Jolt/Physics/Character/CharacterVirtual.h>
 
 #include "layers.h"
-#include "physics/character_controller.h"
-#include "physics/physics_system.h"
+#include "mantle/physics/character_controller.h"
+#include "mantle/physics/physics_system.h"
 
 namespace mantle {
 

@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/types.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/types.h"
 
 using namespace mantle;
 

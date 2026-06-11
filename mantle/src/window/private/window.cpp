@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "window/window.h"
+#include "mantle/window/window.h"
 
 #include <SDL3/SDL.h>
-#include <core/assert.h>
+#include "mantle/core/assert.h"
 
 #include <array>
 #include <utility>

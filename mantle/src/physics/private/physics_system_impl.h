@@ -10,11 +10,11 @@
 #include <Jolt/Physics/PhysicsSystem.h>
 
 #include "arena_temp_allocator.h"
-#include "core/memory/tlsf_allocator.h"
-#include "physics/physics_system.h"
+#include "mantle/core/memory/tlsf_allocator.h"
+#include "mantle/physics/physics_system.h"
 #include "layers.h"
 #include "broad_phase_layers.h"
-#include "core/memory/memory_units.h"
+#include "mantle/core/memory/memory_units.h"
 
 namespace mantle {
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "build_info/build_info.h"
+#include "mantle/build_info/build_info.h"
 
 #ifndef MANTLE_VERSION
 #define MANTLE_VERSION "unknown"

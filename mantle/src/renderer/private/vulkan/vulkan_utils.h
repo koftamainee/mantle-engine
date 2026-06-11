@@ -5,8 +5,8 @@
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
-#include "core/types.h"
-#include "renderer/types.h"
+#include "mantle/core/types.h"
+#include "mantle/renderer/types.h"
 #include "types.h"
 
 namespace mantle {

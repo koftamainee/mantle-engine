@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "system_info/system_info.h"
+#include "mantle/system_info/system_info.h"
 
 #include <cstdint>
 #include <cstdlib>

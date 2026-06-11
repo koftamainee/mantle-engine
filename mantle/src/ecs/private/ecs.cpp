@@ -1,26 +1,19 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "ecs/ecs.h"
+#include "mantle/ecs/ecs.h"
 
-#include "camera/camera.h"
-#include "camera/components.h"
-#include "core/assert.h"
-#include "input/input.h"
-#include "physics/character_controller.h"
-#include "physics/physics_system.h"
-#include "player/player.h"
-#include "rumbling/rumbling.h"
+#include "mantle/core/assert.h"
+#include "mantle/ecs/components.h"
 
 namespace mantle {
-    void Ecs::init(Window &window, f32 camera_aspect, CharacterController &character) {
+    void Ecs::init() {
         MANTLE_CHECK(!m_is_initialized);
         m_logger = spdlog::get("ecs").get();
         m_is_initialized = true;
 
-        bootstrap_input(m_world, window);
-        bootstrap_rumbling(m_world, window);
-        bootstrap_camera(m_world, camera_aspect);
-        bootstrap_player(m_world, character);
+        m_world.component<Transform>();
+        m_world.component<MeshComponent>();
+        m_world.component<Camera>();
 
         m_logger->info("Ecs is initialized");
     }
@@ -32,13 +25,17 @@ namespace mantle {
         }
     }
 
-    void Ecs::update(f32 delta_time) {
+    void Ecs::update(f32 dt) {
         MANTLE_CHECK(m_is_initialized);
-        static_cast<void>(m_world.progress(delta_time)); // xd
+        static_cast<void>(m_world.progress(dt));
     }
 
-    glm::mat4 Ecs::camera_view_proj() const { return m_world.get<Camera>().view_proj; }
+    Entity Ecs::create_entity(std::string_view name) {
+        flecs::entity e = name.empty() ? m_world.entity() : m_world.entity(name.data());
+        return Entity(e);
+    }
 
-    void Ecs::set_camera_aspect(f32 aspect) { m_world.get_mut<Camera>().aspect = aspect; }
-
+    Entity Ecs::lookup(std::string_view name) const {
+        return Entity(m_world.lookup(name.data()));
+    }
 } // namespace mantle

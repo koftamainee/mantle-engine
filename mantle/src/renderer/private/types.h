@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include "core/types.h"
-#include "renderer/types.h"
+#include "mantle/core/types.h"
+#include "mantle/renderer/types.h"
 
 #include <span>
 
-#include "core/enum_flags.h"
+#include "mantle/core/enum_flags.h"
 
 namespace mantle {
     struct ImageResource;

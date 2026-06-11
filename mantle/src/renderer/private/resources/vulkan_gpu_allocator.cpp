@@ -6,7 +6,7 @@
 
 #include <vma/vk_mem_alloc.h>
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 #include "../vulkan/vkassert.h"
 
 namespace mantle {

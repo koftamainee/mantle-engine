@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "renderer/frame_graph.h"
+#include "mantle/renderer/frame_graph.h"
 
 namespace mantle {
 

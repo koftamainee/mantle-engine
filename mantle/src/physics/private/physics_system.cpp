@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "physics/physics_system.h"
+#include "mantle/physics/physics_system.h"
 
 #include <cstdarg>
 
@@ -11,15 +11,17 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 
-#include "core/assert.h"
-#include "core/memory/memory_units.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/memory/memory_units.h"
 #include "physics_system_impl.h"
 
 namespace mantle {
     void PhysicsSystem::init(MemoryBlock block) {
         MANTLE_CHECK(!m_is_initialized);
 
-        m_impl = new Impl(block); // fuck it we use global heap
+        auto [self_block, impl_block] = block.split<kilobytes(64), megabytes(96)>();
+        m_phys_allocator.init(self_block, "physics system");
+        m_impl = m_phys_allocator.emplace<Impl>(impl_block);
         m_is_initialized = true;
         m_impl->logger->info("Physics system initialized");
     }
@@ -38,7 +40,9 @@ namespace mantle {
         if (m_is_initialized) {
             m_is_initialized = false;
 
-            delete m_impl;
+            m_impl->~Impl();
+            m_phys_allocator.free(m_impl);
+            m_phys_allocator.destroy();
 
             spdlog::get("physics")->info("Physics system destroyed");
         }

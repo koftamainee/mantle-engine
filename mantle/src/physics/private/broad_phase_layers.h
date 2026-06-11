@@ -8,7 +8,7 @@
 
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 
-#include "core/types.h"
+#include "mantle/core/types.h"
 #include "layers.h"
 
 namespace mantle {

@@ -2,11 +2,11 @@
 
 #include "vulkan/vulkan_context.h"
 
-#include <core/assert.h>
+#include "mantle/core/assert.h"
 #include <spdlog/spdlog.h>
 
-#include "core/memory/pmr/arena_resource.h"
-#include "core/memory/scope_arena.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
+#include "mantle/core/memory/scope_arena.h"
 #include "vkassert.h"
 
 namespace {

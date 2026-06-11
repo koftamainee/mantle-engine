@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "renderer/frame_graph.h"
+#include "mantle/renderer/frame_graph.h"
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 #include "frame_graph/render_graph_internal.h"
 
 namespace mantle {

@@ -2,8 +2,8 @@
 
 #include "frame_scheduler.h"
 
-#include "core/assert.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 #include "resources/gpu_resource_manager_internal.h"
 #include "vkassert.h"
 #include "vulkan_backend.h"

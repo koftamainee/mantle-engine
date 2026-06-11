@@ -2,16 +2,16 @@
 
 #pragma once
 
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/tlsf_allocator.h"
-#include "core/types.h"
-#include "renderer/types.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/tlsf_allocator.h"
+#include "mantle/core/types.h"
+#include "mantle/renderer/types.h"
 #include "vulkan_context.h"
 #include "vulkan_cpu_allocator.h"
 #include "vulkan_device.h"
 #include "vulkan_swapchain.h"
-#include "window/window.h"
+#include "mantle/window/window.h"
 
 namespace spdlog {
     class logger;

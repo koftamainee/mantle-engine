@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/memory/os_memory.h"
-#include "core/assert.h"
+#include "mantle/core/memory/os_memory.h"
+#include "mantle/core/assert.h"
 
 #ifdef _WIN32
 #include <windows.h>

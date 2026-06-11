@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "renderer/gpu_resource_manager.h"
+#include "mantle/renderer/gpu_resource_manager.h"
 
 #include <vulkan/vkassert.h>
 #include <vulkan/vulkan_backend.h>
 #include <vulkan/vulkan_utils.h>
 
-#include "core/assert.h"
-#include "core/memory/memory_units.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 #include "gpu_resource_manager_internal.h"
 
 namespace mantle {

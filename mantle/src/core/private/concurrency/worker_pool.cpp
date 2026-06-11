@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/concurrency/worker_pool.h"
+#include "mantle/core/concurrency/worker_pool.h"
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
 

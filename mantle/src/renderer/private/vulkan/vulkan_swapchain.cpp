@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <array>
 
-#include "core/assert.h"
-#include "core/memory/scope_arena.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/memory/scope_arena.h"
 #include "vkassert.h"
 #include "../vulkan/vulkan_types.h"
 

@@ -6,11 +6,11 @@
 
 #include <span>
 
-#include "core/memory/arena_allocator.h"
-#include "core/memory/pmr/arena_resource.h"
-#include "core/types.h"
-#include "renderer/gpu_resource_manager.h"
-#include "renderer/types.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
+#include "mantle/core/types.h"
+#include "mantle/renderer/gpu_resource_manager.h"
+#include "mantle/renderer/types.h"
 #include "resources/resources.h"
 #include "types.h"
 

@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "core/types.h"
+#include "mantle/core/types.h"
 
 namespace mantle {
 

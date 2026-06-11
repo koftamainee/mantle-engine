@@ -7,13 +7,13 @@
 #include <span>
 #include <vector>
 
-#include "core/macros.h"
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/pmr/arena_resource.h"
-#include "core/memory/pmr/tlsf_resource.h"
-#include "core/memory/tlsf_allocator.h"
-#include "core/types.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
+#include "mantle/core/memory/pmr/tlsf_resource.h"
+#include "mantle/core/memory/tlsf_allocator.h"
+#include "mantle/core/types.h"
 #include "vulkan_types.h"
 
 namespace spdlog {

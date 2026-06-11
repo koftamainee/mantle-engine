@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 #include "types.h"
 
 namespace mantle {

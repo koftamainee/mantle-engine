@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "math/plane.h"
+#include "mantle/math/plane.h"
 
 #include <glm/glm.hpp>
 

@@ -8,10 +8,10 @@
 
 #include <Jolt/Core/TempAllocator.h>
 
-#include "core/macros.h"
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/thread_safe_allocator.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/thread_safe_allocator.h"
 
 namespace mantle {
     class ArenaTempAllocator final : public JPH::TempAllocator {

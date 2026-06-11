@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/memory/virtual_heap.h"
+#include "mantle/core/memory/virtual_heap.h"
 
 #include <gtest/gtest.h>
 
-#include "core/memory/os_memory.h"
-#include "core/types.h"
+#include "mantle/core/memory/os_memory.h"
+#include "mantle/core/types.h"
 
 using namespace mantle;
 

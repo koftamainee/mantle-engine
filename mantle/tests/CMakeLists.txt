@@ -25,8 +25,5 @@ endfunction()
 mantle_test(NAME aabb DEPS math)
 mantle_test(NAME frustum DEPS math)
 
-mantle_test(NAME bgm DEPS world core)
-target_include_directories(bgm PRIVATE "${CMAKE_SOURCE_DIR}/mantle/src/world/private")
-
 mantle_test(NAME arena DEPS core)
 mantle_test(NAME virtual_heap DEPS core)

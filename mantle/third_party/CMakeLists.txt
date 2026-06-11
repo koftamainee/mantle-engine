@@ -1,3 +1,4 @@
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory(glm)
 
 add_subdirectory(LuaJIT)
@@ -13,6 +14,7 @@ set(FLECS_STATIC ON CACHE BOOL "" FORCE)
 set(FLECS_TESTS OFF CACHE BOOL "" FORCE)
 set(FLECS_PIC ON CACHE BOOL "" FORCE)
 add_subdirectory(flecs)
+target_compile_options(flecs_static PRIVATE -ftls-model=global-dynamic)
 add_library(flecs ALIAS flecs_static)
 
 
@@ -28,6 +30,7 @@ set(SPDLOG_BUILD_BENCH       OFF CACHE BOOL "" FORCE)
 set(SPDLOG_FMT_EXTERNAL      OFF CACHE BOOL "" FORCE)
 set(SPDLOG_NO_EXCEPTIONS     ON  CACHE BOOL "" FORCE)
 add_subdirectory(spdlog)
+target_compile_options(spdlog PRIVATE -fPIC -ftls-model=global-dynamic)
 target_compile_definitions(spdlog PUBLIC SPDLOG_NO_EXCEPTIONS)
 
 
@@ -40,6 +43,8 @@ add_subdirectory(googletest)
 set(PHYSICS_REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/JoltPhysics)
 set(ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 include(${PHYSICS_REPO_ROOT}/Jolt/Jolt.cmake)
+target_compile_options(Jolt PRIVATE -fPIC)
+target_compile_options(Jolt PRIVATE -ftls-model=global-dynamic)
 
 
 add_library(tlsf STATIC ${CMAKE_CURRENT_SOURCE_DIR}/tlsf/tlsf.c)

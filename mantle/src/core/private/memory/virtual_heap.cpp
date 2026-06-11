@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/memory/virtual_heap.h"
+#include "mantle/core/memory/virtual_heap.h"
 
 #include <cstddef>
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
 

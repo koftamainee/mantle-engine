@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "core/memory/arena_allocator.h"
+#include "mantle/core/memory/arena_allocator.h"
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
 

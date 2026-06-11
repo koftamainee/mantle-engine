@@ -7,8 +7,8 @@
 
 #include <fstream>
 
-#include "core/assert.h"
-#include "renderer/types.h"
+#include "mantle/core/assert.h"
+#include "mantle/renderer/types.h"
 #include "types.h"
 
 namespace mantle {

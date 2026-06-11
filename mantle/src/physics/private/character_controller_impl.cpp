@@ -38,13 +38,14 @@ namespace mantle {
 
     void CharacterController::init(PhysicsSystem &physics, glm::vec3 start_pos) {
         MANTLE_CHECK(!m_is_initialized);
-        m_impl = new Impl(physics, start_pos); // fuck we use global heap
+        m_impl = physics.m_phys_allocator.emplace<Impl>(physics, start_pos);
         m_is_initialized = true;
     }
 
     void CharacterController::destroy() {
         if (m_is_initialized) {
-            delete m_impl;
+            m_impl->~Impl();
+            m_impl->physics_system->m_phys_allocator.free(m_impl);
             m_impl = nullptr;
             m_is_initialized = false;
         }

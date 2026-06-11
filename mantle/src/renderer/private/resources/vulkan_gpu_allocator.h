@@ -5,8 +5,8 @@
 #include <vma/vk_mem_alloc.h>
 #include <vulkan/vulkan.h>
 
-#include "core/macros.h"
-#include "core/types.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/types.h"
 
 namespace spdlog {
     class logger;

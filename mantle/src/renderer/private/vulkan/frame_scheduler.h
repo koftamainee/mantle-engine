@@ -7,11 +7,11 @@
 #include <vector>
 
 #include "command_recorder.h"
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/pmr/arena_resource.h"
-#include "core/memory/tlsf_allocator.h"
-#include "core/types.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
+#include "mantle/core/memory/tlsf_allocator.h"
+#include "mantle/core/types.h"
 
 namespace spdlog {
     class logger;

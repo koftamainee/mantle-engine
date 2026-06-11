@@ -54,3 +54,4 @@ include(cmake/gen_error_codes.cmake)
 
 enable_testing()
 add_subdirectory(mantle)
+add_subdirectory(game)

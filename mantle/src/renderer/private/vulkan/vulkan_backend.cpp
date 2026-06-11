@@ -4,9 +4,9 @@
 
 #include <vulkan/vulkan_utils.h>
 
-#include "core/assert.h"
-#include "core/memory/memory_units.h"
-#include "core/memory/scope_arena.h"
+#include "mantle/core/assert.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/core/memory/scope_arena.h"
 #include "vkassert.h"
 
 namespace mantle {

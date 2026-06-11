@@ -4,9 +4,9 @@
 
 #include <vector>
 
-#include "core/macros.h"
-#include "core/memory/pmr/tlsf_resource.h"
-#include "renderer/types.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/memory/pmr/tlsf_resource.h"
+#include "mantle/renderer/types.h"
 
 namespace mantle {
     class GPUResourceManager;

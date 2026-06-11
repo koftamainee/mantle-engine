@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Mantle. All rights reserved.
 
-#include "math/aabb.h"
+#include "mantle/math/aabb.h"
 
-#include "core/assert.h"
+#include "mantle/core/assert.h"
 
 namespace mantle {
     bool AABB::intersects(const AABB &other) const {

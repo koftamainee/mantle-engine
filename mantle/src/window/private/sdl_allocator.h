@@ -4,9 +4,9 @@
 
 #include <SDL3/SDL_stdinc.h>
 
-#include "core/macros.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 
 namespace mantle {
 

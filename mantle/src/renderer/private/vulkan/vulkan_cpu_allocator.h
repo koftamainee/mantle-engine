@@ -4,8 +4,8 @@
 
 #include <vulkan/vulkan.h>
 
-#include "core/macros.h"
-#include "core/memory/tlsf_allocator.h"
+#include "mantle/core/macros.h"
+#include "mantle/core/memory/tlsf_allocator.h"
 
 namespace mantle {
 

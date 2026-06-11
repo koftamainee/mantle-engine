@@ -6,10 +6,10 @@
 #include <ranges>
 #include <vector>
 
-#include "core/memory/arena_allocator.h"
-#include "core/memory/memory_block.h"
-#include "core/memory/memory_units.h"
-#include "core/memory/pmr/arena_resource.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/memory_block.h"
+#include "mantle/core/memory/memory_units.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
 
 namespace mantle {
     template <typename F>

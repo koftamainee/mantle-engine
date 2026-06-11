@@ -4,10 +4,10 @@
 
 #include <vulkan/command_recorder.h>
 
-#include "core/memory/arena_allocator.h"
-#include "core/memory/pmr/arena_resource.h"
-#include "renderer/frame_graph.h"
-#include "renderer/types.h"
+#include "mantle/core/memory/arena_allocator.h"
+#include "mantle/core/memory/pmr/arena_resource.h"
+#include "mantle/renderer/frame_graph.h"
+#include "mantle/renderer/types.h"
 #include "resources/gpu_resource_manager_internal.h"
 #include "resources/transient_resources.h"
 
