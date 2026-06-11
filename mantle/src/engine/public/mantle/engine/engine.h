@@ -3,13 +3,13 @@
 #pragma once
 
 #include "mantle/engine/engine.h"
-#include "flecs.h"
 
-#include "mantle/input/input_system.h"
+#include "flecs.h"
 #include "mantle/core/concurrency/worker_pool.h"
 #include "mantle/core/memory/pmr/tlsf_resource.h"
 #include "mantle/core/memory/tlsf_allocator.h"
 #include "mantle/core/memory/virtual_heap.h"
+#include "mantle/input/input_system.h"
 #include "mantle/physics/character_controller.h"
 #include "mantle/physics/physics_system.h"
 #include "mantle/renderer/renderer.h"
@@ -35,7 +35,7 @@ namespace mantle {
         void destroy();
 
         flecs::world &world();
-        InputSystem &input_system();
+        InputSystem  &input_system();
 
       private:
         void update(f32 dt);
@@ -54,8 +54,8 @@ namespace mantle {
 
         PhysicsSystem       m_physics_system {};
         CharacterController m_character {};
-        flecs::world m_world {};
-        InputSystem m_input {};
+        flecs::world        m_world {};
+        InputSystem         m_input {};
 
         Renderer m_renderer {};
 

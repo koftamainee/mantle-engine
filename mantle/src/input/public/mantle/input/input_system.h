@@ -1,3 +1,5 @@
+// Copyright (c) 2026 Mantle. All rights reserved.
+
 #pragma once
 
 #include <optional>
@@ -48,10 +50,10 @@ namespace mantle {
             std::optional<Key>         axis_positive;
             std::optional<MouseAxis>   mouse_axis;
             f32                        mouse_sensitivity = 1.0f;
-            f32                        mouse_deadzone    = 0.0f;
+            f32                        mouse_deadzone = 0.0f;
             // threshold for is_pressed / is_just_pressed on mouse axes
             // (in normalized [-1,1] space after sensitivity is applied)
-            f32                        mouse_threshold   = 0.01f;
+            f32 mouse_threshold = 0.01f;
         };
 
         struct ControllerActionBinding {
@@ -106,7 +108,7 @@ namespace mantle {
 
         std::vector<ActionBinding> m_bindings;
 
-        DevicePreference m_preference    = DevicePreference::LastUsed;
+        DevicePreference m_preference = DevicePreference::LastUsed;
         ActiveDevice     m_active_device = ActiveDevice::KeyboardMouse;
 
         f32 m_mouse_norm_x = 1.0f;

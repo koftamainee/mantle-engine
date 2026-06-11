@@ -1,7 +1,6 @@
 #pragma once
-#include "mantle/input/input_system.h"
 
-// clang-format off
+#include "mantle/input/input_system.h"
 
 namespace game {
     MANTLE_ACTIONS(GameAction)

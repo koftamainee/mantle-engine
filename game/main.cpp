@@ -1,7 +1,7 @@
 #include "actions.h"
+#include "flecs.h"
 #include "mantle/core/types.h"
 #include "mantle/ecs/components.h"
-#include "flecs.h"
 #include "mantle/engine/engine.h"
 #include "mantle/window/window.h"
 

@@ -2,9 +2,9 @@
 
 #include "mantle/engine/engine.h"
 
-#include <flecs.h>
 #include <algorithm>
 #include <cfloat>
+#include <flecs.h>
 #include <string_view>
 
 #include "mantle/build_info/build_info.h"
