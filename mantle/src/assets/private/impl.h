@@ -17,13 +17,12 @@
 #include <mintload/mmat.h>
 #include <mintload/mmesh.h>
 #include <mintload/mscb.h>
+#include <spdlog/spdlog.h>
 
 #include <cstdio>
 #include <memory_resource>
 #include <string>
 #include <vector>
-
-#include <spdlog/spdlog.h>
 
 #include "mantle/assets/asset_manager.h"
 #include "mantle/assets/types.h"
@@ -36,32 +35,32 @@
 namespace mantle {
 
     struct LoadedMesh {
-        MintMesh                        mint_mesh {};
-        MeshData                        data {};
+        MintMesh mint_mesh {};
+        MeshData data {};
 
         bool loaded = false;
     };
 
     struct LoadedMaterial {
-        MintMaterial                        mint_mat {};
-        MaterialData                        data {};
+        MintMaterial mint_mat {};
+        MaterialData data {};
 
         bool loaded = false;
     };
 
     struct LoadedScene {
-        MintScb                                                     scb {};
-        std::pmr::vector<MeshHandle>                                entity_mesh_handles {};
-        std::pmr::vector<std::pmr::vector<MaterialHandle>>          entity_material_handles {};
-        std::string                                                 base_path {};
+        MintScb                                            scb {};
+        std::pmr::vector<MeshHandle>                       entity_mesh_handles {};
+        std::pmr::vector<std::pmr::vector<MaterialHandle>> entity_material_handles {};
+        std::string                                        base_path {};
 
         bool loaded = false;
     };
 
     struct AssetManager::Impl {
-        Renderer                                   *renderer = nullptr;
-        spdlog::logger                             *logger = nullptr;
-        std::pmr::polymorphic_allocator<std::byte>  alloc {};
+        Renderer                                  *renderer = nullptr;
+        spdlog::logger                            *logger = nullptr;
+        std::pmr::polymorphic_allocator<std::byte> alloc {};
 
         std::pmr::vector<LoadedMesh>     meshes {};
         std::pmr::vector<LoadedMaterial> materials {};
@@ -89,7 +88,9 @@ namespace mantle {
 
             // Check if already loaded
             for (u32 i = 0; i < meshes.size(); i++) {
-                if (!meshes[i].loaded) continue;
+                if (!meshes[i].loaded) {
+                    continue;
+                }
                 if (meshes[i].data.vertex_buffer.is_valid()) {
                     // We could compare UUIDs, but for now just assume unique
                 }
@@ -101,7 +102,7 @@ namespace mantle {
             auto &lm = meshes[idx];
 
             // Load .mmesh
-            std::string path = base + "/meshes/" + uuid_str + ".mmesh";
+            std::string    path = base + "/meshes/" + uuid_str + ".mmesh";
             MintloadResult r = mintload_MmeshLoad(path.c_str(), &lm.mint_mesh);
             if (r != MINTLOAD_SUCCESS) {
                 logger->error("Failed to load mesh: {} (err={})", path, static_cast<int>(r));
@@ -109,7 +110,7 @@ namespace mantle {
             }
 
             // Create GPU vertex buffer
-            usize vertex_bytes = lm.mint_mesh.vertex_count * 48; // fixed stride
+            usize      vertex_bytes = lm.mint_mesh.vertex_count * 48; // fixed stride
             BufferDesc vb_desc = {
                 .size = vertex_bytes,
                 .usage = BufferUsage::Vertex,
@@ -117,10 +118,10 @@ namespace mantle {
             };
             lm.data.vertex_buffer = renderer->resource_manager().create_buffer(vb_desc, true);
             renderer->resource_manager().update_buffer(lm.data.vertex_buffer,
-                                                        lm.mint_mesh.vertex_data, vertex_bytes);
+                                                       lm.mint_mesh.vertex_data, vertex_bytes);
 
             // Create GPU index buffer
-            usize index_bytes = lm.mint_mesh.index_count * sizeof(u32);
+            usize      index_bytes = lm.mint_mesh.index_count * sizeof(u32);
             BufferDesc ib_desc = {
                 .size = index_bytes,
                 .usage = BufferUsage::Index,
@@ -128,7 +129,7 @@ namespace mantle {
             };
             lm.data.index_buffer = renderer->resource_manager().create_buffer(ib_desc, true);
             renderer->resource_manager().update_buffer(lm.data.index_buffer,
-                                                        lm.mint_mesh.index_data, index_bytes);
+                                                       lm.mint_mesh.index_data, index_bytes);
 
             lm.data.vertex_count = lm.mint_mesh.vertex_count;
             lm.data.index_count = lm.mint_mesh.index_count;
@@ -166,7 +167,7 @@ namespace mantle {
             materials.push_back({});
             auto &lm = materials[idx];
 
-            std::string path = base + "/materials/" + uuid_str + ".mmat";
+            std::string    path = base + "/materials/" + uuid_str + ".mmat";
             MintloadResult r = mintload_MmatLoad(path.c_str(), &lm.mint_mat);
             if (r != MINTLOAD_SUCCESS) {
                 logger->error("Failed to load material: {} (err={})", path, static_cast<int>(r));

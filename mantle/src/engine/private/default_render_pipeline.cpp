@@ -14,13 +14,12 @@
 
 #include "default_render_pipeline.h"
 
-#include <cstdio>
-#include <vector>
-
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <cstdio>
 #include <flecs.h>
+#include <vector>
 
 #include "mantle/core/assert.h"
 #include "mantle/core/logger.h"
@@ -33,7 +32,7 @@
 namespace mantle {
 
     DefaultRenderPipeline::DefaultRenderPipeline(flecs::world &world, AssetManager &assets,
-                                                  Renderer &renderer) :
+                                                 Renderer &renderer) :
         m_world(world),
         m_assets(assets),
         m_asset_base_path("assets"),
@@ -66,7 +65,7 @@ namespace mantle {
 
     void DefaultRenderPipeline::create_pipeline(Renderer &renderer) {
         auto &rm = renderer.resource_manager();
-        auto si = renderer.get_swapchain_info();
+        auto  si = renderer.get_swapchain_info();
 
         std::string vert_path = m_asset_base_path + "/shaders/debug_mesh.spv";
         std::string frag_path = m_asset_base_path + "/shaders/debug_mesh.spv";
@@ -108,7 +107,7 @@ namespace mantle {
         };
 
         VertexAttribute attributes[] = {attr};
-        VertexBinding bindings[] = {binding};
+        VertexBinding   bindings[] = {binding};
 
         ColorBlendAttachment blend_attachment = {
             .blend_enable = false,
@@ -122,17 +121,19 @@ namespace mantle {
             .shaders = shader_modules,
             .vertex_input = {.bindings = bindings, .attributes = attributes},
             .input_assembly = {.topology = PrimitiveTopology::TriangleList},
-            .rasterization = {
-                .polygon_mode = PolygonMode::Fill,
-                .cull_mode = CullMode::Back,
-                .front_face = FrontFace::CounterClockwise,
-            },
+            .rasterization =
+                {
+                    .polygon_mode = PolygonMode::Fill,
+                    .cull_mode = CullMode::Back,
+                    .front_face = FrontFace::CounterClockwise,
+                },
             .multisample = {.rasterization_samples = SampleCount::x1},
-            .depth_stencil = {
-                .depth_test_enable = true,
-                .depth_write_enable = true,
-                .depth_compare_op = CompareOp::Less,
-            },
+            .depth_stencil =
+                {
+                    .depth_test_enable = true,
+                    .depth_write_enable = true,
+                    .depth_compare_op = CompareOp::Less,
+                },
             .color_blend = {.attachments = blend_attachments},
             .color_formats = color_formats,
             .depth_format = ImageFormat::D32,
@@ -169,7 +170,7 @@ namespace mantle {
             FGBufferHandle vertex;
             FGBufferHandle index;
         };
-        auto &arena = graph.arena();
+        auto     &arena = graph.arena();
         MeshPair *mesh_buffers =
             static_cast<MeshPair *>(arena.push(mesh_count * sizeof(MeshPair), alignof(MeshPair)));
 
@@ -197,8 +198,8 @@ namespace mantle {
                 auto &backbuffer = bb.get<BbBackbuffer>();
                 builder.write(backbuffer.handle, WriteUsage::ColorAttachment);
             },
-            [&bb, mesh_count, mesh_buffers, &debug_pipeline, &asset_meshes, this](
-                FGPassContext &ctx, const OpaqueData &data) {
+            [&bb, mesh_count, mesh_buffers, &debug_pipeline, &asset_meshes,
+             this](FGPassContext &ctx, const OpaqueData &data) {
                 auto &backbuffer = bb.get<BbBackbuffer>();
                 auto &fb_size = bb.get<BbFramebufferSize>();
                 auto &camera = bb.get<BbCameraData>();

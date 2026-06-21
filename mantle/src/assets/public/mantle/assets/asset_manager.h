@@ -48,7 +48,7 @@ namespace mantle {
                                   LocalTransform transform = {});
 
         // Access for render pipeline
-        u32            mesh_count() const;
+        u32             mesh_count() const;
         const MeshData &mesh_data_by_index(u32 index) const;
         const MeshData *mesh_data(MeshHandle handle) const;
 
@@ -58,7 +58,7 @@ namespace mantle {
 
         bool m_is_initialized = false;
         struct Impl;
-        Impl *m_impl = nullptr;
+        Impl           *m_impl = nullptr;
         spdlog::logger *m_logger = nullptr;
     };
 

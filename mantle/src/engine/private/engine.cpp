@@ -212,12 +212,24 @@ namespace mantle {
         {
             f32 yaw_speed = 0.0f, pitch_speed = 0.0f, dolly_speed = 0.0f;
 
-            if (m_window.is_key_pressed(Key::Left))  yaw_speed = -1.0f;
-            if (m_window.is_key_pressed(Key::Right)) yaw_speed = 1.0f;
-            if (m_window.is_key_pressed(Key::Up))    pitch_speed = 1.0f;
-            if (m_window.is_key_pressed(Key::Down))  pitch_speed = -1.0f;
-            if (m_window.is_key_pressed(Key::Q))     dolly_speed = 1.0f;
-            if (m_window.is_key_pressed(Key::E))     dolly_speed = -1.0f;
+            if (m_window.is_key_pressed(Key::Left)) {
+                yaw_speed = -1.0f;
+            }
+            if (m_window.is_key_pressed(Key::Right)) {
+                yaw_speed = 1.0f;
+            }
+            if (m_window.is_key_pressed(Key::Up)) {
+                pitch_speed = 1.0f;
+            }
+            if (m_window.is_key_pressed(Key::Down)) {
+                pitch_speed = -1.0f;
+            }
+            if (m_window.is_key_pressed(Key::Q)) {
+                dolly_speed = 1.0f;
+            }
+            if (m_window.is_key_pressed(Key::E)) {
+                dolly_speed = -1.0f;
+            }
 
             m_camera_yaw += yaw_speed * 60.0f * dt;
             m_camera_pitch += pitch_speed * 60.0f * dt;
@@ -236,8 +248,8 @@ namespace mantle {
 
             glm::mat4 view = glm::lookAt(eye, m_camera_target, glm::vec3(0, 1, 0));
 
-            f32 aspect = static_cast<f32>(m_window.get_width()) /
-                         static_cast<f32>(m_window.get_height());
+            f32 aspect =
+                static_cast<f32>(m_window.get_width()) / static_cast<f32>(m_window.get_height());
             glm::mat4 proj = glm::perspective(glm::radians(60.0f), aspect, 0.1f, 1000.0f);
             proj[1][1] *= -1.0f; // Vulkan NDC
 

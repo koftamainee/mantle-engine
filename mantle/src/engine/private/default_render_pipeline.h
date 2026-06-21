@@ -49,7 +49,7 @@ namespace mantle {
         AssetManager          &m_assets;
         std::string            m_asset_base_path;
         GraphicsPipelineHandle m_debug_pipeline {};
-        spdlog::logger       *m_logger = nullptr;
+        spdlog::logger        *m_logger = nullptr;
     };
 
 } // namespace mantle

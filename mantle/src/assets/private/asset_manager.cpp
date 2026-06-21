@@ -14,14 +14,13 @@
 
 #include "mantle/assets/asset_manager.h"
 
-#include "impl.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <spdlog/spdlog.h>
 
 #include <flecs.h>
 
-#include <spdlog/spdlog.h>
+#include "impl.h"
 
 namespace mantle {
 
@@ -58,12 +57,12 @@ namespace mantle {
             for (auto &mesh : m_impl->meshes) {
                 if (mesh.loaded) {
                     if (mesh.data.vertex_buffer.is_valid()) {
-                        m_impl->renderer->resource_manager().destroy_buffer(
-                            mesh.data.vertex_buffer, true);
+                        m_impl->renderer->resource_manager().destroy_buffer(mesh.data.vertex_buffer,
+                                                                            true);
                     }
                     if (mesh.data.index_buffer.is_valid()) {
-                        m_impl->renderer->resource_manager().destroy_buffer(
-                            mesh.data.index_buffer, true);
+                        m_impl->renderer->resource_manager().destroy_buffer(mesh.data.index_buffer,
+                                                                            true);
                     }
                     mintload_MmeshUnload(&mesh.mint_mesh);
                     mesh.loaded = false;
@@ -110,7 +109,7 @@ namespace mantle {
                     // [24..] material UUIDs
 
                     const uint8_t *mesh_uuid = comp.data;
-                    u32 mesh_idx = m_impl->find_or_load_mesh(mesh_uuid, ls.base_path);
+                    u32            mesh_idx = m_impl->find_or_load_mesh(mesh_uuid, ls.base_path);
 
                     MeshHandle mh;
                     mh.index = mesh_idx;
@@ -160,7 +159,7 @@ namespace mantle {
         }
 
         auto &ls = m_impl->scenes[scene.index];
-        u32 entity_count = mintload_MscbEntityCount(&ls.scb);
+        u32   entity_count = mintload_MscbEntityCount(&ls.scb);
 
         std::pmr::vector<flecs::entity> entities(ls.entity_mesh_handles.get_allocator().resource());
         entities.reserve(entity_count);
@@ -168,7 +167,7 @@ namespace mantle {
         // First pass: create all entities
         for (u32 ei = 0; ei < entity_count; ei++) {
             MintScbEntity mentity = mintload_MscbEntity(&ls.scb, ei);
-            auto e = world.entity();
+            auto          e = world.entity();
             if (mentity.name && mentity.name_len > 0) {
                 e.set_name(std::string_view(mentity.name, mentity.name_len).data());
             }
