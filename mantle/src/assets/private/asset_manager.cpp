@@ -228,13 +228,13 @@ namespace mantle {
         return &m_impl->meshes[handle.index].data;
     }
 
-    BufferHandle AssetManager::build_material_buffer() {
-        return m_impl->build_material_buffer();
-    }
+    BufferHandle AssetManager::build_material_buffer() { return m_impl->build_material_buffer(); }
 
     void AssetManager::collect_pending_uploads(std::vector<TextureUpload> &out) {
         for (auto &mat : m_impl->materials) {
-            if (!mat.loaded) continue;
+            if (!mat.loaded) {
+                continue;
+            }
             for (auto &tu : mat.texture_uploads) {
                 TextureUpload copy;
                 copy.staging = tu.staging;

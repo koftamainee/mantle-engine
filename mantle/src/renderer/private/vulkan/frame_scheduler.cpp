@@ -151,14 +151,14 @@ namespace mantle {
 
         VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
         VkSubmitInfo         submit_info = {
-                    .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-                    .waitSemaphoreCount = 1,
-                    .pWaitSemaphores = &frame.image_available,
-                    .pWaitDstStageMask = &wait_stage,
-                    .commandBufferCount = 1,
-                    .pCommandBuffers = &frame.cmd,
-                    .signalSemaphoreCount = 1,
-                    .pSignalSemaphores = &m_render_finished[ctx.image_index],
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .waitSemaphoreCount = 1,
+            .pWaitSemaphores = &frame.image_available,
+            .pWaitDstStageMask = &wait_stage,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &frame.cmd,
+            .signalSemaphoreCount = 1,
+            .pSignalSemaphores = &m_render_finished[ctx.image_index],
         };
 
         MANTLE_VK_VERIFY(vkEndCommandBuffer(frame.cmd));

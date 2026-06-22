@@ -209,13 +209,9 @@ namespace mantle {
         m_camera_pos = pos;
     }
 
-    u32 Engine::window_width() const {
-        return m_window.get_width();
-    }
+    u32 Engine::window_width() const { return m_window.get_width(); }
 
-    u32 Engine::window_height() const {
-        return m_window.get_height();
-    }
+    u32 Engine::window_height() const { return m_window.get_height(); }
 
     void Engine::update(f32 dt) {
         m_window.update();

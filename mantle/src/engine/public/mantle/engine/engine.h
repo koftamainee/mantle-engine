@@ -21,7 +21,6 @@
 #include <memory>
 
 #include "flecs.h"
-
 #include "mantle/assets/asset_manager.h"
 #include "mantle/core/concurrency/worker_pool.h"
 #include "mantle/core/memory/pmr/tlsf_resource.h"
@@ -83,17 +82,17 @@ namespace mantle {
         flecs::world        m_world {};
         InputSystem         m_input {};
 
-        Renderer                       m_renderer {};
-        AssetManager                   m_assets {};
+        Renderer                        m_renderer {};
+        AssetManager                    m_assets {};
         std::unique_ptr<RenderPipeline> m_pipeline {};
-        glm::mat4                      m_view_proj {1.0f};
-        glm::vec3                      m_camera_pos {0.0f, 5.0f, 0.0f};
-        u64                            m_last_time = 0;
-        f32          m_fps_timer = 0.0f;
-        u32          m_fps_frame_count = 0;
-        f32          m_fps_frametime_accum = 0.0f;
-        f32          m_fps_frametime_min = 1e10f;
-        f32          m_fps_frametime_max = 0.0f;
+        glm::mat4                       m_view_proj {1.0f};
+        glm::vec3                       m_camera_pos {0.0f, 5.0f, 0.0f};
+        u64                             m_last_time = 0;
+        f32                             m_fps_timer = 0.0f;
+        u32                             m_fps_frame_count = 0;
+        f32                             m_fps_frametime_accum = 0.0f;
+        f32                             m_fps_frametime_min = 1e10f;
+        f32                             m_fps_frametime_max = 0.0f;
 
         f32 m_fps_begin_accum = 0.0f;
         f32 m_fps_exec_accum = 0.0f;

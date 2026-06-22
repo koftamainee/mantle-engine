@@ -17,13 +17,15 @@
 #include <mintload/mmat.h>
 #include <mintload/mmesh.h>
 #include <mintload/mscb.h>
+#include <spdlog/spdlog.h>
+#include <vulkan/vulkan_core.h>
 
 #include <cstdio>
+#include <ktx.h>
+#include <ktxvulkan.h>
 #include <memory_resource>
 #include <string>
 #include <vector>
-
-#include <spdlog/spdlog.h>
 
 #include "mantle/assets/asset_manager.h"
 #include "mantle/assets/types.h"
@@ -33,15 +35,11 @@
 #include "mantle/renderer/gpu_resource_manager.h"
 #include "mantle/renderer/renderer.h"
 
-#include <vulkan/vulkan_core.h>
-#include <ktx.h>
-#include <ktxvulkan.h>
-
 namespace mantle {
 
     struct LoadedMesh {
-        MintMesh                        mint_mesh {};
-        MeshData                        data {};
+        MintMesh mint_mesh {};
+        MeshData data {};
 
         bool loaded = false;
     };
@@ -55,27 +53,27 @@ namespace mantle {
     };
 
     struct LoadedMaterial {
-        MintMaterial                            mint_mat {};
-        MaterialData                            data {};
+        MintMaterial mint_mat {};
+        MaterialData data {};
         // Texture uploads (staging buffers + images kept until first frame)
-        std::pmr::vector<TextureUpload>         texture_uploads {};
+        std::pmr::vector<TextureUpload> texture_uploads {};
 
         bool loaded = false;
     };
 
     struct LoadedScene {
-        MintScb                                                     scb {};
-        std::pmr::vector<MeshHandle>                                entity_mesh_handles {};
-        std::pmr::vector<std::pmr::vector<MaterialHandle>>          entity_material_handles {};
-        std::string                                                 base_path {};
+        MintScb                                            scb {};
+        std::pmr::vector<MeshHandle>                       entity_mesh_handles {};
+        std::pmr::vector<std::pmr::vector<MaterialHandle>> entity_material_handles {};
+        std::string                                        base_path {};
 
         bool loaded = false;
     };
 
     struct AssetManager::Impl {
-        Renderer                                   *renderer = nullptr;
-        spdlog::logger                             *logger = nullptr;
-        std::pmr::polymorphic_allocator<std::byte>  alloc {};
+        Renderer                                  *renderer = nullptr;
+        spdlog::logger                            *logger = nullptr;
+        std::pmr::polymorphic_allocator<std::byte> alloc {};
 
         std::pmr::vector<LoadedMesh>     meshes {};
         std::pmr::vector<LoadedMaterial> materials {};
@@ -100,8 +98,10 @@ namespace mantle {
             char uuid_str[37];
             uuid_to_str(uuid, uuid_str);
 
-            for (auto & mesh : meshes) {
-                if (!mesh.loaded) continue;
+            for (auto &mesh : meshes) {
+                if (!mesh.loaded) {
+                    continue;
+                }
                 if (mesh.data.vertex_buffer.is_valid()) {
                 }
             }
@@ -110,14 +110,14 @@ namespace mantle {
             meshes.push_back({});
             auto &lm = meshes[idx];
 
-            std::string path = base + "/meshes/" + uuid_str + ".mmesh";
+            std::string    path = base + "/meshes/" + uuid_str + ".mmesh";
             MintloadResult r = mintload_MmeshLoad(path.c_str(), &lm.mint_mesh);
             if (r != MINTLOAD_SUCCESS) {
                 logger->error("Failed to load mesh: {} (err={})", path, static_cast<int>(r));
                 return idx;
             }
 
-            usize vertex_bytes = lm.mint_mesh.vertex_count * 48;
+            usize      vertex_bytes = lm.mint_mesh.vertex_count * 48;
             BufferDesc vb_desc = {
                 .size = vertex_bytes,
                 .usage = BufferUsage::Vertex,
@@ -125,9 +125,9 @@ namespace mantle {
             };
             lm.data.vertex_buffer = renderer->resource_manager().create_buffer(vb_desc, true);
             renderer->resource_manager().update_buffer(lm.data.vertex_buffer,
-                                                        lm.mint_mesh.vertex_data, vertex_bytes);
+                                                       lm.mint_mesh.vertex_data, vertex_bytes);
 
-            usize index_bytes = lm.mint_mesh.index_count * sizeof(u32);
+            usize      index_bytes = lm.mint_mesh.index_count * sizeof(u32);
             BufferDesc ib_desc = {
                 .size = index_bytes,
                 .usage = BufferUsage::Index,
@@ -135,7 +135,7 @@ namespace mantle {
             };
             lm.data.index_buffer = renderer->resource_manager().create_buffer(ib_desc, true);
             renderer->resource_manager().update_buffer(lm.data.index_buffer,
-                                                        lm.mint_mesh.index_data, index_bytes);
+                                                       lm.mint_mesh.index_data, index_bytes);
 
             lm.data.vertex_count = lm.mint_mesh.vertex_count;
             lm.data.index_count = lm.mint_mesh.index_count;
@@ -164,9 +164,9 @@ namespace mantle {
                 lm.data.submeshes.push_back(info);
             }
 
-            logger->info("Mesh: {} verts, {} idxs, {} sub, {} LODs",
-                lm.mint_mesh.vertex_count, lm.mint_mesh.index_count,
-                lm.mint_mesh.sub_mesh_count, lm.mint_mesh.lod_count);
+            logger->info("Mesh: {} verts, {} idxs, {} sub, {} LODs", lm.mint_mesh.vertex_count,
+                         lm.mint_mesh.index_count, lm.mint_mesh.sub_mesh_count,
+                         lm.mint_mesh.lod_count);
 
             lm.loaded = true;
             return idx;
@@ -180,8 +180,8 @@ namespace mantle {
             std::string path = base + "/textures/" + uuid_str + ".ktx2";
 
             ktxTexture2 *ktx = nullptr;
-            ktxResult kr = ktxTexture2_CreateFromNamedFile(path.c_str(),
-                KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx);
+            ktxResult    kr = ktxTexture2_CreateFromNamedFile(
+                path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx);
             if (kr != KTX_SUCCESS) {
                 logger->error("Failed to load texture: {} (err={})", path, static_cast<int>(kr));
                 return UINT32_MAX;
@@ -194,7 +194,8 @@ namespace mantle {
             if (ktxTexture_NeedsTranscoding(ktxTexture(ktx))) {
                 KTX_error_code ec = ktxTexture2_TranscodeBasis(ktx, KTX_TTF_RGBA32, 0);
                 if (ec != KTX_SUCCESS) {
-                    logger->error("Failed to transcode texture: {} (err={})", path, ktxErrorString(ec));
+                    logger->error("Failed to transcode texture: {} (err={})", path,
+                                  ktxErrorString(ec));
                     ktxTexture_Destroy(ktxTexture(ktx));
                     return UINT32_MAX;
                 }
@@ -203,20 +204,33 @@ namespace mantle {
             ktx_uint8_t *ktx_data = ktxTexture_GetData(ktxTexture(ktx));
             ktx_size_t   ktx_size = ktxTexture_GetDataSize(ktxTexture(ktx));
 
-            VkFormat vk_fmt = ktxTexture2_GetVkFormat(ktx);
+            VkFormat    vk_fmt = ktxTexture2_GetVkFormat(ktx);
             ImageFormat fmt = ImageFormat::Rgba8Srgb;
-            if (vk_fmt == VK_FORMAT_R8G8B8A8_UNORM) fmt = ImageFormat::Rgba8;
-            else if (vk_fmt == VK_FORMAT_R8G8B8A8_SRGB) fmt = ImageFormat::Rgba8Srgb;
-            else if (vk_fmt == VK_FORMAT_B8G8R8A8_SRGB) fmt = ImageFormat::Bgra8Srgb;
-            else if (vk_fmt == VK_FORMAT_R16G16B16A16_SFLOAT) fmt = ImageFormat::Rgba16f;
-            else if (vk_fmt == VK_FORMAT_R32_SFLOAT) fmt = ImageFormat::R32f;
-            else if (vk_fmt == VK_FORMAT_BC7_UNORM_BLOCK) fmt = ImageFormat::Bc7RgbaUnorm;
-            else if (vk_fmt == VK_FORMAT_BC7_SRGB_BLOCK) fmt = ImageFormat::Bc7RgbaSrgb;
-            else if (vk_fmt == VK_FORMAT_BC3_UNORM_BLOCK) fmt = ImageFormat::Bc3RgbaUnorm;
-            else if (vk_fmt == VK_FORMAT_BC3_SRGB_BLOCK) fmt = ImageFormat::Bc3RgbaSrgb;
-            else if (vk_fmt == VK_FORMAT_BC5_UNORM_BLOCK) fmt = ImageFormat::Bc5RgUnorm;
-            else if (vk_fmt == VK_FORMAT_ASTC_4x4_UNORM_BLOCK) fmt = ImageFormat::Astc4x4RgbaUnorm;
-            else if (vk_fmt == VK_FORMAT_ASTC_4x4_SRGB_BLOCK) fmt = ImageFormat::Astc4x4RgbaSrgb;
+            if (vk_fmt == VK_FORMAT_R8G8B8A8_UNORM) {
+                fmt = ImageFormat::Rgba8;
+            } else if (vk_fmt == VK_FORMAT_R8G8B8A8_SRGB) {
+                fmt = ImageFormat::Rgba8Srgb;
+            } else if (vk_fmt == VK_FORMAT_B8G8R8A8_SRGB) {
+                fmt = ImageFormat::Bgra8Srgb;
+            } else if (vk_fmt == VK_FORMAT_R16G16B16A16_SFLOAT) {
+                fmt = ImageFormat::Rgba16f;
+            } else if (vk_fmt == VK_FORMAT_R32_SFLOAT) {
+                fmt = ImageFormat::R32f;
+            } else if (vk_fmt == VK_FORMAT_BC7_UNORM_BLOCK) {
+                fmt = ImageFormat::Bc7RgbaUnorm;
+            } else if (vk_fmt == VK_FORMAT_BC7_SRGB_BLOCK) {
+                fmt = ImageFormat::Bc7RgbaSrgb;
+            } else if (vk_fmt == VK_FORMAT_BC3_UNORM_BLOCK) {
+                fmt = ImageFormat::Bc3RgbaUnorm;
+            } else if (vk_fmt == VK_FORMAT_BC3_SRGB_BLOCK) {
+                fmt = ImageFormat::Bc3RgbaSrgb;
+            } else if (vk_fmt == VK_FORMAT_BC5_UNORM_BLOCK) {
+                fmt = ImageFormat::Bc5RgUnorm;
+            } else if (vk_fmt == VK_FORMAT_ASTC_4x4_UNORM_BLOCK) {
+                fmt = ImageFormat::Astc4x4RgbaUnorm;
+            } else if (vk_fmt == VK_FORMAT_ASTC_4x4_SRGB_BLOCK) {
+                fmt = ImageFormat::Astc4x4RgbaSrgb;
+            }
 
             ImageDesc img_desc = {
                 .width = width,
@@ -225,9 +239,9 @@ namespace mantle {
                 .format = fmt,
                 .usage = ImageUsage::Sampled | ImageUsage::TransferDst,
             };
-            auto &rm = renderer->resource_manager();
+            auto       &rm = renderer->resource_manager();
             ImageHandle image = rm.create_image(img_desc);
-            u32 bindless_idx = rm.get_bindless_index(image, BindlessImageType::Sampled);
+            u32         bindless_idx = rm.get_bindless_index(image, BindlessImageType::Sampled);
 
             BufferDesc staging_desc = {
                 .size = ktx_size,
@@ -265,7 +279,7 @@ namespace mantle {
             materials.push_back({});
             auto &lm = materials[idx];
 
-            std::string path = base + "/materials/" + uuid_str + ".mmat";
+            std::string    path = base + "/materials/" + uuid_str + ".mmat";
             MintloadResult r = mintload_MmatLoad(path.c_str(), &lm.mint_mat);
             if (r != MINTLOAD_SUCCESS) {
                 logger->error("Failed to load material: {} (err={})", path, static_cast<int>(r));
@@ -296,15 +310,17 @@ namespace mantle {
                     .min_lod = 0.0f,
                     .max_lod = 16.0f,
                 };
-                auto &rm = renderer->resource_manager();
+                auto         &rm = renderer->resource_manager();
                 SamplerHandle sampler = rm.create_sampler(sampler_desc);
                 lm.data.bindless_sampler = rm.get_bindless_index(sampler);
 
                 for (u32 ti = 0; ti < lm.mint_mat.texture_count; ti++) {
-                    const auto &slot = lm.mint_mat.textures[ti];
+                    const auto   &slot = lm.mint_mat.textures[ti];
                     TextureUpload upload;
-                    u32 bindless_idx = load_texture(slot.texture_guid, base, upload);
-                    if (bindless_idx == UINT32_MAX) continue;
+                    u32           bindless_idx = load_texture(slot.texture_guid, base, upload);
+                    if (bindless_idx == UINT32_MAX) {
+                        continue;
+                    }
 
                     lm.texture_uploads.push_back(upload);
 
@@ -334,10 +350,12 @@ namespace mantle {
 
         BufferHandle build_material_buffer() {
             auto &rm = renderer->resource_manager();
-            u32 count = static_cast<u32>(materials.size());
-            if (count == 0) return {};
+            u32   count = static_cast<u32>(materials.size());
+            if (count == 0) {
+                return {};
+            }
 
-            usize buf_size = count * sizeof(MaterialGPU);
+            usize      buf_size = count * sizeof(MaterialGPU);
             BufferDesc desc = {
                 .size = buf_size,
                 .usage = BufferUsage::Storage,
@@ -347,11 +365,13 @@ namespace mantle {
 
             std::vector<MaterialGPU> gpu_mats(count);
             for (u32 i = 0; i < count; i++) {
-                auto &m = materials[i].data;
+                auto       &m = materials[i].data;
                 MaterialGPU mg;
-                mg.base_color = {m.base_color[0], m.base_color[1], m.base_color[2], m.base_color[3]};
+                mg.base_color = {m.base_color[0], m.base_color[1], m.base_color[2],
+                                 m.base_color[3]};
                 mg.metallic_roughness = {m.metallic, m.roughness, m.emissive_strength, 0.0f};
-                mg.emissive_alpha_cutoff = {m.emissive[0], m.emissive[1], m.emissive[2], m.alpha_cutoff};
+                mg.emissive_alpha_cutoff = {m.emissive[0], m.emissive[1], m.emissive[2],
+                                            m.alpha_cutoff};
                 mg.base_color_tex = m.bindless_basecolor;
                 mg.normal_tex = m.bindless_normal;
                 mg.metallic_roughness_tex = m.bindless_mr;

@@ -61,7 +61,7 @@ namespace mantle {
 
         // Exposed to friend classes (DefaultRenderPipeline) for PBR pipeline
         BufferHandle build_material_buffer();
-        void collect_pending_uploads(std::vector<TextureUpload> &out);
+        void         collect_pending_uploads(std::vector<TextureUpload> &out);
 
         bool m_is_initialized = false;
         struct Impl;

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+
 #include <vector>
 
 #include "mantle/assets/asset_manager.h"
@@ -42,11 +43,11 @@ namespace mantle {
     };
 
     struct GPULightData {
-        glm::vec4          camera_pos;
-        glm::vec4          ambient;
-        DirectionalLight   lights[MAX_DIRECTIONAL_LIGHTS];
-        u32                light_count;
-        u32                _padding[3];
+        glm::vec4        camera_pos;
+        glm::vec4        ambient;
+        DirectionalLight lights[MAX_DIRECTIONAL_LIGHTS];
+        u32              light_count;
+        u32              _padding[3];
     };
     static_assert(sizeof(GPULightData) == 304);
 
