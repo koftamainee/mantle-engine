@@ -188,7 +188,9 @@ jobs:
           } else {
             Write-Host "Installing Vulkan SDK (this may take 3-5 min)..."
             $proc = Start-Process -FilePath $installer -ArgumentList @(
-              "--accept-licenses", "--default-answer", "--confirm-command", "install"
+              "--accept-licenses", "--default-answer", "--confirm-command", "install",
+              "--select-option", "com.lunarg.vulkan.vma",
+              "--select-option", "com.lunarg.vulkan.debug"
             ) -Wait -NoNewWindow -PassThru
             if ($proc.ExitCode -ne 0) {
               throw "Vulkan SDK installer failed with exit code $($proc.ExitCode)"
