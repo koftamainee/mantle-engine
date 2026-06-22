@@ -12,6 +12,8 @@ inline constexpr std::string_view kGirl = "f8065bbd-9bfa-483d-b1d1-8d4c70a880ef"
 
 inline constexpr std::string_view kChurch = "59aba93f-da85-488f-88a4-5fae8e1922b3";
 
+inline constexpr std::string_view kJustAGirl = "abf2a568-2ff3-48f6-a895-b4142500366f";
+
 } // namespace models
 
 
