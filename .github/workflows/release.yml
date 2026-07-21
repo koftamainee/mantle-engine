@@ -1,285 +1,285 @@
-name: Daily Release
-
-on:
+#name: Daily Release
+#
+#on:
 #  schedule:
 #    - cron: '0 1 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
-env:
-  VULKAN_VER: 1.4.304.0
-
-jobs:
-  info:
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.calc.outputs.tag }}
-      previous_tag: ${{ steps.calc.outputs.previous_tag }}
-      has_changes: ${{ steps.calc.outputs.has_changes }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Calculate release info
-        id: calc
-        run: |
-          TAG="daily-$(TZ='Europe/Moscow' date '+%Y-%m-%d')"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
-          PREV=$(git tag --list 'daily-*' --sort=-version:refname | head -1 || echo "")
-          echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
-
-          if [ -n "$PREV" ]; then
-            COUNT=$(git rev-list "$PREV"..HEAD --count 2>/dev/null || echo 0)
-          else
-            COUNT=$(git rev-list HEAD --count 2>/dev/null || echo 0)
-          fi
-          echo "has_changes=$([ "$COUNT" -gt 0 ] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
-
-
-  build:
-    needs: info
-    if: needs.info.outputs.has_changes == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            configure: >
-              cmake -B build -G Ninja
-              -DCMAKE_BUILD_TYPE=Release
-              -DCMAKE_C_COMPILER=gcc
-              -DCMAKE_CXX_COMPILER=g++
-            build: cmake --build build
-            artifact: mantle-linux-x64
-
-          - os: windows-2025-vs2026
-            configure: cmake -B build -G "Visual Studio 18 2026" -A x64
-            build: cmake --build build --config Release
-            artifact: mantle-windows-x64
-
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install system deps (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ninja-build \
-            libwayland-dev wayland-protocols libxkbcommon-dev \
-            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
-            mesa-common-dev libgl-dev
-
-      - name: Cache Vulkan SDK
-        id: cache-vulkan
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.os == 'Linux' && '.vulkansdk' || format('C:\VulkanSDK\{0}', env.VULKAN_VER) }}
-          key: vulkan-sdk-${{ env.VULKAN_VER }}-${{ runner.os }}
-
-      - name: Install Vulkan SDK (Linux)
-        if: runner.os == 'Linux' && steps.cache-vulkan.outputs.cache-hit != 'true'
-        run: |
-          mkdir -p .vulkansdk
-          wget -qO- https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/linux/vulkansdk-linux-x86_64-${{ env.VULKAN_VER }}.tar.xz \
-            | tar -xJ -C .vulkansdk
-
-      - name: Set Vulkan env (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          SDK="${GITHUB_WORKSPACE}/.vulkansdk/${{ env.VULKAN_VER }}/x86_64"
-          echo "VULKAN_SDK=${SDK}" >> "${GITHUB_ENV}"
-          echo "${SDK}/bin" >> "${GITHUB_PATH}"
-          echo "LD_LIBRARY_PATH=${SDK}/lib:${LD_LIBRARY_PATH}" >> "${GITHUB_ENV}"
-
-      - name: Cache Vulkan SDK installer (Windows)
-        if: runner.os == 'Windows'
-        id: cache-installer
-        uses: actions/cache@v4
-        with:
-          path: ~\vulkansdk-${{ env.VULKAN_VER }}-installer.exe
-          key: vulkan-sdk-installer-${{ env.VULKAN_VER }}
-
-      - name: Download Vulkan SDK installer (Windows)
-        if: runner.os == 'Windows' && steps.cache-installer.outputs.cache-hit != 'true'
-        shell: pwsh
-        run: |
-          $url = "https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/windows/VulkanSDK-${{ env.VULKAN_VER }}-Installer.exe"
-          $out = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
-          Write-Host "Downloading Vulkan SDK ($url)"
-          $wc = New-Object System.Net.WebClient
-          $wc.DownloadFile($url, $out)
-          Write-Host "Download complete ($((Get-Item $out).Length / 1MB) MB)"
-
-      - name: Install Vulkan SDK (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          $installer = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
-          $sdkPath = "C:\VulkanSDK\${{ env.VULKAN_VER }}"
-          if (Test-Path "$sdkPath\Include\vulkan\vulkan.h") {
-            Write-Host "Vulkan SDK already installed at $sdkPath"
-          } else {
-            Write-Host "Installing Vulkan SDK (this may take 3-5 min)..."
-            $args = @(
-              "--accept-licenses",
-              "--default-answer",
-              "--confirm-command",
-              "install",
-              "com.lunarg.vulkan.vma",
-              "com.lunarg.vulkan.volk",
-              "com.lunarg.vulkan.debug"
-            )
-            $p = Start-Process -FilePath $installer -ArgumentList $args -Wait -NoNewWindow -PassThru
-            if ($p.ExitCode -ne 0) {
-              throw "Installer failed with exit code $($p.ExitCode)"
-            }
-            Write-Host "Vulkan SDK installed"
-          }
-
-      - name: Set Vulkan env (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          echo "VULKAN_SDK=C:\VulkanSDK\${{ env.VULKAN_VER }}" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "C:\VulkanSDK\${{ env.VULKAN_VER }}\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
-
-      - name: Configure
-        run: ${{ matrix.configure }}
-
-      - name: Build
-        run: ${{ matrix.build }}
-
-      - name: Stage game package (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p "${{ matrix.artifact }}"
-          cp -r build/target/* "${{ matrix.artifact }}/"
-
-      - name: Stage game package (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path "${{ matrix.artifact }}"
-          Copy-Item -Path build\target\* -Destination "${{ matrix.artifact }}\" -Recurse
-
-      - name: Stage devinfo (Linux)
-        if: runner.os == 'Linux'
-        run: cp build/devinfo/error_codes.json error_codes.json
-
-      - name: Upload devinfo
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: mantle-devinfo
-          path: error_codes.json
-          if-no-files-found: error
-
-      - name: Upload game package
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}
-          if-no-files-found: error
-
-
-  notes:
-    needs: info
-    if: needs.info.outputs.has_changes == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Generate patch notes
-        id: gen
-        run: |
-          PREV="${{ needs.info.outputs.previous_tag }}"
-
-          if [ -n "$PREV" ]; then
-            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" --arg previous "$PREV" \
-              '{tag_name: $tag, previous_tag_name: $previous}')
-          else
-            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" \
-              '{tag_name: $tag}')
-          fi
-
-          RESP=$(curl -s -w '\n%{http_code}' -X POST \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${{ github.repository }}/releases/generate-notes" \
-            -d "$JSON")
-
-          HTTP_CODE=$(echo "$RESP" | tail -1)
-          BODY=$(echo "$RESP" | head -n -1)
-
-          if [ "$HTTP_CODE" = "200" ]; then
-            NOTES=$(echo "$BODY" | jq -r '.body // empty')
-          fi
-
-          if [ -z "$NOTES" ]; then
-            LOG=$(git log --oneline --no-decorate "${{ needs.info.outputs.previous_tag || 'HEAD~30' }}..HEAD" 2>/dev/null || git log --oneline --no-decorate -30 2>/dev/null)
-            printf '# Mantle Daily Build — %s\n\n%s\n' \
-              "${{ needs.info.outputs.tag }}" \
-              "$LOG" > /tmp/release_body.md
-          else
-            printf '%s' "$NOTES" > /tmp/release_body.md
-          fi
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: release-body
-          path: /tmp/release_body.md
-
-
-  release:
-    needs: [info, build, notes]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: release-body
-          path: .
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: mantle-linux-x64
-          path: mantle-linux-x64
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: mantle-windows-x64
-          path: mantle-windows-x64
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: mantle-devinfo
-          path: .
-
-      - name: Bundle Linux
-        run: (cd mantle-linux-x64 && zip -r ../mantle-linux-x64.zip .)
-
-      - name: Bundle Windows
-        shell: pwsh
-        run: Compress-Archive -Path mantle-windows-x64\* -DestinationPath mantle-windows-x64.zip
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.info.outputs.tag }}
-          name: Mantle Daily Build — ${{ needs.info.outputs.tag }}
-          body_path: release_body.md
-          files: |
-            mantle-linux-x64.zip
-            mantle-windows-x64.zip
-            error_codes.json
-          fail_on_unmatched_files: false
-          draft: false
-          prerelease: false
+#  workflow_dispatch:
+#
+#permissions:
+#  contents: write
+#
+#env:
+#  VULKAN_VER: 1.4.304.0
+#
+#jobs:
+#  info:
+#    runs-on: ubuntu-latest
+#    outputs:
+#      tag: ${{ steps.calc.outputs.tag }}
+#      previous_tag: ${{ steps.calc.outputs.previous_tag }}
+#      has_changes: ${{ steps.calc.outputs.has_changes }}
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Calculate release info
+#        id: calc
+#        run: |
+#          TAG="daily-$(TZ='Europe/Moscow' date '+%Y-%m-%d')"
+#          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+#
+#          PREV=$(git tag --list 'daily-*' --sort=-version:refname | head -1 || echo "")
+#          echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
+#
+#          if [ -n "$PREV" ]; then
+#            COUNT=$(git rev-list "$PREV"..HEAD --count 2>/dev/null || echo 0)
+#          else
+#            COUNT=$(git rev-list HEAD --count 2>/dev/null || echo 0)
+#          fi
+#          echo "has_changes=$([ "$COUNT" -gt 0 ] && echo 'true' || echo 'false')" >> "$GITHUB_OUTPUT"
+#
+#
+#  build:
+#    needs: info
+#    if: needs.info.outputs.has_changes == 'true'
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        include:
+#          - os: ubuntu-latest
+#            configure: >
+#              cmake -B build -G Ninja
+#              -DCMAKE_BUILD_TYPE=Release
+#              -DCMAKE_C_COMPILER=gcc
+#              -DCMAKE_CXX_COMPILER=g++
+#            build: cmake --build build
+#            artifact: mantle-linux-x64
+#
+#          - os: windows-2025-vs2026
+#            configure: cmake -B build -G "Visual Studio 18 2026" -A x64
+#            build: cmake --build build --config Release
+#            artifact: mantle-windows-x64
+#
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          submodules: recursive
+#
+#      - name: Install system deps (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y --no-install-recommends \
+#            ninja-build \
+#            libwayland-dev wayland-protocols libxkbcommon-dev \
+#            libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libxss-dev libxtst-dev \
+#            mesa-common-dev libgl-dev
+#
+#      - name: Cache Vulkan SDK
+#        id: cache-vulkan
+#        uses: actions/cache@v4
+#        with:
+#          path: ${{ runner.os == 'Linux' && '.vulkansdk' || format('C:\VulkanSDK\{0}', env.VULKAN_VER) }}
+#          key: vulkan-sdk-${{ env.VULKAN_VER }}-${{ runner.os }}
+#
+#      - name: Install Vulkan SDK (Linux)
+#        if: runner.os == 'Linux' && steps.cache-vulkan.outputs.cache-hit != 'true'
+#        run: |
+#          mkdir -p .vulkansdk
+#          wget -qO- https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/linux/vulkansdk-linux-x86_64-${{ env.VULKAN_VER }}.tar.xz \
+#            | tar -xJ -C .vulkansdk
+#
+#      - name: Set Vulkan env (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          SDK="${GITHUB_WORKSPACE}/.vulkansdk/${{ env.VULKAN_VER }}/x86_64"
+#          echo "VULKAN_SDK=${SDK}" >> "${GITHUB_ENV}"
+#          echo "${SDK}/bin" >> "${GITHUB_PATH}"
+#          echo "LD_LIBRARY_PATH=${SDK}/lib:${LD_LIBRARY_PATH}" >> "${GITHUB_ENV}"
+#
+#      - name: Cache Vulkan SDK installer (Windows)
+#        if: runner.os == 'Windows'
+#        id: cache-installer
+#        uses: actions/cache@v4
+#        with:
+#          path: ~\vulkansdk-${{ env.VULKAN_VER }}-installer.exe
+#          key: vulkan-sdk-installer-${{ env.VULKAN_VER }}
+#
+#      - name: Download Vulkan SDK installer (Windows)
+#        if: runner.os == 'Windows' && steps.cache-installer.outputs.cache-hit != 'true'
+#        shell: pwsh
+#        run: |
+#          $url = "https://sdk.lunarg.com/sdk/download/${{ env.VULKAN_VER }}/windows/VulkanSDK-${{ env.VULKAN_VER }}-Installer.exe"
+#          $out = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
+#          Write-Host "Downloading Vulkan SDK ($url)"
+#          $wc = New-Object System.Net.WebClient
+#          $wc.DownloadFile($url, $out)
+#          Write-Host "Download complete ($((Get-Item $out).Length / 1MB) MB)"
+#
+#      - name: Install Vulkan SDK (Windows)
+#        if: runner.os == 'Windows'
+#        shell: pwsh
+#        run: |
+#          $installer = "$env:USERPROFILE\vulkansdk-${{ env.VULKAN_VER }}-installer.exe"
+#          $sdkPath = "C:\VulkanSDK\${{ env.VULKAN_VER }}"
+#          if (Test-Path "$sdkPath\Include\vulkan\vulkan.h") {
+#            Write-Host "Vulkan SDK already installed at $sdkPath"
+#          } else {
+#            Write-Host "Installing Vulkan SDK (this may take 3-5 min)..."
+#            $args = @(
+#              "--accept-licenses",
+#              "--default-answer",
+#              "--confirm-command",
+#              "install",
+#              "com.lunarg.vulkan.vma",
+#              "com.lunarg.vulkan.volk",
+#              "com.lunarg.vulkan.debug"
+#            )
+#            $p = Start-Process -FilePath $installer -ArgumentList $args -Wait -NoNewWindow -PassThru
+#            if ($p.ExitCode -ne 0) {
+#              throw "Installer failed with exit code $($p.ExitCode)"
+#            }
+#            Write-Host "Vulkan SDK installed"
+#          }
+#
+#      - name: Set Vulkan env (Windows)
+#        if: runner.os == 'Windows'
+#        shell: pwsh
+#        run: |
+#          echo "VULKAN_SDK=C:\VulkanSDK\${{ env.VULKAN_VER }}" | Out-File -FilePath $env:GITHUB_ENV -Append
+#          echo "C:\VulkanSDK\${{ env.VULKAN_VER }}\Bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+#
+#      - name: Configure
+#        run: ${{ matrix.configure }}
+#
+#      - name: Build
+#        run: ${{ matrix.build }}
+#
+#      - name: Stage game package (Linux)
+#        if: runner.os == 'Linux'
+#        run: |
+#          mkdir -p "${{ matrix.artifact }}"
+#          cp -r build/target/* "${{ matrix.artifact }}/"
+#
+#      - name: Stage game package (Windows)
+#        if: runner.os == 'Windows'
+#        shell: pwsh
+#        run: |
+#          New-Item -ItemType Directory -Force -Path "${{ matrix.artifact }}"
+#          Copy-Item -Path build\target\* -Destination "${{ matrix.artifact }}\" -Recurse
+#
+#      - name: Stage devinfo (Linux)
+#        if: runner.os == 'Linux'
+#        run: cp build/devinfo/error_codes.json error_codes.json
+#
+#      - name: Upload devinfo
+#        if: runner.os == 'Linux'
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: mantle-devinfo
+#          path: error_codes.json
+#          if-no-files-found: error
+#
+#      - name: Upload game package
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ${{ matrix.artifact }}
+#          path: ${{ matrix.artifact }}
+#          if-no-files-found: error
+#
+#
+#  notes:
+#    needs: info
+#    if: needs.info.outputs.has_changes == 'true'
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      - name: Generate patch notes
+#        id: gen
+#        run: |
+#          PREV="${{ needs.info.outputs.previous_tag }}"
+#
+#          if [ -n "$PREV" ]; then
+#            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" --arg previous "$PREV" \
+#              '{tag_name: $tag, previous_tag_name: $previous}')
+#          else
+#            JSON=$(jq -n --arg tag "${{ needs.info.outputs.tag }}" \
+#              '{tag_name: $tag}')
+#          fi
+#
+#          RESP=$(curl -s -w '\n%{http_code}' -X POST \
+#            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+#            -H "Accept: application/vnd.github+json" \
+#            "https://api.github.com/repos/${{ github.repository }}/releases/generate-notes" \
+#            -d "$JSON")
+#
+#          HTTP_CODE=$(echo "$RESP" | tail -1)
+#          BODY=$(echo "$RESP" | head -n -1)
+#
+#          if [ "$HTTP_CODE" = "200" ]; then
+#            NOTES=$(echo "$BODY" | jq -r '.body // empty')
+#          fi
+#
+#          if [ -z "$NOTES" ]; then
+#            LOG=$(git log --oneline --no-decorate "${{ needs.info.outputs.previous_tag || 'HEAD~30' }}..HEAD" 2>/dev/null || git log --oneline --no-decorate -30 2>/dev/null)
+#            printf '# Mantle Daily Build — %s\n\n%s\n' \
+#              "${{ needs.info.outputs.tag }}" \
+#              "$LOG" > /tmp/release_body.md
+#          else
+#            printf '%s' "$NOTES" > /tmp/release_body.md
+#          fi
+#
+#      - uses: actions/upload-artifact@v4
+#        with:
+#          name: release-body
+#          path: /tmp/release_body.md
+#
+#
+#  release:
+#    needs: [info, build, notes]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: release-body
+#          path: .
+#
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: mantle-linux-x64
+#          path: mantle-linux-x64
+#
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: mantle-windows-x64
+#          path: mantle-windows-x64
+#
+#      - uses: actions/download-artifact@v4
+#        with:
+#          name: mantle-devinfo
+#          path: .
+#
+#      - name: Bundle Linux
+#        run: (cd mantle-linux-x64 && zip -r ../mantle-linux-x64.zip .)
+#
+#      - name: Bundle Windows
+#        shell: pwsh
+#        run: Compress-Archive -Path mantle-windows-x64\* -DestinationPath mantle-windows-x64.zip
+#
+#      - uses: softprops/action-gh-release@v2
+#        with:
+#          tag_name: ${{ needs.info.outputs.tag }}
+#          name: Mantle Daily Build — ${{ needs.info.outputs.tag }}
+#          body_path: release_body.md
+#          files: |
+#            mantle-linux-x64.zip
+#            mantle-windows-x64.zip
+#            error_codes.json
+#          fail_on_unmatched_files: false
+#          draft: false
+#          prerelease: false
